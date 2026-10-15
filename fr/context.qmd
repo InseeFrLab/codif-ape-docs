@@ -1,0 +1,85 @@
+---
+title: "Contexte et historique"
+description: "Pourquoi l'Insee code automatiquement l'activité économique, et comment le système est passé d'un moteur de règles à l'apprentissage profond."
+lang: fr
+---
+
+## Le code APE et la nomenclature NACE
+
+Toute entreprise immatriculée en France reçoit un **code APE** (activité principale exercée). Ce code situe l'unité dans la **NAF** (nomenclature d'activités française), déclinaison nationale de la nomenclature européenne **NACE**. Il est rattaché aux identifiants de l'entreprise dans le répertoire **Sirene**, que l'Insee gère depuis 1973 et qui fait foi pour les numéros SIREN et SIRET.
+
+Le code APE n'est pas une simple étiquette administrative. Il sert à :
+
+- constituer les bases de sondage des enquêtes auprès des entreprises et produire les statistiques structurelles d'entreprises ;
+- produire les comptes nationaux et les indicateurs conjoncturels par branche ;
+- appliquer des réglementations sectorielles (conventions collectives, assurances, certains impôts et aides).
+
+Une erreur de codification se propage donc à la fois dans les statistiques et dans la vie administrative de l'entreprise.
+
+La nomenclature est hiérarchique et compte cinq niveaux :
+
+| Niveau | NAF rév. 2 (2008) | NAF 2025 (NACE Rév. 2.1) |
+|---|---|---|
+| Sections | 21 | 22 |
+| Divisions | 88 | 87 |
+| Groupes | 272 | 287 |
+| Classes | 615 | 651 |
+| Sous-classes (code APE) | **732** | **746** |
+
+: Taille de la nomenclature NAF à chaque niveau. Pour la NAF 2025, les niveaux supérieurs suivent la NACE Rév. 2.1. {#tbl-naf}
+
+::: {.callout-note}
+## Ce que l'on prédit
+La cible est la **sous-classe**, le niveau le plus fin, avec environ 750 modalités possibles. Les niveaux supérieurs se déduisent directement du code. Les métriques sont donc calculées à chaque niveau de la hiérarchie.
+:::
+
+## D'un formulaire structuré au texte libre
+
+À chaque création d'entreprise ou modification d'activité, l'entreprise dépose une déclaration (liasse) qui comporte un libellé de son activité. Jusqu'en 2022, un agent d'un centre de formalités des entreprises aidait le déclarant à remplir le formulaire. Les libellés d'activité étaient donc plutôt courts et normalisés.
+
+Deux réformes ont changé la donne :
+
+1. **La loi PACTE (2019)** a créé un **guichet unique** en ligne, géré par l'INPI. Depuis le 1er janvier 2023, toutes les formalités d'entreprise passent par lui. Le libellé d'activité est devenu un champ de texte libre, saisi par le déclarant sans aucune aide.
+2. **Sirene 4**, le nouveau système d'information du répertoire, est passé d'un traitement par lots nocturne à un **traitement au fil de l'eau**, fondé sur des micro-services. La migration a été progressive, à partir de fin 2022.
+
+Résultat : les textes sont plus longs, plus verbeux et plus variés. Ils comportent aussi toutes les fautes et les particularités d'écriture propres à une saisie libre.
+
+Chaque année, environ **2 millions** de libellés doivent être codés.
+
+## Trois générations de moteurs de codification
+
+| Période | Moteur | Principe | Limites |
+|---|---|---|---|
+| Années 1990 → 2022 | **Sicore** | Règles déterministes, dictionnaires de mots-clés | Le taux de codification automatique est tombé à environ 30 % sur les libellés en texte libre. Les règles étaient coûteuses à maintenir. |
+| Fin 2022 → 2025 | **fastText** | Modèle supervisé (sac de mots et n-grammes de caractères), les variables annexes étant ajoutées au texte sous forme de tokens | Meta a archivé la bibliothèque en mars 2024. Ni calibration, ni explicabilité, ni prise en charge des GPU. |
+| 2025 → | **PyTorch** ([torchTextClassifiers](companion-projects.qmd#sec-ttc)) | Même famille de modèles, reconstruite en PyTorch : un plongement (*embedding*) dédié par variable catégorielle, calibration, explicabilité | Inférence un peu plus lente qu'avec fastText, mais dans le budget. |
+
+: Moteurs successifs de codification APE. {#tbl-history}
+
+**Sicore** a été développé dans les années 1990 [@meyer1997]. Il traitait correctement les textes bien structurés de l'ancien système. Sur les libellés en texte libre, en revanche, il ne codait automatiquement qu'environ un cas sur trois. Le reste, soit environ 70 %, passait en reprise manuelle [@avouac2025].
+
+Le modèle **fastText** a été mis en production progressivement à partir de novembre 2022, avec un seuil d'abord volontairement prudent. Il a ramené le taux de codification automatique à environ **80 %**, ce qui a rendu la réforme du guichet unique tenable.
+
+Lorsque Meta a archivé le dépôt fastText en mars 2024, l'équipe a engagé la migration vers **PyTorch**. Elle en a profité pour corriger les faiblesses structurelles du modèle : traitement des variables catégorielles, calibration et explicabilité. Il en est résulté le package open source torchTextClassifiers, présenté dans [Projets associés](companion-projects.qmd).
+
+## Contraintes de production
+
+Le modèle est appelé par le système d'information Sirene pour chaque déclaration, dès son arrivée. Cela impose des contraintes fortes :
+
+- **Inférence unitaire sur CPU** dans un environnement fermé : pas de GPU, pas d'accès à internet, et toutes les dépendances embarquées avec le modèle.
+- **Faible latence** : l'objectif est d'environ 200 ms par appel.
+- **Repli sur l'humain** : le modèle renvoie ses cinq codes les plus probables, chacun avec sa probabilité, ainsi qu'un **indice de confiance**. En dessous d'un seuil, la déclaration part en reprise manuelle : une équipe de gestionnaires la code en s'appuyant sur les suggestions du modèle.
+- **Traçabilité** : chaque prédiction doit pouvoir être rattachée à la version exacte du modèle qui l'a produite.
+
+Le **taux de codification automatique** est la part des déclarations codées sans intervention humaine, avec une qualité maîtrisée. C'est l'indicateur métier clé, car il détermine la charge de travail des équipes de reprise manuelle.
+
+## Pourquoi le MLOps
+
+Un modèle entraîné une fois puis laissé en l'état ne reste pas performant longtemps, pour plusieurs raisons :
+
+- la façon dont les déclarants décrivent leur activité dérive avec le temps : nouveaux métiers, nouvelles formes juridiques, nouvelles formulations ;
+- les experts métier signalent des erreurs qu'il faut corriger vite et durablement ;
+- la nomenclature elle-même évolue : le passage de la NAF rév. 2 à la NAF 2025 a imposé de recoder tout le jeu d'entraînement (voir [Données](data.qmd#sec-naf2025)) ;
+- les bibliothèques dont dépend le modèle sont abandonnées (fastText) ou changent de version majeure (MLflow, PyTorch).
+
+La suite de cette note décrit le système qui fait de ce travail une routine : un entraînement reproductible, un registre de modèles versionné, une API déployée en GitOps, un suivi et une annotation en continu, et un protocole de réentraînement doté de critères de validation explicites.

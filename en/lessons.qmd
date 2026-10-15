@@ -1,0 +1,61 @@
+---
+title: "Lessons learned"
+description: "What four years of machine learning in production for APE coding taught us, and the questions that remain open."
+lang: en
+---
+
+## Technical lessons
+
+**A small model, well integrated, beats a large model that cannot be deployed.** Pre-trained transformers gave only a marginal gain over a fastText-style model, and they did not fit the latency and CPU budget. The effort went where the returns were: data quality, calibration and the deployment chain.
+
+**Dependencies are a risk to manage.** fastText was archived upstream barely more than a year after going into production. The move to PyTorch took time and care, "but it's well worth it": the model is now maintained in-house, it is calibrated and explainable, and it can evolve. In return, PyTorch requires a strict versioning policy across training, serving and production.
+
+**Ship preprocessing with the model.** In the early days, the business IT team re-coded the text preprocessing in Java. This duplication was a source of errors. Packaging the model with its preprocessing and its contract (MLflow `pyfunc`, Pydantic models), and serving it through a Python API, removed it.
+
+**GitOps makes deployment boring, which is what we want.** When deploying a model is a one-line, reviewable commit and a rollback is a revert, deployments stop being events.
+
+**Calibration is a business feature.** The threshold on the confidence index sets the manual coding workload. It is a methodological decision, not an operational setting. It can only be set on a calibrated model and a representative sample, and must be revisited for every new model.
+
+## Data lessons
+
+**Label quality is the main lever.** Historical labels mix outputs of a rule engine, of earlier models and of hurried human coding. An auditable rule engine, where every relabelling is logged, did more for accuracy than most architectural changes. Rules have side effects on neighbouring codes, though, so they should stay targeted.
+
+**Evaluation needs a random, blind golden set.** Manual corrections are selected on the model's failures, and annotators who see the prediction are anchored on it. Without a continuously fed random sample, annotated blind, the accuracy of automatic coding cannot be measured, the threshold cannot be set and two models cannot be compared. Monitoring has to be a routine process, not a series of one-off campaigns.
+
+**Use experts as the benchmark and LLMs for scale.** For the NAF 2025 revision, a few tens of thousands of expert annotations were enough to choose and validate LLM-based recoding of millions of observations. LLMs' self-reported confidence was not a usable filter, whereas agreement between models was.
+
+**Know the ceiling.** Even experienced annotators often disagree at the finest level of the classification. Inter-annotator agreement gives a realistic upper bound on what any model can reach, and should frame expectations.
+
+## Organisational lessons
+
+**MLOps is an organisation as much as a stack.** The project involves:
+
+- the business team, which owns the register and the classification;
+- the IT teams that run production;
+- the data science team (SSP Lab).
+
+The decisive step was to name a **model owner** in the business team, who is responsible for retraining, qualification and operation, distinct from the innovation team. This mirrors the AIML4OS recommendation that every model in production have a named owner [@aiml4os2025, ch. 3].
+
+**Trust is built with tools.** Business experts trust the model when they can see why it decided (explainability), check what changed between two versions (comparison reports, change journals) and turn their feedback into permanent fixes (rules).
+
+**Open source pays off.** All the code is public. This made exchanges with other statistical offices possible: Statistics Canada, Statec, Statistics Austria, Destatis, the national statistical institutes of sub-Saharan Africa, and the OECD. It also made the tools reusable for other classifications.
+
+## A European perspective
+
+The pipeline served as one of the reference implementations of the MLOps tutorial written within the European **AIML4OS** project (Work Package 10, cluster 4 "From text to code"), together with Statistics Austria and Destatis [@aiml4os2025]. The tutorial organises the lifecycle into four stages, each with a checklist:
+
+1. [Data](https://aiml4os.github.io/WP10_Cluster4_MLOps/chapters/chapter1.html): storage, validation, versioning;
+2. [Model](https://aiml4os.github.io/WP10_Cluster4_MLOps/chapters/chapter2.html): reproducible training, validation beyond accuracy, wrapping, registry;
+3. [Serving](https://aiml4os.github.io/WP10_Cluster4_MLOps/chapters/chapter3.html): APIs, containers, GitOps, bridging development and production;
+4. [Monitoring](https://aiml4os.github.io/WP10_Cluster4_MLOps/chapters/chapter4.html): drift taxonomy, monitoring layers, retraining and promotion.
+
+This note can be read as a detailed case study for that framework.
+
+## Open questions
+
+Some methodological questions remain open, and they are probably common to every coding pipeline:
+
+- **Anchoring.** If manual coders see the model's suggestion, their labels are no longer independent of the model. How should this be accounted for when those labels are used for training?
+- **Golden set size.** With about 750 classes, per-class metrics on a single quarter are out of reach. Over what window should the golden set be accumulated?
+- **Target accuracy.** Who sets $p^*$? It is a business trade-off between accuracy and manual workload.
+- **History.** How fast should old labels lose weight? How should historical observations whose NAF 2025 code is ambiguous be treated: re-annotation, exclusion, or engine labels with a low weight?

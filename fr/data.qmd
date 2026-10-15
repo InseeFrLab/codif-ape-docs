@@ -1,0 +1,92 @@
+---
+title: "Données"
+description: "Données d'entraînement, nettoyage des labels par un moteur de règles auditable, et passage à la NAF 2025."
+lang: fr
+---
+
+## Données d'entraînement
+
+Le modèle apprend à partir des déclarations passées, conservées dans le répertoire Sirene. Chaque observation comprend :
+
+- le **libellé d'activité** : texte libre saisi par le déclarant, parfois complété de précisions sur une activité secondaire ou agricole ;
+- des **variables annexes** issues du formulaire de déclaration :
+  - la catégorie juridique (`CJ`) ;
+  - la nature de l'activité (`NAT`) ;
+  - le type de liasse (`TYP`) ;
+  - la surface du local (`SRF`, regroupée en tranches) ;
+  - le caractère permanent ou saisonnier de l'activité (`CRT`) ;
+- le **code APE** attribué, automatiquement ou par un gestionnaire.
+
+Les premiers modèles ont été entraînés sur environ 10 millions de déclarations issues de l'ancien répertoire (2014–2022). Depuis le passage au nouveau répertoire et à la NAF 2025, la base d'entraînement est constituée d'environ **2,7 millions** de déclarations récentes [@randriamanana2025jms].
+
+::: {.callout-warning}
+## Les labels ne sont pas une vérité terrain
+Les labels historiques proviennent de Sicore, des versions précédentes du modèle et de gestionnaires travaillant sous contrainte de temps. Certains sont faux, d'autres se contredisent : un même libellé peut porter des codes différents. La qualité des labels compte autant que l'architecture du modèle. Deux composants s'en chargent : le moteur de règles (ci-dessous) et les campagnes d'annotation ([Suivi](monitoring.qmd)).
+:::
+
+## Nettoyage des labels : un moteur de règles auditable {#sec-rules}
+
+[codif-ape-preprocess](https://github.com/InseeFrLab/codif-ape-preprocess) applique des **règles métier** aux données d'entraînement avant chaque entraînement. Une règle traduit en code une connaissance des experts métier. Par exemple, les activités de location meublée désignées par le sigle « LMNP », les sociétés holding, les chauffeurs VTC et les taxis sont chacun orientés vers un code précis.
+
+Une règle peut agir de trois façons :
+
+| Type | Effet | Exemple |
+|---|---|---|
+| **Modifier** | Réétiqueter les lignes qui correspondent à un motif | Libellés mentionnant une activité de holding passive → le code dédié aux holdings |
+| **Augmenter** | Ajouter des lignes synthétiques, pondérées, pour que le modèle apprenne un cas qu'il voit rarement | Une ligne « LMNP » par catégorie juridique, pour que toutes soient couvertes |
+| **Supprimer** | Retirer les lignes inexploitables | Codes absents de la nomenclature cible |
+
+: Types de règles. {#tbl-rule-types}
+
+Les règles sont des fonctions Python enregistrées à l'aide d'un décorateur. Chacune porte un nom, des tags et une description. Une règle repère les libellés concernés par une ou plusieurs de ces trois méthodes :
+
+- des **expressions régulières** sur le texte normalisé ;
+- une **correspondance approximative** (*fuzzy matching*), pour absorber les fautes de frappe ;
+- une **similarité sémantique**, à partir d'un modèle de plongements de phrases calculé sur GPU.
+
+Les correspondances approximative et sémantique étendent une règle aux libellés proches de ceux listés par les experts. Chaque règle définit les méthodes qu'elle autorise. Par exemple, une règle portant sur un sigle court est limitée à la correspondance exacte.
+
+**Chaque modification est journalisée.** Pour chaque ligne modifiée, créée ou supprimée, un journal enregistre le code avant et après, la règle appliquée et le contexte de la déclaration. Ces journaux sont stockés à côté du jeu de données nettoyé. Tout label du jeu d'entraînement peut ainsi être retracé jusqu'à son origine.
+
+Les règles rendent **pérennes** les retours des experts. Une erreur corrigée uniquement par réentraînement peut réapparaître avec le modèle suivant. Une règle, elle, corrige définitivement tout le jeu d'entraînement, et la correction est auditable. La création, la vérification et la propagation des règles sont décrites dans le [protocole de réentraînement](retraining.qmd#sec-known-cases).
+
+## Découpage et versionnage
+
+Après nettoyage, la chaîne :
+
+1. construit les variables finales : le libellé concaténé avec ses champs texte complémentaires, et les variables catégorielles ;
+2. découpe les données en jeux d'entraînement, de validation et de test ;
+3. écrit ces jeux sur S3, dans un dossier nommé d'après la date d'extraction ;
+4. inscrit ce dossier, avec la liste des variables, dans un fichier de configuration partagé, lu par le code d'entraînement.
+
+Chaque entraînement enregistre ses jeux de données d'entrée dans MLflow. Il est donc rattaché à un instantané exact des données.
+
+## Le passage à la NAF 2025 {#sec-naf2025}
+
+La révision européenne de la nomenclature d'activités (NACE Rév. 2.1, appelée NAF 2025 en France) s'applique à toutes les unités de Sirene au 1er janvier 2027. Le modèle doit donc être entraîné dans une nomenclature **dans laquelle aucune donnée historique n'a été codée**.
+
+### Le problème de la correspondance
+
+La table de correspondance officielle entre la NAF rév. 2 et la NAF 2025 relie 732 anciennes sous-classes à 746 nouvelles [@randriamanana2025jms] :
+
+- **551 correspondances univoques** : l'ancien code correspond à un seul nouveau code, et la traduction est mécanique ;
+- **181 correspondances multivoques** : l'ancien code éclate en plusieurs nouveaux codes (jusqu'à 38), et il faut lire le libellé pour choisir.
+
+Les codes multivoques ne représentent que 25 % des codes, mais ils couvrent **52 % des observations d'entraînement**, soit environ 1,4 million de lignes. Les experts métier ont d'abord requalifié certains « faux multivoques », où une cible domine nettement. Cette étape en a réglé environ un tiers. Il restait néanmoins environ 500 000 observations à recoder une à une.
+
+### Les experts comme référence, les LLM pour le volume
+
+Le recodage a combiné expertise humaine et grands modèles de langage :
+
+1. **Annotation par les experts.** Environ 25 experts métier ont annoté quelque **30 000** libellés multivoques en NAF 2025, dans Label Studio, pendant environ cinq mois. La campagne a aussi fourni des mesures d'accord inter-annotateurs, qui fixent un plafond réaliste : trois experts indépendants ne s'accordent sur la sous-classe que dans 62 % des cas environ, alors qu'au moins deux d'entre eux s'accordent dans 96 % des cas.
+2. **Les LLM comme annotateurs virtuels.** Des LLM à poids ouverts, servis sur la plateforme avec vLLM, ont recodé les observations multivoques. Chaque prompt contenait le libellé, les codes NAF 2025 candidats et leurs **notes explicatives** (génération augmentée par le contexte). La sortie était contrainte par un schéma JSON. Plusieurs modèles ont été comparés aux annotations des experts. Le meilleur modèle isolé atteignait une exactitude d'environ 72 % au niveau de la sous-classe. Combiner les modèles, par vote ou en cascade, apportait quelques points de plus.
+3. **Des règles métier** ont ensuite été appliquées par-dessus, via le [moteur de règles](#sec-rules), pour corriger les erreurs systématiques.
+
+Au total, environ 2,3 millions des 2,7 millions d'observations ont été reconstituées en NAF 2025. Des itérations ultérieures, avec des modèles à poids ouverts plus récents et un vote majoritaire, ont porté l'exactitude des LLM à environ 78 % [@pramil2026isi].
+
+::: {.callout-tip}
+## Enseignement
+Les annotations d'experts sont coûteuses : mieux vaut les utiliser comme **référence**. Elles orientent le choix des prompts et des modèles et mesurent le résultat, tandis que les LLM apportent le volume. La confiance déclarée par un LLM lui-même s'est révélée un filtre peu fiable. L'accord entre plusieurs modèles est un meilleur signal.
+:::
+
+Le modèle réentraîné sur ces données est présenté dans le [chapitre suivant](model.qmd#sec-results).

@@ -1,0 +1,114 @@
+---
+title: "Projets associés : TTC et GRAAL"
+description: "Deux projets open source nés de la codification APE : une bibliothèque PyTorch de classification de textes et un cadre d'agents LLM pour les nomenclatures."
+lang: fr
+---
+
+Deux projets sont nés des besoins de la codification APE. Ils sont développés comme des outils généralistes et open source :
+
+- **torchTextClassifiers (TTC)** est la bibliothèque avec laquelle le modèle de production est construit. Elle se trouve **sur le chemin critique** : chaque prédiction passe par elle.
+- **GRAAL** est un cadre d'agents LLM qui raisonnent sur une nomenclature. Il se trouve **hors du chemin critique** : il travaille hors ligne, sur des données et non sur des requêtes en direct.
+
+```{mermaid}
+%%| label: fig-companions
+%%| fig-cap: "Place de TTC et de GRAAL dans la chaîne."
+flowchart LR
+  subgraph OFF["Hors ligne (par lots)"]
+    GR["GRAAL<br/>agents LLM"]
+    PRE["Curation des données<br/>codif-ape-preprocess"]
+  end
+  subgraph CRIT["Chemin critique"]
+    TRN["Entraînement<br/>codif-ape-train"] --> MOD["Modèle<br/>(TTC)"] --> API["API<br/>codif-ape-api"]
+  end
+  GR -->|"recodification, audits,<br/>arbitrage, données synthétiques"| PRE
+  PRE --> TRN
+  API -->|"codes candidats,<br/>référence supervisée"| GR
+  API -->|"prédictions"| MON["Suivi"]
+  MON -->|"cas à auditer"| GR
+```
+
+## torchTextClassifiers {#sec-ttc}
+
+[torchTextClassifiers](https://github.com/InseeFrLab/torchTextClassifiers) ([documentation](https://inseefrlab.github.io/torchTextClassifiers/), [PyPI](https://pypi.org/project/torchtextclassifiers/)) se définit comme « un cadre unifié et extensible pour la classification de textes avec variables catégorielles, construit sur PyTorch et PyTorch Lightning » [@couralet2025pydata].
+
+### Pourquoi
+
+Lorsque Meta a archivé le dépôt de fastText en mars 2024, le modèle de production s'est retrouvé dépendant d'une bibliothèque C++ compilée et non maintenue. fastText présentait d'autres inconvénients :
+
+- les variables auxiliaires ne pouvaient être prises en compte qu'en les ajoutant au texte ;
+- il n'offrait aucune explicabilité ;
+- ses scores étaient mal calibrés ;
+- il ne pouvait pas être entraîné sur GPU.
+
+Une première réimplémentation en PyTorch, *torchFastText*, reproduisait l'architecture de fastText. Elle est ensuite devenue un cadre général, renommé torchTextClassifiers en 2025.
+
+Si le modèle est un **package** plutôt que du code dans le dépôt d'entraînement, c'est pour une raison précise. La même classe de modèle doit exister dans le dépôt d'entraînement, dans l'API, en production et dans les traitements par lots. Un package versionné sur PyPI, répliqué dans le gestionnaire de dépôts interne de l'Insee, constitue la **source unique de vérité** commune à tous ces usages.
+
+### Conception
+
+La bibliothèque décompose un classifieur de textes en composants interchangeables :
+
+| Composant | Options |
+|---|---|
+| Tokeniseur | n-grammes de caractères à la manière de fastText, WordPiece, ou tout tokeniseur Hugging Face |
+| Plongement des tokens | Sac de plongements (*embedding bag*), éventuellement avec des couches d'auto-attention (« construisez votre propre petit BERT ») |
+| Plongement de la phrase | Moyenne, premier ou dernier token, ou **attention par classe** (*label attention* : une représentation par classe) |
+| Variables catégorielles | Un plongement par variable, combiné au texte par somme, par moyenne puis concaténation, ou par concaténation |
+| Tête | Classifieur linéaire, multiclasse ou multilabel ; une variante multiniveau exploite la hiérarchie |
+
+: Briques de torchTextClassifiers. {#tbl-ttc}
+
+Une interface de haut niveau prend en charge l'encodage des valeurs catégorielles brutes et des classes, l'entraînement (avec pondération facultative des observations), la prédiction des *k* meilleurs codes, ainsi que la sauvegarde et le chargement. Deux formes d'explicabilité sont intégrées :
+
+- des attributions au niveau des tokens par **gradients intégrés** (Captum) ;
+- l'**attention par classe**, qui montre quels mots pèsent dans chaque classe candidate.
+
+La bibliothèque s'adresse aux équipes qui ont besoin d'une classification de textes précise mais **ne peuvent pas déployer de grands modèles** : budgets CPU réduits, contraintes de latence unitaire, environnements fermés. Au-delà de l'APE, elle sert pour d'autres nomenclatures à l'Insee, comme la COICOP pour les libellés de produits des tickets de caisse. Elle a vocation à devenir un outil commun de codification automatique pour la statistique publique.
+
+### Dans la chaîne APE
+
+- `codif-ape-train` construit et entraîne le modèle avec TTC, puis l'encapsule dans le `pyfunc` MLflow.
+- `codif-ape-api` installe TTC pour pouvoir charger ce `pyfunc`, mais ne l'appelle pas directement.
+- Par rapport à fastText, TTC offre le même taux de codification automatique, une bien meilleure calibration, l'explicabilité et l'entraînement sur GPU, pour un temps d'inférence qui reste dans le budget (voir [Modèle](model.qmd#tbl-ft-vs-ttc)).
+
+## GRAAL {#sec-graal}
+
+[GRAAL](https://github.com/InseeFrLab/GRAAL) ([documentation](https://inseefrlab.github.io/GRAAL/)), *Graph-based Reasoning Agents for Automatic Labelling*, est un cadre d'agents LLM qui codent du texte libre dans une nomenclature hiérarchique.
+
+### Principe
+
+L'ensemble de la nomenclature est stocké sous forme de **graphe** dans Neo4j :
+
+- les codes et leurs libellés ;
+- les **notes explicatives** : inclusions, exclusions, exemples ;
+- les relations parent–enfant, ainsi qu'un index vectoriel sur les notes.
+
+Les agents explorent ce graphe au moyen d'outils, comme un expert humain parcourt la nomenclature. Toutes les entrées et sorties sont des contrats Pydantic typés. Les agents fonctionnent avec tout point d'accès compatible avec l'API d'OpenAI, servi sur la plateforme avec des modèles à poids ouverts.
+
+Comme toute la connaissance de la nomenclature réside dans le graphe, le cadre est **indépendant de la nomenclature**. Des graphes existent pour la NAF 2025 (en français), la NACE Rev. 2.1 (en anglais) et la COICOP 2018.
+
+### Composants
+
+| Famille | Agent | Rôle |
+|---|---|---|
+| *Texte → code* | **Navigator** | Parcourt la hiérarchie de la racine jusqu'à une feuille, en lisant les notes à chaque étape |
+| | **Agentic RAG** | Part d'une recherche vectorielle, puis vérifie et corrige avec le Navigator |
+| | **Summary agent** | Un agent unique, avec l'ensemble de la nomenclature résumé dans son contexte |
+| *Arbitrage* | **CodeChooser** | Arbitre entre quelques codes candidats |
+| | **MatchVerifier** | Audite un couple (libellé, code) : est-il cohérent avec les notes ? Sinon, quel code convient mieux ? |
+| *Code → texte* | **Code2Text** | Génère des libellés synthétiques réalistes pour un code donné |
+
+: Agents de GRAAL. {#tbl-graal}
+
+GRAAL comprend aussi un module d'évaluation et des applications de revue dans lesquelles les experts métier jugent les verdicts des agents. Le module d'évaluation propose des métriques à chaque niveau, des échantillons stratifiés pondérés, des intervalles de confiance par bootstrap et des tests appariés.
+
+### Rôle dans la chaîne
+
+GRAAL **ne remplace pas** le modèle de production. Les agents mettent de quelques secondes à quelques minutes par libellé et nécessitent des GPU pour servir le LLM, alors que la production exige environ 200 ms sur CPU. Dans les premiers bancs d'essai, les agents n'étaient pas non plus meilleurs que le modèle supervisé sur l'ensemble du flux. L'intérêt de GRAAL est ailleurs, dans quatre tâches hors ligne :
+
+1. **Recoder un stock après un changement de nomenclature.** Des LLM codant avec les notes explicatives dans leur contexte ont produit l'essentiel des données d'entraînement NAF 2025 ([Données](data.qmd#sec-naf2025)).
+2. **Auditer et fiabiliser les codes.** Le MatchVerifier signale les codes douteux dans les données d'entraînement, ou parmi les cas codés automatiquement, et propose des alternatives. Dans le [protocole de réentraînement](retraining.qmd), GRAAL est l'un des moteurs indépendants dont les désaccords avec le modèle de production sont arbitrés.
+3. **Prioriser la revue humaine.** Les cas suspects sont soumis en priorité aux experts métier. Leurs avis sont recueillis dans une application de revue et deviennent de nouvelles annotations.
+4. **Générer des données synthétiques.** Code2Text produit des libellés pour les codes rares, ainsi que des variantes reformulées de cas connus, pour vérifier qu'une correction se généralise.
+
+En retour, GRAAL s'appuie sur l'API de production. Il l'utilise comme référence supervisée et comme source de codes candidats pour les agents et les annotateurs.

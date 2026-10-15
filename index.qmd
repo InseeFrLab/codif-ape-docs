@@ -1,0 +1,16 @@
+---
+title: "APE coding · MLOps"
+subtitle: "Automatic coding of economic activity at INSEE: a technical note"
+lang: en
+number-sections: false
+toc: false
+page-layout: article
+---
+
+How INSEE codes about two million business activity descriptions a year into the NAF / NACE classification with machine learning: architecture, data, model, deployment, monitoring and a retraining protocol, plus the open-source tools it gave rise to.
+
+::: {.lang-choice}
+[**English** Read the technical note in English.](en/index.qmd)
+
+[**Français** Lire la note technique en français.](fr/index.qmd)
+:::

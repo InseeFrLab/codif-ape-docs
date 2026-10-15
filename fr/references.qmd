@@ -1,0 +1,52 @@
+---
+title: "Références et ressources"
+description: "Présentations, articles, code et travaux connexes."
+lang: fr
+number-sections: false
+---
+
+## Présentations
+
+Toutes les présentations de l'équipe sont rassemblées sur **[inseefrlab.github.io/codif-ape-prez](https://inseefrlab.github.io/codif-ape-prez/)**. Les plus utiles pour cette note sont listées ci-dessous.
+
+| Date | Titre | Événement |
+|---|---|---|
+| 2026-06 | [torchTextClassifiers from an MLOps perspective](https://inseefrlab.github.io/codif-ape-prez/slides/isi-malta/) | ISI World Statistics Congress, Malte |
+| 2026-06 | [When Classifications Change but Deadlines Don't: Scaling Recoding with LLMs](https://inseefrlab.github.io/codif-ape-prez/slides/isi-malta-relabeling/) | ISI World Statistics Congress, Malte |
+| 2026-03 | [Classification of business activities by ML: the case of France](https://inseefrlab.github.io/codif-ape-prez/slides/webinar-subsaharan-africa-2026/) | Webinaires avec l'Afrique subsaharienne et l'OCDE |
+| 2025-12 | [torchTextClassifiers: a unified framework for text classification in PyTorch](https://inseefrlab.github.io/codif-ape-prez/slides/pydata-global/) | PyData Global |
+| 2025-11 | [Données d'entraînement générées par LLM pour un changement de nomenclature](https://inseefrlab.github.io/codif-ape-prez/slides/jms2025-llm-relabeling/) | Journées de méthodologie statistique |
+| 2025-11 | [torchTextClassifiers](https://inseefrlab.github.io/codif-ape-prez/slides/jms-ttc-prez/) | Journées de méthodologie statistique |
+| 2025-10 | [torchFastText / torchTextClassifiers](https://inseefrlab.github.io/codif-ape-prez/slides/pydata/) | PyData Paris |
+| 2025-05 | [Présentation du projet national WP10](https://inseefrlab.github.io/codif-ape-prez/slides/wp10-country-project/) | AIML4OS |
+| 2024-05 | [Retraining strategies for an economic activity classification model](https://inseefrlab.github.io/codif-ape-prez/slides/estoril-slides/) | Q2024, Estoril |
+
+: Sélection de présentations. {#tbl-prez}
+
+## Articles
+
+- Tayebjee M., Couralet C., Randriamanana N., Pramil J. (2025). [*fastText, tout juste en production et déjà obsolète ? Présentation du package torchTextClassifiers…*](https://inseefrlab.github.io/codif-ape-prez/papers/jms-torchft/index.pdf) Journées de méthodologie statistique.
+- Randriamanana N., Faria T. (2025). [*Changement de nomenclature statistique à l'ère du Machine Learning : réentraînement basé sur les LLM pour la révision de la NAF*](https://inseefrlab.github.io/codif-ape-prez/papers/jms2025-llm-relabeling/index.pdf). Journées de méthodologie statistique.
+- Avouac R., Faria T., Comte F. (2025). [*L'apport des technologies cloud pour industrialiser le processus d'innovation statistique*](https://www.insee.fr/fr/statistiques/8614378). Insee, Document de travail M2025-05. La section 4 porte sur la codification APE.
+- Faria T., Randriamanana N., Seimandi T. (2024). [*Retraining strategies for an economic activity classification model*](https://inseefrlab.github.io/codif-ape-prez/slides/estoril-paper/index.pdf). Q2024, Estoril.
+- AIML4OS WP10 (2025). [*From text to code (WP10.4): MLOps tutorial*](https://aiml4os.github.io/WP10_Cluster4_MLOps/). Insee, Statistics Austria, Destatis.
+
+## Code
+
+| Dépôt | Description |
+|---|---|
+| [codif-ape](https://github.com/InseeFrLab/codif-ape) | Dépôt chapeau regroupant les sous-modules |
+| [codif-ape-preprocess](https://github.com/InseeFrLab/codif-ape-preprocess) | Nettoyage des données, moteur de règles, découpage des échantillons |
+| [codif-ape-train](https://github.com/InseeFrLab/codif-ape-train) | Entraînement, évaluation, empaquetage MLflow |
+| [codif-ape-api](https://github.com/InseeFrLab/codif-ape-api) | Mise à disposition du modèle avec FastAPI |
+| [codif-ape-cd](https://github.com/InseeFrLab/codif-ape-cd) | Manifestes Kubernetes, Argo CD |
+| [torchTextClassifiers](https://github.com/InseeFrLab/torchTextClassifiers) | Bibliothèque PyTorch de classification de textes ([documentation](https://inseefrlab.github.io/torchTextClassifiers/)) |
+| [GRAAL](https://github.com/InseeFrLab/GRAAL) | Agents LLM pour les nomenclatures ([documentation](https://inseefrlab.github.io/GRAAL/)) |
+| [codif-ape-docs](https://github.com/InseeFrLab/codif-ape-docs) | Ce site |
+
+: Code source. {#tbl-code}
+
+## Bibliographie
+
+::: {#refs}
+:::

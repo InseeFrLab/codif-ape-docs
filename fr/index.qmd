@@ -1,0 +1,60 @@
+---
+title: "La codification automatique de l'activité économique à l'Insee"
+subtitle: "Une chaîne MLOps pour le code APE : architecture, méthodes et retours d'expérience"
+description: "Note technique sur la chaîne MLOps de l'Insee qui code les libellés d'activité des entreprises dans la nomenclature NAF / NACE."
+lang: fr
+number-sections: false
+toc: false
+---
+
+Toute entreprise qui s'immatricule en France décrit son activité en quelques mots. L'Insee doit ensuite traduire ce libellé en l'un des quelque 750 codes de la nomenclature d'activités française (NAF, déclinaison nationale de la NACE). Ce **code APE** structure les statistiques d'entreprises et les comptes nationaux. Il conditionne aussi une partie de la réglementation applicable à l'entreprise.
+
+Depuis fin 2022, cette codification est assurée par un modèle d'apprentissage automatique, appelé en temps réel par le répertoire Sirene. Cette note présente la **chaîne MLOps** (*pipeline*) qui l'entoure :
+
+- comment les données sont préparées et nettoyées ;
+- comment le modèle est entraîné, empaqueté, déployé et suivi ;
+- comment l'expertise humaine et les grands modèles de langage (LLM) permettent d'en maîtriser la qualité ;
+- comment l'ensemble est réentraîné sans régression.
+
+::: {.key-figures}
+::: {.figure-box}
+[~2 M]{.value}
+[libellés codés par an]{.label}
+:::
+::: {.figure-box}
+[~750]{.value}
+[codes possibles (sous-classes)]{.label}
+:::
+::: {.figure-box}
+[~80 %]{.value}
+[codés sans intervention humaine]{.label}
+:::
+::: {.figure-box}
+[< 300 ms]{.value}
+[par prédiction, sur CPU]{.label}
+:::
+:::
+
+## Comment lire cette note
+
+| Chapitre | Contenu |
+|---|---|
+| 1. [Contexte et historique](context.qmd) | Le code APE, la réforme du guichet unique, de Sicore à fastText puis à PyTorch |
+| 2. [Architecture](architecture.qmd) | Plateforme, dépôts, flux de bout en bout |
+| 3. [Données](data.qmd) | Données d'entraînement, moteur de règles auditable, passage à la NAF 2025 avec des LLM |
+| 4. [Modèle](model.qmd) | Architecture, entraînement, indice de confiance, calibration, résultats |
+| 5. [Mise à disposition et déploiement](serving.qmd) | Empaquetage MLflow, API, CI/CD et GitOps |
+| 6. [Suivi et annotation](monitoring.qmd) | Dérive, tableaux de bord, Label Studio, audits par LLM |
+| 7. [Protocole de réentraînement](retraining.qmd) | *Golden set*, curation des données, règles métier, critères de validation |
+| 8. [Projets associés](companion-projects.qmd) | torchTextClassifiers et GRAAL |
+| 9. [Enseignements](lessons.qmd) | Ce qui a fonctionné, ce que nous referions, questions ouvertes |
+| [Références](references.qmd) | Présentations, articles, code |
+
+: Structure de la note. {#tbl-structure}
+
+Les lecteurs intéressés avant tout par la **méthodologie** peuvent aller directement au [Protocole de réentraînement](retraining.qmd). Ceux qui s'intéressent à l'**infrastructure** commenceront par l'[Architecture](architecture.qmd) et la [Mise à disposition](serving.qmd).
+
+::: {.callout-note}
+## À propos de cette note
+Cette note est rédigée par le SSP Lab, l'équipe de data science de l'Insee. Tout le code est en open source sur [GitHub](https://github.com/InseeFrLab). Les présentations de l'équipe sont rassemblées [ici](https://inseefrlab.github.io/codif-ape-prez/). Une [version anglaise](../en/index.qmd) est disponible.
+:::

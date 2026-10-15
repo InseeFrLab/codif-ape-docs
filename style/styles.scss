@@ -1,0 +1,67 @@
+/*-- scss:defaults --*/
+$primary: #b83352;
+$font-size-root: 17px;
+
+/*-- scss:rules --*/
+
+.navbar-title {
+  font-weight: 600;
+}
+
+// Key figures on landing pages.
+.key-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+
+  .figure-box {
+    border-left: 4px solid $primary;
+    padding: 0.5rem 0.9rem;
+    background: rgba($primary, 0.05);
+
+    .value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .label {
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+  }
+}
+
+// Language chooser on the root page.
+.lang-choice {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+
+  a {
+    display: block;
+    padding: 1.5rem;
+    border: 1px solid rgba($primary, 0.3);
+    border-radius: 0.5rem;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s;
+
+    &:hover {
+      border-color: $primary;
+    }
+
+    strong {
+      display: block;
+      font-size: 1.25rem;
+      color: $primary;
+      margin-bottom: 0.4rem;
+    }
+  }
+}
+
+table {
+  font-size: 0.92rem;
+}

@@ -1,3 +1,4 @@
 [submodule "codif-ape-prez"]
 	path = codif-ape-prez
 	url = https://github.com/InseeFrLab/codif-ape-prez.git
+	branch = main

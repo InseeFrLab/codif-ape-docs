@@ -1,0 +1,114 @@
+---
+title: "Companion projects: TTC and GRAAL"
+description: "Two open-source projects born from APE coding: a PyTorch text-classification library and a framework of LLM agents for classifications."
+lang: en
+---
+
+Two projects were born from the needs of APE coding and are developed as general-purpose, open-source tools:
+
+- **torchTextClassifiers (TTC)** is the library the production model is built with. It sits **on the critical path**: every prediction goes through it.
+- **GRAAL** is a framework of LLM agents that reason over a classification. It sits **off the critical path**: it works offline, on data rather than on live requests.
+
+```{mermaid}
+%%| label: fig-companions
+%%| fig-cap: "Where TTC and GRAAL fit in the pipeline."
+flowchart LR
+  subgraph OFF["Offline (batch)"]
+    GR["GRAAL<br/>LLM agents"]
+    PRE["Data curation<br/>codif-ape-preprocess"]
+  end
+  subgraph CRIT["Critical path"]
+    TRN["Training<br/>codif-ape-train"] --> MOD["Model<br/>(TTC)"] --> API["API<br/>codif-ape-api"]
+  end
+  GR -->|"relabelling, audits,<br/>arbitration, synthetic data"| PRE
+  PRE --> TRN
+  API -->|"candidate codes,<br/>supervised baseline"| GR
+  API -->|"predictions"| MON["Monitoring"]
+  MON -->|"cases to audit"| GR
+```
+
+## torchTextClassifiers {#sec-ttc}
+
+[torchTextClassifiers](https://github.com/InseeFrLab/torchTextClassifiers) ([documentation](https://inseefrlab.github.io/torchTextClassifiers/), [PyPI](https://pypi.org/project/torchtextclassifiers/)) is "a unified, extensible framework for text classification with categorical variables, built on PyTorch and PyTorch Lightning" [@couralet2025pydata].
+
+### Why
+
+When Meta archived the fastText repository in March 2024, the production model was left depending on a compiled C++ library with no maintenance. fastText had other drawbacks:
+
+- auxiliary variables could only be handled by appending them to the text;
+- it offered no explainability;
+- its scores were poorly calibrated;
+- it could not train on GPU.
+
+A first PyTorch reimplementation, *torchFastText*, reproduced the fastText architecture. It then grew into a general framework and was renamed torchTextClassifiers in 2025.
+
+There is a reason why the model is a **package** rather than code inside the training repository. The same model class has to exist in the training repository, in the API, in production and in batch jobs. A versioned package on PyPI, mirrored in INSEE's internal repository manager, is the **single source of truth** shared by all of them.
+
+### Design
+
+The library splits a text classifier into interchangeable components:
+
+| Component | Options |
+|---|---|
+| Tokenizer | fastText-style character n-grams, WordPiece, or any Hugging Face tokenizer |
+| Token embedder | Embedding bag, optionally with self-attention layers ("make your own small BERT") |
+| Sentence embedder | Mean, first or last token, or **label attention** (one representation per class) |
+| Categorical variables | One embedding per variable, combined with the text by sum, average-and-concatenate, or concatenation |
+| Head | Linear classifier, multi-class or multi-label; a multi-level variant exploits the hierarchy |
+
+: torchTextClassifiers building blocks. {#tbl-ttc}
+
+A high-level wrapper takes care of encoding the raw categorical values and the labels, training (with optional sample weights), prediction with top-*k* outputs, and saving and loading. Two forms of explainability are built in:
+
+- token-level attributions with **integrated gradients** (Captum);
+- **label attention**, which shows which words drive each candidate class.
+
+The intended users are teams that need accurate text classification but **cannot deploy large models**: small CPU budgets, unit latency constraints, closed environments. Beyond APE, the library is used for other classifications at INSEE, such as COICOP for product descriptions on receipts. It aims to become a common tool for automatic coding in official statistics.
+
+### In the APE pipeline
+
+- `codif-ape-train` builds and trains the model with TTC, and wraps it in the MLflow `pyfunc`.
+- `codif-ape-api` installs TTC so that it can load that `pyfunc`, but does not call it directly.
+- Compared with fastText, TTC gives the same automation rate, much better calibration, explainability and GPU training, for an inference time that remains within budget (see [Model](model.qmd#tbl-ft-vs-ttc)).
+
+## GRAAL {#sec-graal}
+
+[GRAAL](https://github.com/InseeFrLab/GRAAL) ([documentation](https://inseefrlab.github.io/GRAAL/)), *Graph-based Reasoning Agents for Automatic Labelling*, is a framework of LLM agents for coding free text into a hierarchical classification.
+
+### Principle
+
+The whole classification is stored as a **graph** in Neo4j:
+
+- codes and labels;
+- **explanatory notes**: includes, excludes, examples;
+- parent–child relations, plus a vector index on the notes.
+
+Agents use tools to explore this graph, the way a human expert browses the classification. All inputs and outputs are typed Pydantic contracts. The agents run against any OpenAI-compatible endpoint, served on the platform with open-weight models.
+
+Because all classification knowledge lives in the graph, the framework is **independent of the classification**. Graphs exist for NAF 2025 (French), NACE Rev. 2.1 (English) and COICOP 2018.
+
+### Components
+
+| Family | Agent | Role |
+|---|---|---|
+| *Text → code* | **Navigator** | Walks the hierarchy from the root to a leaf, reading notes at each step |
+| | **Agentic RAG** | Starts from a vector search, then checks and corrects with the Navigator |
+| | **Summary agent** | One agent with the whole classification summarised in its context |
+| *Closers* | **CodeChooser** | Arbitrates between a few candidate codes |
+| | **MatchVerifier** | Audits a (description, code) pair: is it consistent with the notes? If not, which code is better? |
+| *Code → text* | **Code2Text** | Generates realistic synthetic descriptions for a given code |
+
+: GRAAL agents. {#tbl-graal}
+
+GRAAL also includes an evaluation module and review applications in which experts judge the agents' verdicts. The evaluation module offers metrics at each level, stratified samples with weights, bootstrap confidence intervals and paired tests.
+
+### Role in the pipeline
+
+GRAAL **does not replace** the production model. The agents take seconds to minutes per description and need GPUs to serve the LLM, while production needs ~200 ms on CPU. In early benchmarks, the agents were also not more accurate than the supervised model on the flow as a whole. GRAAL's value lies elsewhere, in four offline tasks:
+
+1. **Recoding a stock after a classification change.** LLMs coding with the explanatory notes in context produced most of the NAF 2025 training data ([Data](data.qmd#sec-naf2025)).
+2. **Auditing and curating labels.** The MatchVerifier flags dubious labels in the training data, or in automatically coded cases, and proposes alternatives. In the [retraining protocol](retraining.qmd), GRAAL is one of the independent engines whose disagreements with the production model are arbitrated.
+3. **Prioritising human review.** Suspicious cases are sent to experts first. Their judgements are collected in a review application and become new labels.
+4. **Generating synthetic data.** Code2Text produces descriptions for rare codes, and reworded variants of known cases to test that a fix generalises.
+
+In return, GRAAL relies on the production API. It uses the API as a supervised baseline, and as a source of candidate codes for agents and annotators.

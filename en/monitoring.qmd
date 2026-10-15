@@ -1,0 +1,65 @@
+---
+title: "Monitoring and annotation"
+description: "Watching the model in production and collecting the human labels that measure, and improve, its quality."
+lang: en
+---
+
+## What can go wrong
+
+A coding model in production can degrade in several ways, which the European MLOps framework sorts into a taxonomy [@aiml4os2025, ch. 4]:
+
+| Drift | Example in APE coding |
+|---|---|
+| **Covariate shift**: the inputs change | New trades and new phrasings appear, and the one-stop-shop reform made descriptions longer |
+| **Prior shift**: the class mix changes | Waves of registrations in particular sectors, such as ride-hailing or furnished rentals |
+| **Concept drift**: the input–label relationship changes | Classification revision (NAF rev. 2 → NAF 2025); a brand that becomes a new activity (e.g. "Uber" → "Uber Eats") |
+| **Upstream failure** | A field that is no longer filled in, or a change in the form's format |
+
+: Sources of degradation. {#tbl-drift}
+
+## Label-free monitoring
+
+Most predictions are never checked by a human. The first line of monitoring therefore relies on signals that need no label. API logs are converted daily into partitioned Parquet files, queried with DuckDB, and shown in a **dashboard** that is rebuilt every night [@faria2024estoril]. It shows:
+
+- query volumes and the **automation rate** over time, for various thresholds;
+- the **distribution of the confidence index**, and how it shifts between time windows (Kolmogorov–Smirnov, χ² and similar tests);
+- the distribution of predicted codes;
+- statistics on the input text (length, new vocabulary).
+
+These indicators raise alerts. For example, a sudden drop in the automation rate, or a shift in the confidence distribution, triggers an analysis. They cannot, however, tell whether the model is *right*.
+
+## Human annotation
+
+### Label Studio campaigns
+
+Quality can only be measured against labels produced by experts. Annotation campaigns run on **Label Studio**, deployed on the platform, with one project per team of experts. Scheduled jobs handle the flow of data:
+
+- **sampling** descriptions to annotate and pushing them into the annotation queues;
+- **syncing** completed annotations back to object storage;
+- **converting** them into evaluation and training sets.
+
+Annotating one description takes about a minute. Two campaigns have been run so far:
+
+- a **NAF rev. 2 gold standard** of about 10,000 descriptions, coded blind by the Sirene quality team;
+- a **NAF 2025** campaign of about 30,000 descriptions, used both to evaluate the LLM relabelling and as training data (see [Data](data.qmd#sec-naf2025)).
+
+### Why random, blind annotation matters
+
+Low-confidence cases are recoded by hand every day, so it is tempting to treat these manual codes as an evaluation set. They are not one: they are **selected on the model's failures**, and they say nothing about the cases the model codes automatically. To estimate the accuracy of automatic coding, part of the flow must be annotated at **random**, by experts who do **not see** the model's suggestion. Otherwise their labels are anchored on the prediction they are meant to judge.
+
+This sample, called the **golden set**, is the foundation of the [retraining protocol](retraining.qmd#sec-golden). It is the only data that can be used to:
+
+- estimate the accuracy of automatic coding;
+- set the threshold;
+- compare two models fairly;
+- measure drift with labels.
+
+## Auditing with LLMs
+
+The project also uses LLM agents to watch predictions offline. [GRAAL](companion-projects.qmd#sec-graal)'s *MatchVerifier* checks whether a (description, code) pair is consistent with the explanatory notes of the classification, and suggests an alternative when it is not. It is too slow and too costly to run on every prediction, but it can be run in batch to:
+
+- **prioritise** which cases human reviewers should look at first;
+- flag suspicious labels in the training data;
+- arbitrate disagreements between the production model and other engines.
+
+On another classification (COICOP), the MatchVerifier found about half of the errors, with few false rejections. That makes it a good tool for prioritising human review, but not a reliable enough one to route cases on its own.

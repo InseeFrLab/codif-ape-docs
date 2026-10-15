@@ -1,0 +1,109 @@
+---
+title: "Modèle"
+description: "Un petit classifieur de textes PyTorch, calibré, intégrant des variables catégorielles, entraîné de façon reproductible et évalué à chaque niveau de la nomenclature."
+lang: fr
+---
+
+## Pourquoi un petit modèle
+
+De grands modèles de langage pré-entraînés, comme CamemBERT, ont été testés dès le début du projet. Sur la codification APE, ils n'apportaient qu'un gain modeste par rapport à un modèle de type fastText : une exactitude (*accuracy*) d'environ 0,76 contre 0,75 sur le même jeu de test [@faria2024estoril]. Ce gain ne justifiait pas leur coût d'inférence au regard des contraintes de production (appels unitaires, CPU uniquement, quelques centaines de millisecondes).
+
+Le modèle en production est donc un **réseau de neurones peu profond** d'environ **un million de paramètres**, de la famille fastText [@joulin2016]. Il est désormais implémenté en PyTorch avec [torchTextClassifiers](companion-projects.qmd#sec-ttc).
+
+## Architecture
+
+```{mermaid}
+%%| label: fig-model
+%%| fig-cap: "Architecture du modèle."
+flowchart LR
+  T["Libellé d'activité<br/>(+ texte complémentaire)"] --> TOK["Tokenizer<br/>(sous-mots / n-grammes)"]
+  TOK --> EMB["Plongements des tokens<br/>(dim. 80)"]
+  EMB --> AGG["Moyenne<br/>(mean pooling)"]
+  C["Variables catégorielles<br/>CJ, NAT, TYP, SRF, CRT"] --> CEMB["Un plongement<br/>par variable (dim. 16)"]
+  AGG --> CAT["Concaténation"]
+  CEMB --> CAT
+  CAT --> HEAD["Couche linéaire<br/>~745 classes"]
+  HEAD --> SM["Softmax<br/>top 5 + indice de confiance"]
+```
+
+Le modèle comporte trois parties :
+
+- **Texte.** Le libellé est découpé en tokens de sous-mots. Le tokenizer (vocabulaire WordPiece ou n-grammes de caractères à la manière de fastText) est entraîné sur les données d'entraînement et versionné avec elles. Les sous-mots rendent le modèle robuste aux fautes de frappe, aux flexions et aux mots nouveaux. Les plongements des tokens sont moyennés en un vecteur unique qui représente le texte.
+- **Variables catégorielles.** À l'époque de fastText, les variables annexes étaient ajoutées au texte sous forme de tokens artificiels (`NAT_21 TYP_X …`), ce qui relevait du contournement. Chacune dispose désormais de son **propre plongement**, appris conjointement avec la représentation du texte.
+- **Tête.** Une couche linéaire projette la représentation combinée sur les sous-classes de la nomenclature cible.
+
+La même bibliothèque prend aussi en charge des couches d'auto-attention, l'attention sur les labels (*label attention*) et les tokenizers Hugging Face. Ces options sont évaluées sur le jeu de validation. Une architecture plus riche n'est retenue que si elle tient dans le budget de latence.
+
+## Entraînement
+
+L'entraînement est assuré par [codif-ape-train](https://github.com/InseeFrLab/codif-ape-train), avec les réglages suivants :
+
+- **Configuration** : Hydra, qui gère le choix de la nomenclature (NAF rév. 2 ou NAF 2025), du modèle, du tokenizer et de l'optimisation.
+- **Cadre logiciel** : PyTorch Lightning.
+  - Optimiseur : Adam.
+  - Taux d'apprentissage : réduit lorsque la perte de validation stagne.
+  - Arrêt précoce (*early stopping*) sur la perte de validation.
+  - Le meilleur point de sauvegarde (*checkpoint*) est conservé.
+- **Pondération des observations** : les lignes créées par les règles métier ou tirées de certaines sources peuvent être sur- ou sous-pondérées dans la fonction de perte (voir [Protocole de réentraînement](retraining.qmd#sec-assembly)).
+- **Exécution** : un workflow Argo tourne sur un nœud GPU et entraîne en parallèle les modèles NAF rév. 2 et NAF 2025. Chaque exécution part d'un clone propre du dépôt et d'un environnement verrouillé.
+- **Suivi** : chaque exécution enregistre dans MLflow :
+  - la configuration complète ;
+  - ses jeux de données d'entrée ;
+  - les courbes d'apprentissage ;
+  - les métriques d'évaluation et les figures de diagnostic ;
+  - le modèle empaqueté.
+
+## Indice de confiance et calibration
+
+Pour chaque déclaration, le modèle renvoie ses cinq codes les plus probables et leurs probabilités. La décision de coder automatiquement repose sur un **indice de confiance (IC)** : l'écart entre les deux plus fortes probabilités, $\text{IC} = p_{(1)} - p_{(2)}$.
+
+- Si l'IC est supérieur ou égal à un seuil $\tau$, le premier code est attribué automatiquement.
+- Sinon, la déclaration part en reprise manuelle : un gestionnaire la code, en voyant les cinq suggestions.
+
+Le seuil règle l'arbitrage entre **taux de codification automatique** et **exactitude de la codification automatique**. Avec fastText, un seuil d'environ 0,75 envoyait environ 20 % des déclarations en reprise manuelle [@randriamanana2025jms]. La distribution des scores change d'un modèle à l'autre : le seuil doit donc être **recalibré pour chaque nouveau modèle**, sur un échantillon représentatif. Reprendre le seuil précédent déplacerait la charge de reprise manuelle de façon non maîtrisée.
+
+D'où l'importance de la **calibration** : une probabilité de 0,9 doit être juste dans environ 90 % des cas. Les scores « un contre tous » de fastText étaient mal calibrés. Le modèle PyTorch, entraîné avec une perte d'entropie croisée sur un softmax, est bien calibré d'emblée, comme l'a montré une mesure sur un échantillon de test de 300 000 libellés [@tayebjee2025jms]. La calibration est mesurée à chaque exécution par l'erreur de calibration attendue (ECE) et le score de Brier.
+
+## Évaluation
+
+Chaque exécution produit, sur les données de validation et de test :
+
+- l'**exactitude à chaque niveau** de la nomenclature, de la section (niveau 1) à la sous-classe (niveau 5), car une erreur qui reste dans la bonne division coûte moins cher qu'une erreur qui change de section ;
+- la **calibration** : ECE, score de Brier, histogramme des confiances ;
+- la **courbe exactitude–automatisation** : l'exactitude des cas codés automatiquement en fonction de la part de cas codés automatiquement, lorsque le seuil varie. C'est sur cette courbe que le métier choisit son point de fonctionnement.
+
+::: {.callout-important}
+## Évaluer sur les bonnes données
+Les métriques calculées sur un jeu de test tiré des données d'entraînement sont optimistes, car ses labels partagent les biais des labels d'entraînement. Elles ne sont pas non plus représentatives du flux de production. La décision de déployer repose donc sur un **« golden set »** : un échantillon de référence tiré aléatoirement dans le flux de production et annoté à l'aveugle par des experts, qui ne voient pas la prédiction du modèle. Voir [Protocole de réentraînement](retraining.qmd#sec-golden).
+:::
+
+## Résultats {#sec-results}
+
+### fastText face à PyTorch
+
+| | fastText | torchTextClassifiers |
+|---|---|---|
+| Taux de codification automatique | ~80 % | ~80 % |
+| Temps moyen d'inférence (CPU, appel unitaire) | < 100 ms | < 300 ms |
+| Calibration | Limitée | Excellente |
+| Variables catégorielles | Ajoutées au texte | Plongements dédiés |
+| Explicabilité | Aucune | Gradients intégrés, attention sur les labels |
+| Entraînement sur GPU | Non | Oui |
+| Maintenance | Archivé par l'éditeur (2024) | Maintenu en interne, open source |
+
+: Comparaison des deux générations de modèles [@tayebjee2025jms]. {#tbl-ft-vs-ttc}
+
+Le modèle PyTorch sacrifie un peu de latence au profit de la maintenabilité, de la calibration et de la capacité d'évolution. Sa latence reste dans le budget de production.
+
+### NAF 2025
+
+Exactitude sur le jeu de test du réentraînement en NAF 2025, par niveau [@randriamanana2025jms] :
+
+| Modèle | Section | Division | Groupe | Classe | Sous-classe |
+|---|---|---|---|---|---|
+| fastText | 0,855 | 0,833 | 0,797 | 0,784 | 0,776 |
+| torchTextClassifiers | 0,92 | 0,89 | 0,86 | 0,84 | 0,83 |
+
+: Exactitude sur le jeu de test des modèles réentraînés sur les données NAF 2025, avant correction des données. {#tbl-naf2025}
+
+L'application des règles métier aux données d'entraînement (correction des données, ou *data editing*) a porté l'exactitude au niveau de la sous-classe à environ 0,88–0,90 pour les deux modèles. Le gain est important, mais il doit être interprété avec prudence. Les règles modifient aussi les labels de test : une partie du gain traduit donc un meilleur alignement sur les règles plutôt qu'une meilleure généralisation. Le [protocole de réentraînement](retraining.qmd) est justement conçu pour distinguer ces deux effets.

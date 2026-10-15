@@ -1,0 +1,216 @@
+---
+title: "Retraining protocol"
+description: "How each quarter's production flow becomes a better model, without fooling ourselves: golden set, data curation, business rules, quality gates and qualification."
+lang: en
+---
+
+Retraining a model is easy. Retraining it so that it is **demonstrably no worse** than the one in production, under labels that are partly produced by that very model, is hard. This chapter describes the protocol we use for that. It is the methodological core of the pipeline.
+
+The protocol follows a quarterly cycle. During quarter $n$, the model $f_n$ is in production with a threshold $\tau_n$, and the cycle produces $f_{n+1}$ and $\tau_{n+1}$.
+
+## What the production flow gives us {#sec-golden}
+
+The flow of declarations $F_n$ received during quarter $n$ splits naturally into several sets. Each one has its own value and its own **selection bias**:
+
+| Set | What it is | Who labels it | Bias | Use |
+|---|---|---|---|---|
+| **Golden set** $G_n$ | A **random** 1–3 % sample of the flow, annotated **blind** (without seeing the model's prediction) | Experts | None | **Evaluation only**, never training |
+| **Manual set** $M_n$ | Cases below the threshold (~20–25 % of the flow) | Human coders | Yes: the cases that are hard *for $f_n$* | Training |
+| **Automatic set** $A_n$ | Cases above the threshold | The model $f_n$ itself | Yes: the cases that are easy *for $f_n$* | Training, **after curation** |
+| **Known cases** $K_n$ | Validated business rules (e.g. "LMNP" → furnished rental) | Experts | Yes: reported errors | Must pass at ~100 % |
+
+: The four sources of labels in a production cycle. {#tbl-sets}
+
+$G_n$, $M_n$ and $A_n$ partition the flow, while $K_n$ comes from outside it. Known cases come from two sources:
+
+- **business feedback**, mostly errors spotted after the fact in automatically coded cases;
+- **recurring error patterns** mined from the manual set (see [below](#sec-known-cases)).
+
+We write $\bar{X}_n = \bigcup_{k \le n} X_k$ for the set accumulated over quarters, possibly within a sliding window.
+
+```{mermaid}
+%%| label: fig-sets
+%%| fig-cap: "How the production flow splits."
+flowchart LR
+  F["Flow F_n"] -->|"random 1–3 %"| G["G_n: blind expert annotation"]
+  F --> R{"CI ≥ τ_n ?"}
+  R -->|"no (~20–25 %)"| M["M_n: manual coding"]
+  R -->|"yes"| A["A_n: automatic coding"]
+  A -.->|"reported errors"| K["K_n: validated rules"]
+  M -.->|"recurring patterns, after review"| K
+```
+
+::: {.callout-important}
+## The golden set is not optional
+Without a random, blind sample of the flow, there is no unbiased estimate of the accuracy of automatic coding. It is then impossible to set the threshold, compare two models, or measure drift with labels. Manual corrections cannot replace it, because they are selected on the model's failures. Running a small, continuous annotation of the flow is the single most important organisational prerequisite of the protocol.
+:::
+
+The golden set is split **once and for all** into two halves, using a hash of each declaration's identifier. This keeps the split stable as the set grows:
+
+- $\bar{G}^{\text{val}}$ is used for every **choice**: the threshold, calibration, architecture and hyper-parameters, and the selection of auxiliary engines and candidate rules;
+- $\bar{G}^{\text{test}}$ is used only for the **final verdict**.
+
+## Building the next training set
+
+### The accuracy of automatic coding can be estimated
+
+We do not know which automatic codes are wrong, but we can estimate **how many** are. The golden set is a random sample of the flow, so its above-threshold part $G_n^A = \{x \in G_n : \text{CI}_n(x) \ge \tau_n\}$ is a random sample of $A_n$. The accuracy of $f_n$ on $G_n^A$, with a confidence interval (Wilson or bootstrap), estimates the accuracy of automatic coding. Accumulating over quarters gives enough data for this estimate.
+
+### Curating the automatic set: focus on disagreements
+
+Feeding $A_n$ back into training with the labels of $f_n$ is **self-training**: the model learns nothing new, and its confident errors get reinforced. To break this loop, we compare $f_n$ with **independent engines** $E$. None of them is an oracle:
+
+- the **rule engine** of [codif-ape-preprocess](data.qmd#sec-rules) applies deterministic rules, which often abstain, plus a cautious extension to similar descriptions;
+- the **LLM agents** of [GRAAL](companion-projects.qmd#sec-graal) navigate the classification and read the explanatory notes. They are slow, but latency does not matter in an offline batch.
+
+The global accuracy of an engine on the golden set is not the right question. What matters is **who is right when $E$ and $f_n$ disagree** on the automatic set:
+
+| On $A_n$ | $E$ abstains | $E$ agrees with $f_n$ | $E$ disagrees with $f_n$ |
+|---|---|---|---|
+| Action | Keep $f_n$'s label (its accuracy is known), with a reduced weight | Keep, with high confidence | **Arbitrate** |
+
+: Decision rule for automatically coded cases. {#tbl-curation}
+
+Disagreements are most likely the **confident errors** of $f_n$, so they are the most valuable examples. They can be handled in three ways:
+
+1. **Targeted human annotation** of the disagreements. This is probably the best use of an annotation budget, in the spirit of *query by committee*.
+2. **Adopting the engine's label**, if on $\bar{G}^{\text{val}} \cap \{\text{CI}_n \ge \tau_n,\ E \ne f_n\}$ the engine is right significantly more often than $f_n$. There is no absolute reliability threshold: the criterion is **comparative**, and **conditional** on the disagreement zone.
+3. **Excluding** unarbitrated disagreements from training. This is the default when there is no budget and no evidence. It removes the hardest automatic cases, which is acceptable because the manual set already covers the hard zone.
+
+The same criterion is used to choose among the variants of the LLM engine (retrieval-augmented, agentic, full agent, or a vote between them). Three precautions apply:
+
+- measure on $\bar{G}^{\text{val}}$, never on $\bar{G}^{\text{test}}$, since this choice shapes the training data;
+- compare at **similar coverage**, since an engine that abstains often wins the disagreement zone mechanically;
+- switch variants only when the gap exceeds the confidence intervals.
+
+To control the cost of LLM engines, they can be restricted to a band of moderate confidence $\tau_n \le \text{CI} < \tau'$: very confident predictions are rarely wrong.
+
+### Known cases: propagate rather than overweight {#sec-known-cases}
+
+Simply overweighting known cases rarely works. The training set usually contains **the same descriptions with the old code**, so the model sees contradictory labels. The protocol therefore:
+
+1. turns each piece of business feedback into a **rule**, and applies it to the **whole** training set through the rule engine;
+2. optionally, for the very short list of cases where 100 % accuracy is required, adds a **rule layer in front of the model** in production. The fix is then guaranteed, auditable and immediate, with no retraining needed. This layer must stay small: an ever-growing stock of rules is what made Sicore fail.
+
+**Checks before training.** Propagation is checked automatically, and the checks block training if they fail:
+
+- **exact contradictions**: a join between the known cases and the new training set on the deduplication key (normalised description plus auxiliary variables) must return no row with a different code;
+- **near-duplicates**: nearest neighbours of each known case (character n-gram TF-IDF, or the model's embeddings) that carry another code go to **human review**, since a similar description may legitimately belong to another code;
+- the number of conflicts, by source and by quarter, is logged. This shows where errors come from, and measures the internal contradiction rate of the training set, a direct indicator of label noise.
+
+**Mining rules from manual corrections.** In the manual set, rows where the human code differs from $f_n$'s prediction are corrected errors. A single error is not a rule, but a recurring one is a good candidate. The principle is: *automation proposes, statistical filters sort, an expert decides.*
+
+1. **Detect recurring patterns** on the accumulated manual set:
+   - identical normalised descriptions with enough support and a dominant code that $f_n$ misses;
+   - discriminating tokens, found with association rules (support, confidence, lift), which work well for acronyms like "LMNP";
+   - clusters of errors for the same (predicted, corrected) pair, in the model's embedding space.
+2. **Draft the rule with an LLM**, which has access to the explanatory notes, **without letting it decide**.
+3. **Filter automatically.** Apply each candidate rule to the training set and to $\bar{G}^{\text{val}}$, then measure how many rows it touches and how precise it is. Reject rules that are too broad or too imprecise.
+4. **Expert validation** in a review queue that shows the rule, its examples and its counter-examples.
+
+The rule repository is versioned. Each rule records its origin, its date and who validated it, so that it can be audited or withdrawn.
+
+### Assembly {#sec-assembly}
+
+The next training set is
+
+$$
+\mathcal{D}_{n+1} = \mathcal{D}_n \cup M_n \cup \tilde{A}_n \cup K_n,
+$$
+
+where $\tilde{A}_n$ is the curated automatic set. It is then processed as follows:
+
+- **Deduplicated** on (normalised description, auxiliary variables). Conflicts are resolved by source priority, known cases > manual > curated automatic > history, and then by recency.
+- **Tagged**: every observation carries its **source** and **quarter**. This enables source-dependent weights (e.g. automatic labels weigh less than human ones) and per-source monitoring of the loss.
+- **History is down-weighted** by age, or truncated. Old labels are noisier and reflect an older flow.
+- **Versioned**: each training set is a snapshot on S3 with a hash, logged with the training run.
+
+Two further rules apply:
+
+- The training set is **not representative** of the flow, since the manual set over-represents hard cases. This is why the threshold and calibration are always set on $\bar{G}^{\text{val}}$, never on a validation split drawn from the training data.
+- The golden set **never** enters training. The flow is very repetitive, so identical descriptions in both are normal. Metrics are therefore also published on **never-seen descriptions**.
+
+A random validation split of the training set is used only for early stopping.
+
+## Quality gates: $f_{n+1}$ against $f_n$
+
+| Gate | Data | Purpose | Criterion |
+|---|---|---|---|
+| 1 | Known cases $\bar{K}_n$ and reworded variants $K'_n$ not seen in training | Business non-regression (unit tests) | ≥ 99 %; failures listed one by one |
+| 2 | $\bar{G}^{\text{test}}$ | Generalisation | **Non-inferiority** against $f_n$, with a paired test (McNemar or paired bootstrap) |
+| 3 | $\bar{G}^{\text{test}}$ | Business KPI | Automation rate at target accuracy $p^*$ ≥ that of $f_n$ |
+
+: Gates a candidate model must pass. {#tbl-gates}
+
+On known cases, a high score can simply mean the model memorised them. The reworded variants check that the fix **generalises**. They can be generated by GRAAL's *Code2Text* agents.
+
+**We do not evaluate on the manual set.** It is in the training data of $f_{n+1}$, and it is selected on the failures of $f_n$, so by construction it is biased against $f_n$. For a signal on hard cases, we use $\bar{G} \cap \{\text{CI}_n < \tau_n\}$, which is an unbiased random sample of the hard zone.
+
+**Metrics** reported on $\bar{G}^{\text{test}}$:
+
+- accuracy at each level of the classification;
+- macro-F1 and performance on rare classes;
+- calibration (ECE);
+- the risk–coverage curve and the area under it (AURC);
+- **coverage at target accuracy $p^*$**, the KPI that drives the manual coding workload;
+- all of the above by quarter of the golden set, to reveal drift.
+
+The threshold is **recalibrated for each model** on $\bar{G}^{\text{val}}$.
+
+Three principles guide the comparison:
+
+- **How to beat $f_n$.** The levers are the manual set (human labels exactly where the model fails, which amounts to active learning), the curated disagreements, cleaner data and more recent data. Iterating on architectures until the test set improves would amount to overfitting it, so that iteration happens on $\bar{G}^{\text{val}}$.
+- **Non-regression is the gate; improvement is the goal.** Requiring a strict improvement every quarter is unrealistic.
+- **Training on known cases and manual corrections is not leakage.** Leakage begins when a metric computed on training data is presented as a measure of generalisation. As long as $\bar{G}^{\text{test}}$ stays untouched, the protocol is clean.
+
+**Traceability.** The MLflow run of each candidate records:
+
+- the dataset version, the rule repository version and the LLM engine variant;
+- the hyper-parameters and metrics;
+- a "$n$ vs. $n+1$" comparison report as an HTML artifact.
+
+The registry tracks the *champion* and the *challenger*.
+
+## Qualification and release {#sec-preprod}
+
+Even with an unchanged architecture, qualification is not a formality:
+
+- **Iso-production qualification**: p95 latency and memory, on CPU, on the pre-production platform.
+- **Online/offline parity**: the served model must reproduce the offline predictions on $\bar{G}^{\text{test}}$ exactly. This is a cheap test that catches preprocessing or library-version mismatches.
+- **The threshold and the calibration ship inside the model** artifact, not in a separate configuration.
+- **Shadow deployment** for a few weeks: $f_{n+1}$ scores the real flow next to $f_n$. We monitor the effective automation rate, the agreement with $f_n$ and the score distribution. Disagreements feed annotation.
+- **Rollback** means pointing production back at $f_n$.
+
+## Comparing models over time
+
+Scores obtained on different golden sets cannot be compared. The model history is therefore built by **re-evaluating all past models** on the latest $\bar{G}^{\text{test}}$.
+
+Until the golden set is fed continuously, label-free indicators (automation rate, distribution of the confidence index, new vocabulary, agreement with the auxiliary engines) are the only drift signals, and alert thresholds on them can trigger an out-of-cycle retraining.
+
+## Overview
+
+```{mermaid}
+%%| label: fig-cycle
+%%| fig-cap: "One retraining cycle."
+flowchart TD
+  subgraph Q["Quarter n: production runs f_n, τ_n"]
+    G["G_n"]
+    M["M_n"]
+    A["A_n"]
+    K["K_n"]
+  end
+  A --> C["Curation: rules + LLM engines<br/>agreement / disagreement"]
+  C -->|agreements| At["Ã_n"]
+  C -->|disagreements| H["Targeted annotation"] --> At
+  M -.->|"recurring patterns<br/>+ expert review"| K
+  K --> RL["Rules propagated to all of D"]
+  D0["D_n"] & M & At & RL --> D1["D_n+1: dedup, conflicts, weights, version"]
+  D1 --> T["Train f_n+1"]
+  G --> GV["Ḡ val: threshold, calibration, selection"] --> T
+  G --> GT["Ḡ test"]
+  T --> E{"Gates: K / K', non-inferiority,<br/>coverage at p*"}
+  GT --> E
+  E -->|fail| T
+  E -->|pass| P["Qualification: latency, parity, shadow"]
+  P --> PR["Production: f_n+1, τ_n+1"]
+```

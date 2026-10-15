@@ -1,0 +1,85 @@
+---
+title: "Context and history"
+description: "Why INSEE codes economic activity automatically, and how the system evolved from a rule engine to deep learning."
+lang: en
+---
+
+## The APE code and the NACE classification
+
+Every business registered in France receives an **APE code** (*activité principale exercée*, principal activity). This code places the unit in the French activity classification, the **NAF** (*nomenclature d'activités française*), which is the national version of the European **NACE**. It is attached to the business's identifiers in the **Sirene** register, which INSEE has managed since 1973 and which is the legal reference for the SIREN and SIRET numbers.
+
+The APE code is not just an administrative label. It is used to:
+
+- build the sampling frames of business surveys and the structural business statistics;
+- produce national accounts and short-term indicators broken down by industry;
+- apply sector-specific regulation (collective agreements, insurance, some taxes and grants).
+
+A coding error therefore spreads into statistics as well as into the administrative life of the business.
+
+The classification is hierarchical, with five levels:
+
+| Level | NAF rev. 2 (2008) | NAF 2025 (NACE Rev. 2.1) |
+|---|---|---|
+| Sections | 21 | 22 |
+| Divisions | 88 | 87 |
+| Groups | 272 | 287 |
+| Classes | 615 | 651 |
+| Sub-classes (APE code) | **732** | **746** |
+
+: Size of the NAF classification at each level. Upper levels for NAF 2025 follow NACE Rev. 2.1. {#tbl-naf}
+
+::: {.callout-note}
+## What we predict
+The target is the **sub-class**, the finest level, with about 750 possible labels. The higher levels follow directly from the code, so metrics are reported at every level of the hierarchy.
+:::
+
+## From a structured form to free text
+
+Each time a business is created or changes its activity, it files a declaration that includes a description of its activity. Until 2022, a clerk at a business formalities centre helped the declarant fill in the form, so activity descriptions were fairly short and standardised.
+
+Two reforms changed this:
+
+1. **The PACTE law (2019)** set up a **single online one-stop shop** (*guichet unique*), run by INPI. Since 1 January 2023, all business formalities go through it. The activity description became a free-text field, typed by the declarant with no one to help.
+2. **Sirene 4**, the new information system of the register, moved from nightly batch processing to **continuous processing** built on micro-services. The migration was gradual, starting at the end of 2022.
+
+As a result, texts are longer, more verbose and more varied. They also include all the spelling quirks you would expect from free input.
+
+Each year, about **2 million** descriptions must be coded.
+
+## Three generations of coding engines
+
+| Period | Engine | Principle | Limits |
+|---|---|---|---|
+| 1990s → 2022 | **Sicore** | Deterministic rules, keyword dictionaries | The automation rate fell to about 30 % on free-text descriptions. The rules were costly to maintain. |
+| End of 2022 → 2025 | **fastText** | Supervised model (bag of words and character n-grams), with auxiliary variables added to the text as tokens | Meta archived the library in March 2024. It offered no calibration, no explainability and no GPU support. |
+| 2025 → | **PyTorch** ([torchTextClassifiers](companion-projects.qmd#sec-ttc)) | Same family of models, rebuilt in PyTorch: a dedicated embedding per categorical variable, calibration, explainability | Inference is somewhat slower than fastText, but still within budget. |
+
+: Successive APE coding engines. {#tbl-history}
+
+**Sicore** was developed in the 1990s [@meyer1997]. It handled the well-structured texts of the former system well, but on free-text descriptions it automated only about one case in three. The rest, about 70 %, had to be coded by hand [@avouac2025].
+
+The **fastText** model went into production gradually from November 2022, with a deliberately conservative threshold at first. It brought the automation rate back to around **80 %**, which made the one-stop-shop reform workable.
+
+When Meta archived the fastText repository in March 2024, the team started moving to **PyTorch**. The move was also an opportunity to fix the model's structural weak points: how categorical variables were handled, calibration, and explainability. The result is the open-source package torchTextClassifiers, described in [Companion projects](companion-projects.qmd).
+
+## Production constraints
+
+The model is called by the Sirene information system for each declaration as it arrives. This sets strict constraints:
+
+- **Unit inference on CPU** in a closed environment: no GPU, no internet access, and every dependency shipped with the model.
+- **Low latency**: the target is about 200 ms for each call.
+- **Fallback to a human**: the model returns its five most likely codes, each with a probability, plus a **confidence index**. Below a threshold, the declaration goes to a manual coding team, who see the model's suggestions.
+- **Traceability**: every prediction must be linked to the exact version of the model that produced it.
+
+The **automation rate** is the share of declarations coded with no human involvement, at a controlled level of accuracy. It is the key business indicator, because it determines the workload of the manual coding teams.
+
+## Why MLOps
+
+A model trained once and never touched again does not stay good for long, for several reasons:
+
+- the way declarants describe their activity drifts over time, as new trades, new legal forms and new phrasings appear;
+- business experts report errors that must be fixed quickly and permanently;
+- the classification itself changes: the move from NAF rev. 2 to NAF 2025 required recoding the entire training set (see [Data](data.qmd#sec-naf2025));
+- the libraries the model depends on get deprecated (fastText) or move to new major versions (MLflow, PyTorch).
+
+The rest of this note describes the system that makes this work routine: reproducible training, a versioned model registry, an API deployed through GitOps, continuous monitoring and annotation, and a retraining protocol with explicit quality gates.

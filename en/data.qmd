@@ -1,0 +1,92 @@
+---
+title: "Data"
+description: "Training data, label cleaning with an auditable rule engine, and the move to NAF 2025."
+lang: en
+---
+
+## Training data
+
+The model learns from past declarations stored in the Sirene register. Each observation contains:
+
+- the **activity description**: free text typed by the declarant, sometimes followed by details on secondary or agricultural activity;
+- **auxiliary variables** from the declaration form:
+  - the legal form (`CJ`, *catégorie juridique*);
+  - the nature of the activity (`NAT`);
+  - the type of form (`TYP`);
+  - the surface area of the premises (`SRF`, grouped into bins);
+  - whether the activity is permanent or seasonal (`CRT`);
+- the **APE code** that was assigned, either automatically or by a human coder.
+
+The earliest models were trained on about 10 million declarations from the former register (2014–2022). Since the move to the new register and to NAF 2025, the training base is built from about **2.7 million** recent declarations [@randriamanana2025jms].
+
+::: {.callout-warning}
+## Labels are not ground truth
+Historical labels come from Sicore, from earlier versions of the model and from human coders working under time pressure. Some are wrong, and some contradict each other: the same description can carry different codes. Label quality matters as much as model architecture. Two components address it: the rule engine (below) and the annotation campaigns ([Monitoring](monitoring.qmd)).
+:::
+
+## Label cleaning: an auditable rule engine {#sec-rules}
+
+[codif-ape-preprocess](https://github.com/InseeFrLab/codif-ape-preprocess) applies **business rules** to the training data before every training run. A rule turns knowledge from business experts into code. For example, furnished-rental activities described with the acronym "LMNP", holding companies, ride-hailing drivers and taxis each go to a precise code.
+
+Rules can do three things:
+
+| Type | Effect | Example |
+|---|---|---|
+| **Modify** | Relabel the rows that match a pattern | Descriptions mentioning a passive holding activity → the dedicated holding code |
+| **Augment** | Add synthetic, weighted rows so that the model learns a case it rarely sees | One "LMNP" row per legal form, so that every legal form is covered |
+| **Suppress** | Remove rows that cannot be used | Codes absent from the target classification |
+
+: Rule types. {#tbl-rule-types}
+
+Rules are Python functions registered with a decorator. Each one carries a name, tags and a description. A rule matches descriptions using one or more of three methods:
+
+- **regular expressions** on normalised text;
+- **fuzzy matching**, to absorb typos;
+- **semantic similarity**, using a sentence-embedding model computed on GPU.
+
+Fuzzy and semantic matching widen a rule to descriptions that are close to the ones the experts listed. Each rule decides which methods it allows. For instance, a rule on a short acronym is restricted to exact matching.
+
+**Every change is logged.** For each modified, created or deleted row, a journal records the code before and after, the rule that applied and the context of the declaration. These journals are stored next to the cleaned dataset, so any label in the training set can be traced back to its origin.
+
+Rules are what make expert feedback **permanent**. If an error is fixed only by retraining, it can come back with the next model. A rule, on the other hand, fixes the whole training set for good, and the fix can be audited. How rules are created, checked and propagated is described in the [retraining protocol](retraining.qmd#sec-known-cases).
+
+## Splits and versioning
+
+After cleaning, the pipeline:
+
+1. builds the final features: the description joined with its complementary text fields, and the categorical variables;
+2. splits the data into training, validation and test sets;
+3. writes the splits to S3 in a folder named after the extraction date;
+4. records this folder, along with the list of features, in a shared configuration file read by the training code.
+
+Every training run logs its input datasets in MLflow. The run is therefore tied to an exact snapshot of the data.
+
+## Moving to NAF 2025 {#sec-naf2025}
+
+The European revision of the activity classification (NACE Rev. 2.1, called NAF 2025 in France) takes effect for all Sirene units on 1 January 2027. The model must be trained on a classification that **no historical data was labelled in**.
+
+### The correspondence problem
+
+The official correspondence table between NAF rev. 2 and NAF 2025 links 732 old sub-classes to 746 new ones [@randriamanana2025jms]:
+
+- **551 univocal** correspondences: the old code maps to a single new code, so translation is mechanical;
+- **181 multivocal** correspondences: the old code splits into several new codes (up to 38), and the description must be read to choose.
+
+Multivocal codes are only 25 % of codes, but they cover **52 % of training observations**, about 1.4 million rows. Business experts first requalified some "false multivocals" (cases where one target clearly dominates). This settled about a third of them. Around 500,000 observations still had to be recoded one by one.
+
+### Experts as the benchmark, LLMs as the scale
+
+The recoding combined human expertise with large language models:
+
+1. **Expert annotation.** About 25 business experts annotated around **30,000** multivocal descriptions in NAF 2025, using Label Studio, over roughly five months. The campaign also produced inter-annotator agreement figures, which set a realistic ceiling: three independent experts agree on the sub-class in only about 62 % of cases, while at least two of them agree in 96 % of cases.
+2. **LLMs as virtual annotators.** Open-weight LLMs, served on the platform with vLLM, recoded the multivocal observations. Each prompt contained the description, the candidate NAF 2025 codes and their **explanatory notes** (context-augmented generation). The output was constrained to a JSON schema. Several models were compared against the expert annotations. The best single model reached about 72 % accuracy at the sub-class level, and combining models by vote or cascade added a few points.
+3. **Business rules** were then applied on top, through the [rule engine](#sec-rules), to fix systematic errors.
+
+In the end, about 2.3 million of the 2.7 million observations were rebuilt in NAF 2025. Later iterations, using more recent open-weight models and majority voting, raised LLM accuracy to about 78 % [@pramil2026isi].
+
+::: {.callout-tip}
+## Lesson
+Expert annotations are expensive, so they are best used as a **benchmark**. They guide the choice of prompts and models and measure the result, while LLMs supply the volume. An LLM's self-reported confidence turned out to be an unreliable filter. Agreement between several models is a better signal.
+:::
+
+The model retrained on these data is described in the [next chapter](model.qmd#sec-results).

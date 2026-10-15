@@ -1,0 +1,109 @@
+---
+title: "Model"
+description: "A small, calibrated PyTorch text classifier with categorical variables, trained reproducibly and evaluated at every level of the classification."
+lang: en
+---
+
+## Why a small model
+
+Large pre-trained language models such as CamemBERT were tested early in the project. On APE coding, they gave only a small gain over a fastText-style model: about 0.76 against 0.75 accuracy on the same test set [@faria2024estoril]. That gain did not justify their inference cost under the production constraints (unit calls, CPU only, a few hundred milliseconds).
+
+The production model is therefore a **shallow neural network** of about **one million parameters**, in the fastText family [@joulin2016]. It is now implemented in PyTorch with [torchTextClassifiers](companion-projects.qmd#sec-ttc).
+
+## Architecture
+
+```{mermaid}
+%%| label: fig-model
+%%| fig-cap: "Model architecture."
+flowchart LR
+  T["Activity description<br/>(+ complementary text)"] --> TOK["Tokenizer<br/>(sub-words / n-grams)"]
+  TOK --> EMB["Token embeddings<br/>(dim 80)"]
+  EMB --> AGG["Mean pooling"]
+  C["Categorical variables<br/>CJ, NAT, TYP, SRF, CRT"] --> CEMB["One embedding<br/>per variable (dim 16)"]
+  AGG --> CAT["Concatenation"]
+  CEMB --> CAT
+  CAT --> HEAD["Linear head<br/>~745 classes"]
+  HEAD --> SM["Softmax<br/>top-5 + confidence index"]
+```
+
+The model has three parts:
+
+- **Text.** The description is split into sub-word tokens. The tokenizer, either a WordPiece vocabulary or fastText-style character n-grams, is trained on the training data and versioned with it. Sub-words make the model robust to typos, inflections and new words. The token embeddings are averaged into a single vector for the text.
+- **Categorical variables.** In the fastText era, auxiliary variables were appended to the text as artificial tokens (`NAT_21 TYP_X …`), which was a workaround. They now each have their **own embedding**, learned jointly with the text representation.
+- **Head.** A linear layer maps the combined representation to the sub-classes of the target classification.
+
+The same library also supports self-attention layers, label attention and Hugging Face tokenizers. These options are evaluated on the validation set. A richer architecture is adopted only if it fits within the latency budget.
+
+## Training
+
+Training is run by [codif-ape-train](https://github.com/InseeFrLab/codif-ape-train), with these settings:
+
+- **Configuration:** Hydra, which handles the choice of classification (NAF rev. 2 or NAF 2025), the model, the tokenizer and the optimisation.
+- **Framework:** PyTorch Lightning.
+  - Optimiser: Adam.
+  - Learning rate: reduced when the validation loss plateaus.
+  - Early stopping on the validation loss.
+  - The best checkpoint is kept.
+- **Sample weights:** rows created by business rules or sampled from particular sources can be weighted up or down in the loss (see [Retraining protocol](retraining.qmd#sec-assembly)).
+- **Execution:** an Argo workflow runs on a GPU node and trains the NAF rev. 2 and NAF 2025 models in parallel. Each run starts from a clean clone of the repository and a locked environment.
+- **Tracking:** each run logs the following in MLflow:
+  - the full configuration;
+  - its input datasets;
+  - the training curves;
+  - the evaluation metrics and diagnostic figures;
+  - the packaged model.
+
+## Confidence index and calibration
+
+For each declaration, the model returns its five most likely codes and their probabilities. The decision to code automatically relies on a **confidence index (CI)**: the gap between the two highest probabilities, $\text{CI} = p_{(1)} - p_{(2)}$.
+
+- If the CI is at or above a threshold $\tau$, the first code is assigned automatically.
+- Otherwise, the declaration goes to a human coder, who sees the five suggestions.
+
+The threshold sets the trade-off between **automation rate** and **accuracy of automatic coding**. With fastText, a threshold of about 0.75 sent roughly 20 % of declarations to manual coding [@randriamanana2025jms]. Since the score distribution changes from one model to the next, the threshold must be **recalibrated for every new model** on a representative sample. Reusing the previous threshold would shift the manual coding workload in an uncontrolled way.
+
+This is why **calibration** matters. A probability of 0.9 should be right about 90 % of the time. fastText's one-versus-all scores were poorly calibrated. The PyTorch model, trained with a softmax cross-entropy loss, is well calibrated out of the box, as measured on a test sample of 300,000 descriptions [@tayebjee2025jms]. Calibration is measured at every run with the expected calibration error (ECE) and the Brier score.
+
+## Evaluation
+
+Every run reports, on validation and test data:
+
+- **accuracy at each level** of the classification, from section (level 1) to sub-class (level 5), since a mistake that stays within the right division costs less than one across sections;
+- **calibration**: ECE, Brier score, histogram of confidence;
+- **the accuracy–automation curve**: accuracy of automatically coded cases as a function of the share of cases coded automatically, as the threshold varies. This is the curve the business uses to choose the operating point.
+
+::: {.callout-important}
+## Evaluating on the right data
+Metrics computed on a test split drawn from the training data are optimistic, since those labels share the biases of the training labels. They are also not representative of the production flow. The decision to deploy relies on a **golden set**: a random sample of the production flow, annotated by experts who do not see the model's prediction. See [Retraining protocol](retraining.qmd#sec-golden).
+:::
+
+## Results {#sec-results}
+
+### fastText vs. PyTorch
+
+| | fastText | torchTextClassifiers |
+|---|---|---|
+| Automation rate | ~80 % | ~80 % |
+| Mean inference time (CPU, unit call) | < 100 ms | < 300 ms |
+| Calibration | Limited | Excellent |
+| Categorical variables | Appended to the text | Dedicated embeddings |
+| Explainability | None | Integrated gradients, label attention |
+| GPU training | No | Yes |
+| Maintenance | Archived upstream (2024) | Maintained in-house, open source |
+
+: Comparison of the two model generations [@tayebjee2025jms]. {#tbl-ft-vs-ttc}
+
+The PyTorch model trades some latency for maintainability, calibration and the ability to evolve. The latency remains within the production budget.
+
+### NAF 2025
+
+Accuracy on the test set of the NAF 2025 retraining, by level [@randriamanana2025jms]:
+
+| Model | Section | Division | Group | Class | Sub-class |
+|---|---|---|---|---|---|
+| fastText | 0.855 | 0.833 | 0.797 | 0.784 | 0.776 |
+| torchTextClassifiers | 0.92 | 0.89 | 0.86 | 0.84 | 0.83 |
+
+: Test accuracy of the models retrained on NAF 2025 data, before data editing. {#tbl-naf2025}
+
+Applying business rules to the training data (data editing) raised sub-class accuracy to about 0.88–0.90 for both models. The gain is large but must be read with care: rules also change the test labels, so part of the gain reflects closer agreement with the rules rather than better generalisation. The [retraining protocol](retraining.qmd) is designed precisely to separate the two effects.

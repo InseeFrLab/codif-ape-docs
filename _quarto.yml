@@ -1,0 +1,89 @@
+project:
+  type: website
+  # Explicit list: the codif-ape-prez submodule must never be rendered here.
+  render:
+    - index.qmd
+    - en/*.qmd
+    - fr/*.qmd
+
+website:
+  title: "APE coding · MLOps"
+  description: "Technical note on INSEE's MLOps pipeline for the automatic coding of economic activity (APE / NACE)."
+  site-url: "https://inseefrlab.github.io/codif-ape-docs/"
+  repo-url: "https://github.com/InseeFrLab/codif-ape-docs"
+  repo-actions: [edit, issue]
+  open-graph: true
+  page-navigation: true
+  back-to-top-navigation: true
+  bread-crumbs: false
+
+  navbar:
+    logo: https://upload.wikimedia.org/wikipedia/fr/thumb/1/10/Logo_Insee.svg/1200px-Logo_Insee.svg.png
+    title: "APE coding · MLOps"
+    collapse-below: lg
+    left:
+      - text: "English"
+        href: en/index.qmd
+      - text: "Français"
+        href: fr/index.qmd
+    right:
+      - text: "Slides"
+        href: https://inseefrlab.github.io/codif-ape-prez/
+      - icon: github
+        href: https://github.com/InseeFrLab/codif-ape-docs
+        aria-label: GitHub
+
+  sidebar:
+    - id: en
+      title: "Technical note"
+      style: docked
+      contents:
+        - en/index.qmd
+        - en/context.qmd
+        - en/architecture.qmd
+        - en/data.qmd
+        - en/model.qmd
+        - en/serving.qmd
+        - en/monitoring.qmd
+        - en/retraining.qmd
+        - en/companion-projects.qmd
+        - en/lessons.qmd
+        - en/references.qmd
+    - id: fr
+      title: "Note technique"
+      style: docked
+      contents:
+        - fr/index.qmd
+        - fr/context.qmd
+        - fr/architecture.qmd
+        - fr/data.qmd
+        - fr/model.qmd
+        - fr/serving.qmd
+        - fr/monitoring.qmd
+        - fr/retraining.qmd
+        - fr/companion-projects.qmd
+        - fr/lessons.qmd
+        - fr/references.qmd
+
+  page-footer:
+    left: "Insee — SSP Lab"
+    right: "Built with [Quarto](https://quarto.org/)"
+
+bibliography: references.bib
+
+format:
+  html:
+    theme:
+      light: [cosmo, style/styles.scss]
+      dark: [darkly, style/styles.scss]
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    reference-location: margin
+    citation-location: margin
+    code-copy: true
+    code-overflow: wrap
+    link-external-icon: true
+    link-external-newwindow: true
+    mermaid:
+      theme: neutral

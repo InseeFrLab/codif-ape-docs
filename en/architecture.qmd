@@ -1,0 +1,120 @@
+---
+title: "Architecture"
+description: "The platform, the repositories and how data and models flow between them."
+lang: en
+---
+
+## Design principles
+
+The pipeline is built on a few principles, shared with the European MLOps framework produced within the AIML4OS project [@aiml4os2025]:
+
+- **Separate data, code and compute.**
+  - Data lives in S3 object storage, in Parquet format.
+  - Code lives in Git.
+  - Compute is provided by containers that are started on demand.
+- **Make everything reproducible.**
+  - Every training run is driven by a configuration file.
+  - Every environment is pinned (uv lock files, Docker images).
+  - Every dataset, model and image is versioned.
+- **Package the model and its preprocessing together**, so that what was evaluated is exactly what is served (no training/serving skew).
+- **Describe deployments declaratively.** The state of each environment is a set of manifests in Git, and a GitOps controller reconciles the cluster with them.
+- **Keep the human in the loop.** Low-confidence predictions go to human coders, and human annotation is what measures quality.
+
+## The platform
+
+All development, training and pre-production work runs on **SSP Cloud**, the data science platform of the French official statistical system. SSP Cloud is built on the open-source [Onyxia](https://www.onyxia.sh/) project [@avouac2025springer]. This is possible because Sirene activity descriptions are not sensitive data.
+
+| Component | Tool | Role in the pipeline |
+|---|---|---|
+| Object storage | MinIO (S3 API) | Raw extractions, cleaned datasets, splits, tokenizers, model artifacts, annotation exports |
+| Interactive environments | Onyxia (VS Code, Jupyter) | Exploration and development |
+| Orchestration | Argo Workflows | Batch jobs for data preparation and training on GPU nodes (A2, H100) |
+| Experiment tracking and registry | MLflow | Parameters, metrics, figures and datasets for every run; versioned models |
+| Serving | FastAPI on Kubernetes | REST API exposing the model |
+| Continuous delivery | GitHub Actions, Argo CD | Building Docker images; GitOps synchronisation of the cluster |
+| Annotation | Label Studio | Expert annotation campaigns |
+| LLM inference | vLLM (OpenAI-compatible API) | Offline relabelling, auditing and synthetic data (see [GRAAL](companion-projects.qmd#sec-graal)) |
+
+: Technical stack. {#tbl-stack}
+
+Production runs on INSEE's internal Kubernetes infrastructure. The model is promoted there once it has been qualified on a pre-production platform that matches production.
+
+## Repositories
+
+The code is organised as a set of single-purpose repositories under the [InseeFrLab](https://github.com/InseeFrLab) GitHub organisation:
+
+| Repository | Produces | Consumes |
+|---|---|---|
+| [codif-ape-preprocess](https://github.com/InseeFrLab/codif-ape-preprocess) | Cleaned and augmented training data; train/validation/test splits; an audit journal of every label change | Raw Sirene extractions, relabelled NAF 2025 data, reference tables |
+| [codif-ape-train](https://github.com/InseeFrLab/codif-ape-train) | A trained model packaged as an MLflow `pyfunc`, with its metrics and diagnostic figures | Splits produced by `preprocess`; [torchTextClassifiers](https://github.com/InseeFrLab/torchTextClassifiers) |
+| [codif-ape-api](https://github.com/InseeFrLab/codif-ape-api) | A Docker image of the REST API | A registered MLflow model, loaded at start-up |
+| [codif-ape-cd](https://github.com/InseeFrLab/codif-ape-cd) | Kubernetes manifests for every service (APIs, dashboard, annotation ETLs, review apps) | Docker images; model names and versions |
+| [torchTextClassifiers](https://github.com/InseeFrLab/torchTextClassifiers) | A generic PyTorch library for text classification (on PyPI) | — |
+| [GRAAL](https://github.com/InseeFrLab/GRAAL) | LLM agents for coding, auditing and generating labels; review apps | The classification graph (Neo4j), explanatory notes, the production API |
+| [codif-ape-prez](https://github.com/InseeFrLab/codif-ape-prez) | [Presentations and papers](https://inseefrlab.github.io/codif-ape-prez/) | — |
+
+: Repositories and their contracts. {#tbl-repos}
+
+The repositories do not import one another. They communicate through **artifacts**:
+
+- `preprocess` publishes the location of the latest dataset, along with the feature lists, in a shared configuration file on S3, and `train` reads it.
+- `train` logs a self-contained model in MLflow, which embeds its own inference code.
+- `api` downloads that model at start-up, using a model name and version given as environment variables.
+- `cd` decides which image, and which model version, each environment runs.
+
+So moving a new model to an environment is a one-line change to a manifest, and it can be reviewed like any other code change.
+
+## End-to-end flow
+
+```{mermaid}
+%%| label: fig-flow
+%%| fig-cap: "Data and model flow across repositories."
+flowchart LR
+  subgraph SRC["Sources"]
+    SIR["Sirene extractions"]
+    ANN["Expert annotations<br/>(Label Studio)"]
+    LLM["LLM relabelling<br/>(GRAAL, vLLM)"]
+  end
+  subgraph PRE["codif-ape-preprocess"]
+    RUL["Rule engine<br/>+ audit journal"]
+    SPL["Splits<br/>train / val / test"]
+  end
+  subgraph TRN["codif-ape-train"]
+    TTC["torchTextClassifiers<br/>(Lightning, GPU)"]
+    EVAL["Evaluation<br/>calibration, levels 1–5"]
+  end
+  REG[("MLflow<br/>registry")]
+  subgraph SRV["Serving"]
+    IMG["codif-ape-api<br/>Docker image"]
+    GIT["codif-ape-cd<br/>manifests"]
+    K8S["Kubernetes<br/>(Argo CD)"]
+  end
+  SIR --> RUL
+  LLM --> RUL
+  ANN --> RUL
+  RUL --> SPL --> TTC --> EVAL --> REG
+  REG -->|"model name + version"| K8S
+  IMG --> K8S
+  GIT --> K8S
+  K8S -->|"predictions, logs"| MON["Monitoring<br/>dashboard"]
+  MON -->|"samples to annotate"| ANN
+```
+
+Each block is described in its own chapter:
+
+- [Data](data.qmd): sources, label cleaning and the NAF 2025 revision.
+- [Model](model.qmd): architecture, training and evaluation.
+- [Serving and deployment](serving.qmd): packaging, the API and GitOps.
+- [Monitoring and annotation](monitoring.qmd): closing the loop.
+- [Retraining protocol](retraining.qmd): how the loop turns into a new model, safely.
+
+## Development workflow
+
+The team works in an umbrella repository, [codif-ape](https://github.com/InseeFrLab/codif-ape), which gathers all the repositories above as Git submodules that track the `main` branch. It is a workspace, not a release unit: each repository keeps its own version tags and its own CI.
+
+All repositories follow the same conventions:
+
+- `uv` for Python environments;
+- `pre-commit` with `ruff` for code quality;
+- Renovate for dependency updates;
+- GitHub Actions for building images and documentation.

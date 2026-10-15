@@ -1,0 +1,71 @@
+---
+title: "Serving and deployment"
+description: "A self-contained model, a thin API, and GitOps deployments."
+lang: en
+---
+
+## A self-contained model
+
+The model is logged in MLflow as a **`pyfunc`**, a generic Python wrapper that bundles everything needed for inference:
+
+- the trained network and its tokenizer;
+- the encoders for categorical variables and for labels;
+- the inference code: validation of the input form, building features, decoding the top-*k* codes with their labels, and computing the confidence index;
+- the resources needed offline, such as stopword lists, so that nothing is downloaded at run time in a closed environment.
+
+The input and output contract is defined by Pydantic models in the training repository. The model can therefore be loaded and queried the same way in a notebook, in a batch job or in the API. What has been evaluated is exactly what gets served.
+
+Each registered model has a **name** that identifies the classification (NAF rev. 2 or NAF 2025) and a **version**. Every response includes the identifier of the model that produced it, so every prediction can be traced.
+
+## The API
+
+[codif-ape-api](https://github.com/InseeFrLab/codif-ape-api) is a thin FastAPI application. It loads the registered model at start-up, based on its name and version (passed as environment variables). It exposes one prediction endpoint:
+
+- **Input:** a batch of declaration forms, each with a mandatory activity description and optional auxiliary fields: legal form, nature of activity, type of form, surface area, permanence. Values are validated against the allowed modalities before inference.
+- **Output:** for each form, the top-*k* codes with their probability and label, the **confidence index** and the **model identifier**.
+- **Parameters:** the number of suggestions, a minimum probability, and the batch size and number of workers. One endpoint therefore serves both unit calls from the register (one form at a time, lowest latency) and bulk recoding (large batches in parallel).
+
+The API runs on CPU-only PyTorch builds and logs to standard output only, as the production platform requires. It is the only component that the Sirene information system calls. The Java application that manages declarations sends the form to the API and routes it according to the confidence index.
+
+## Continuous integration and delivery
+
+```{mermaid}
+%%| label: fig-cicd
+%%| fig-cap: "From a commit to a running service."
+flowchart LR
+  DEV["Commit / tag<br/>codif-ape-api"] --> GHA["GitHub Actions<br/>build + push image"]
+  GHA --> HUB[("Container<br/>registry")]
+  TRN["Training run"] --> REG[("MLflow<br/>registry")]
+  MAN["Edit manifest<br/>codif-ape-cd<br/>(image tag, model version)"] --> ARGO["Argo CD<br/>auto-sync"]
+  HUB --> ARGO
+  ARGO --> POD["API pod"]
+  REG -->|"loaded at start-up"| POD
+```
+
+The delivery process works as follows:
+
+1. **Images.** On each push to `main` and on each version tag, GitHub Actions builds the API's Docker image and pushes it to the container registry. Pull requests check that the image builds.
+2. **Manifests.** [codif-ape-cd](https://github.com/InseeFrLab/codif-ape-cd) holds the plain Kubernetes manifests of every service:
+   - the API instances for each classification and environment;
+   - the monitoring dashboard;
+   - the scheduled annotation and monitoring jobs;
+   - the GRAAL review applications.
+3. **Synchronisation.** Each directory of the repository has an Argo CD `Application`, with automatic sync and self-healing enabled. The cluster always reflects the repository.
+
+**Deploying a new model** is a one-line change to a manifest: update the model version, or the image tag if the API code changed. The change is reviewed and merged, and Argo CD rolls it out. **Rolling back** is reverting that commit. The history of what ran where, and when, is the Git log.
+
+## Environments
+
+Several API instances run side by side on the platform. Each one is identified by its classification and its model generation, for example a NAF 2008 model and a NAF 2025 model built with PyTorch. They are used for:
+
+- development and demonstrations;
+- comparing model generations on the same inputs;
+- bulk recoding jobs.
+
+For production, the model goes through **qualification** on a pre-production platform that matches the production environment:
+
+- **latency** and memory are measured on CPU;
+- **online/offline parity** is checked: the served model must reproduce the offline evaluation predictions exactly;
+- a **shadow** period can follow, during which the new model scores the real flow without its decisions being used.
+
+These steps are detailed in the [retraining protocol](retraining.qmd#sec-preprod).

@@ -1,0 +1,216 @@
+---
+title: "Protocole de réentraînement"
+description: "Comment le flux de production de chaque trimestre devient un meilleur modèle, sans se leurrer : golden set, curation des données, règles métier, portes de qualité et qualification."
+lang: fr
+---
+
+Réentraîner un modèle est facile. Le réentraîner de sorte qu'il soit, **de façon démontrable, au moins aussi bon** que celui en production, avec des annotations produites en partie par ce même modèle, est difficile. Ce chapitre décrit le protocole que nous utilisons à cette fin. C'est le cœur méthodologique de la chaîne.
+
+Le protocole suit un cycle trimestriel. Pendant le trimestre $n$, le modèle $f_n$ est en production avec un seuil $\tau_n$, et le cycle produit $f_{n+1}$ et $\tau_{n+1}$.
+
+## Ce que fournit le flux de production {#sec-golden}
+
+Le flux de déclarations $F_n$ reçu pendant le trimestre $n$ se décompose naturellement en plusieurs ensembles. Chacun a sa propre valeur et son propre **biais de sélection** :
+
+| Ensemble | Définition | Qui l'annote | Biais | Usage |
+|---|---|---|---|---|
+| **Golden set** $G_n$ | Un échantillon **aléatoire** de 1 à 3 % du flux, annoté **à l'aveugle** (sans voir la prédiction du modèle) | Experts métier | Aucun | **Évaluation uniquement**, jamais l'entraînement |
+| **Reprises manuelles** $M_n$ | Cas sous le seuil (20 à 25 % du flux environ) | Gestionnaires | Oui : les cas difficiles *pour $f_n$* | Entraînement |
+| **Codifications automatiques** $A_n$ | Cas au-dessus du seuil | Le modèle $f_n$ lui-même | Oui : les cas faciles *pour $f_n$* | Entraînement, **après curation** |
+| **Cas connus** $K_n$ | Règles métier validées (par exemple « LMNP » → location meublée) | Experts métier | Oui : erreurs signalées | Doivent être réussis à 100 % ou presque |
+
+: Les quatre sources d'annotations d'un cycle de production. {#tbl-sets}
+
+$G_n$, $M_n$ et $A_n$ forment une partition du flux, tandis que $K_n$ vient de l'extérieur. Les cas connus ont deux origines :
+
+- les **retours métier**, surtout des erreurs repérées a posteriori parmi les cas codés automatiquement ;
+- les **erreurs récurrentes** extraites de l'ensemble des reprises manuelles (voir [plus bas](#sec-known-cases)).
+
+On note $\bar{X}_n = \bigcup_{k \le n} X_k$ l'ensemble cumulé au fil des trimestres, éventuellement sur une fenêtre glissante.
+
+```{mermaid}
+%%| label: fig-sets
+%%| fig-cap: "Décomposition du flux de production."
+flowchart LR
+  F["Flux F_n"] -->|"aléatoire 1 à 3 %"| G["G_n : annotation experte à l'aveugle"]
+  F --> R{"IC ≥ τ_n ?"}
+  R -->|"non (20 à 25 %)"| M["M_n : reprise manuelle"]
+  R -->|"oui"| A["A_n : codification automatique"]
+  A -.->|"erreurs signalées"| K["K_n : règles validées"]
+  M -.->|"erreurs récurrentes, après revue"| K
+```
+
+::: {.callout-important}
+## Le golden set n'est pas facultatif
+Sans échantillon aléatoire du flux annoté à l'aveugle, il n'existe pas d'estimation sans biais de l'exactitude de la codification automatique. Il est alors impossible de fixer le seuil, de comparer deux modèles ou de mesurer la dérive à partir d'annotations. Les reprises manuelles ne peuvent pas le remplacer, car elles sont sélectionnées sur les échecs du modèle. Une annotation continue du flux, même modeste, est le prérequis organisationnel le plus important du protocole.
+:::
+
+Le golden set est scindé **une fois pour toutes** en deux moitiés, à l'aide d'un hachage de l'identifiant de chaque déclaration. Ce partage reste ainsi stable à mesure que l'ensemble grandit :
+
+- $\bar{G}^{\text{val}}$ sert à tous les **choix** : seuil, calibration, architecture et hyperparamètres, sélection des moteurs auxiliaires et des règles candidates ;
+- $\bar{G}^{\text{test}}$ ne sert qu'au **verdict final**.
+
+## Construire le prochain jeu d'entraînement
+
+### L'exactitude de la codification automatique peut être estimée
+
+On ne sait pas quels codes automatiques sont faux, mais on peut estimer **combien** le sont. Le golden set étant un échantillon aléatoire du flux, sa partie au-dessus du seuil, $G_n^A = \{x \in G_n : \text{IC}_n(x) \ge \tau_n\}$, est un échantillon aléatoire de $A_n$. L'exactitude de $f_n$ sur $G_n^A$, assortie d'un intervalle de confiance (Wilson ou bootstrap), estime l'exactitude de la codification automatique. Le cumul sur plusieurs trimestres fournit assez de données pour cette estimation.
+
+### Curation des codifications automatiques : se concentrer sur les désaccords
+
+Réinjecter $A_n$ dans l'entraînement avec les codes de $f_n$, c'est faire du *self-training* : le modèle n'apprend rien de nouveau, et ses erreurs à forte confiance sont renforcées. Pour briser cette boucle, on compare $f_n$ à des **moteurs indépendants** $E$. Aucun n'est un oracle :
+
+- le **moteur de règles** de [codif-ape-preprocess](data.qmd#sec-rules) applique des règles déterministes, qui s'abstiennent souvent, complétées par une extension prudente aux libellés similaires ;
+- les **agents LLM** de [GRAAL](companion-projects.qmd#sec-graal) parcourent la nomenclature et lisent les notes explicatives. Ils sont lents, mais la latence importe peu dans un traitement par lots hors ligne.
+
+L'exactitude globale d'un moteur sur le golden set n'est pas la bonne question. Ce qui compte, c'est de savoir **qui a raison quand $E$ et $f_n$ sont en désaccord** sur les codifications automatiques :
+
+| Sur $A_n$ | $E$ s'abstient | $E$ est d'accord avec $f_n$ | $E$ est en désaccord avec $f_n$ |
+|---|---|---|---|
+| Action | Conserver le code de $f_n$ (son exactitude est connue), avec un poids réduit | Conserver, avec une confiance élevée | **Arbitrer** |
+
+: Règle de décision pour les cas codés automatiquement. {#tbl-curation}
+
+Les désaccords sont très probablement les **erreurs à forte confiance** de $f_n$ : ce sont donc les exemples les plus précieux. Ils peuvent être traités de trois façons :
+
+1. **Annotation humaine ciblée** des désaccords. C'est sans doute le meilleur usage d'un budget d'annotation, dans l'esprit du *query by committee*.
+2. **Adoption du code du moteur**, si, sur $\bar{G}^{\text{val}} \cap \{\text{IC}_n \ge \tau_n,\ E \ne f_n\}$, le moteur a raison significativement plus souvent que $f_n$. Il n'y a pas de seuil de fiabilité absolu : le critère est **comparatif**, et **conditionnel** à la zone de désaccord.
+3. **Exclusion** des désaccords non arbitrés de l'entraînement. C'est l'option par défaut, faute de budget et d'éléments probants. Elle retire les cas automatiques les plus difficiles, ce qui est acceptable puisque les reprises manuelles couvrent déjà la zone difficile.
+
+Le même critère sert à choisir entre les variantes du moteur LLM (recherche augmentée, agentique, agent complet, ou vote entre elles). Trois précautions s'imposent :
+
+- mesurer sur $\bar{G}^{\text{val}}$, jamais sur $\bar{G}^{\text{test}}$, puisque ce choix façonne les données d'entraînement ;
+- comparer à **couverture comparable**, car un moteur qui s'abstient souvent l'emporte mécaniquement dans la zone de désaccord ;
+- ne changer de variante que lorsque l'écart dépasse les intervalles de confiance.
+
+Pour maîtriser le coût des moteurs LLM, on peut les limiter à une bande de confiance intermédiaire, $\tau_n \le \text{IC} < \tau'$ : les prédictions très confiantes sont rarement fausses.
+
+### Cas connus : propager plutôt que surpondérer {#sec-known-cases}
+
+Surpondérer simplement les cas connus fonctionne rarement. Le jeu d'entraînement contient en général **les mêmes libellés avec l'ancien code**, si bien que le modèle voit des codes contradictoires. Le protocole consiste donc à :
+
+1. transformer chaque retour métier en **règle**, et l'appliquer à **l'ensemble** du jeu d'entraînement au moyen du moteur de règles ;
+2. éventuellement, pour la très courte liste de cas où une exactitude de 100 % est exigée, ajouter en production une **couche de règles en amont du modèle**. La correction est alors garantie, auditable et immédiate, sans réentraînement. Cette couche doit rester réduite : c'est l'accumulation sans fin de règles qui a fait échouer Sicore.
+
+**Contrôles avant entraînement.** La propagation est vérifiée automatiquement, et les contrôles bloquent l'entraînement en cas d'échec :
+
+- **contradictions exactes** : une jointure entre les cas connus et le nouveau jeu d'entraînement sur la clé de dédoublonnage (libellé normalisé et variables auxiliaires) ne doit renvoyer aucune ligne avec un code différent ;
+- **quasi-doublons** : les plus proches voisins de chaque cas connu (TF-IDF sur n-grammes de caractères, ou plongements du modèle) qui portent un autre code sont soumis à une **revue humaine**, car un libellé similaire peut légitimement relever d'un autre code ;
+- le nombre de conflits, par source et par trimestre, est journalisé. On voit ainsi d'où viennent les erreurs, et l'on mesure le taux de contradiction interne du jeu d'entraînement, indicateur direct du bruit sur les codes.
+
+**Extraire des règles des corrections manuelles.** Parmi les reprises manuelles, les lignes où le code humain diffère de la prédiction de $f_n$ sont des erreurs corrigées. Une erreur isolée ne fait pas une règle, mais une erreur récurrente est une bonne candidate. Le principe est le suivant : *l'automatisation propose, des filtres statistiques trient, un expert décide.*
+
+1. **Détecter les erreurs récurrentes** sur l'ensemble cumulé des reprises manuelles :
+   - libellés normalisés identiques, avec un support suffisant et un code dominant que $f_n$ manque ;
+   - mots discriminants, repérés par des règles d'association (support, confiance, lift), efficaces pour des sigles comme « LMNP » ;
+   - groupes d'erreurs portant sur un même couple (code prédit, code corrigé), dans l'espace des plongements du modèle.
+2. **Rédiger la règle avec un LLM**, qui a accès aux notes explicatives, **sans le laisser décider**.
+3. **Filtrer automatiquement.** Appliquer chaque règle candidate au jeu d'entraînement et à $\bar{G}^{\text{val}}$, puis mesurer combien de lignes elle touche et quelle est sa précision. Rejeter les règles trop larges ou trop imprécises.
+4. **Faire valider par un expert**, dans une file de revue qui présente la règle, ses exemples et ses contre-exemples.
+
+Le dépôt des règles est versionné. Chaque règle indique son origine, sa date et la personne qui l'a validée, afin de pouvoir être auditée ou retirée.
+
+### Assemblage {#sec-assembly}
+
+Le prochain jeu d'entraînement est
+
+$$
+\mathcal{D}_{n+1} = \mathcal{D}_n \cup M_n \cup \tilde{A}_n \cup K_n,
+$$
+
+où $\tilde{A}_n$ désigne les codifications automatiques après curation. Ce jeu est ensuite :
+
+- **Dédoublonné** sur le couple (libellé normalisé, variables auxiliaires). Les conflits sont résolus par priorité de source (cas connus > reprises manuelles > codifications automatiques après curation > historique), puis au profit du plus récent.
+- **Marqué** : chaque observation porte sa **source** et son **trimestre**. Cela permet des poids qui dépendent de la source (par exemple, les codes automatiques pèsent moins que les codes humains) et un suivi de la perte par source.
+- **Pondéré selon l'ancienneté** : l'historique est sous-pondéré, voire tronqué. Les anciens codes sont plus bruités et reflètent un flux plus ancien.
+- **Versionné** : chaque jeu d'entraînement est un instantané sur S3 avec son empreinte (hash), enregistré avec l'exécution d'entraînement.
+
+Deux règles s'ajoutent :
+
+- Le jeu d'entraînement **n'est pas représentatif** du flux, puisque les reprises manuelles surreprésentent les cas difficiles. C'est pourquoi le seuil et la calibration sont toujours fixés sur $\bar{G}^{\text{val}}$, jamais sur un échantillon de validation tiré des données d'entraînement.
+- Le golden set **n'entre jamais** dans l'entraînement. Le flux étant très répétitif, il est normal de trouver des libellés identiques dans les deux. Les métriques sont donc aussi publiées sur les **libellés jamais vus**.
+
+Un échantillon de validation aléatoire, tiré du jeu d'entraînement, sert uniquement à l'arrêt précoce.
+
+## Portes de qualité (*gates*) : $f_{n+1}$ face à $f_n$
+
+| Porte | Données | Objectif | Critère |
+|---|---|---|---|
+| 1 | Cas connus $\bar{K}_n$ et variantes reformulées $K'_n$ absentes de l'entraînement | Non-régression métier (tests unitaires) | ≥ 99 % ; échecs listés un par un |
+| 2 | $\bar{G}^{\text{test}}$ | Généralisation | **Non-infériorité** par rapport à $f_n$, avec un test apparié (McNemar ou bootstrap apparié) |
+| 3 | $\bar{G}^{\text{test}}$ | Indicateur métier | Taux de codification automatique à l'exactitude cible $p^*$ ≥ celui de $f_n$ |
+
+: Portes qu'un modèle candidat doit franchir. {#tbl-gates}
+
+Sur les cas connus, un score élevé peut simplement signifier que le modèle les a mémorisés. Les variantes reformulées vérifient que la correction **se généralise**. Elles peuvent être produites par les agents *Code2Text* de GRAAL.
+
+**On n'évalue pas sur les reprises manuelles.** Elles font partie des données d'entraînement de $f_{n+1}$ et sont sélectionnées sur les échecs de $f_n$ : par construction, elles sont biaisées en défaveur de $f_n$. Pour obtenir un signal sur les cas difficiles, on utilise $\bar{G} \cap \{\text{IC}_n < \tau_n\}$, échantillon aléatoire et sans biais de la zone difficile.
+
+**Métriques** publiées sur $\bar{G}^{\text{test}}$ :
+
+- exactitude à chaque niveau de la nomenclature ;
+- macro-F1 et performance sur les classes rares ;
+- calibration (ECE) ;
+- courbe risque–couverture et aire sous cette courbe (AURC) ;
+- **couverture à l'exactitude cible $p^*$**, l'indicateur qui détermine la charge de reprise manuelle ;
+- l'ensemble de ces indicateurs par trimestre du golden set, pour révéler la dérive.
+
+Le seuil est **recalibré pour chaque modèle** sur $\bar{G}^{\text{val}}$.
+
+Trois principes guident la comparaison :
+
+- **Comment faire mieux que $f_n$.** Les leviers sont les reprises manuelles (des annotations humaines exactement là où le modèle échoue, ce qui revient à de l'apprentissage actif), les désaccords arbitrés, des données plus propres et des données plus récentes. Itérer sur les architectures jusqu'à améliorer le score sur le jeu de test reviendrait à surajuster ce jeu : ces itérations se font donc sur $\bar{G}^{\text{val}}$.
+- **La non-régression conditionne le passage ; l'amélioration est l'objectif.** Exiger une amélioration stricte à chaque trimestre n'est pas réaliste.
+- **Entraîner sur les cas connus et les corrections manuelles n'est pas une fuite de données.** La fuite commence lorsqu'une métrique calculée sur les données d'entraînement est présentée comme une mesure de la capacité de généralisation. Tant que $\bar{G}^{\text{test}}$ reste intact, le protocole est sain.
+
+**Traçabilité.** L'exécution MLflow de chaque candidat enregistre :
+
+- la version du jeu de données, la version du dépôt de règles et la variante du moteur LLM ;
+- les hyperparamètres et les métriques ;
+- un rapport de comparaison « $n$ vs $n+1$ » sous forme d'artefact HTML.
+
+Le registre identifie le *champion* et le *challenger*.
+
+## Qualification et mise en production {#sec-preprod}
+
+Même à architecture inchangée, la qualification n'est pas une formalité :
+
+- **Qualification iso-production** : latence au 95e centile (p95) et mémoire, sur CPU, sur la plateforme de préproduction.
+- **Parité en ligne/hors ligne** : le modèle servi doit reproduire exactement les prédictions hors ligne sur $\bar{G}^{\text{test}}$. Ce test peu coûteux détecte les écarts de prétraitement ou de versions de bibliothèques.
+- **Le seuil et la calibration sont livrés dans l'artefact du modèle**, et non dans une configuration séparée.
+- **Déploiement en mode *shadow*** pendant quelques semaines : $f_{n+1}$ traite le flux réel en parallèle de $f_n$. On suit le taux effectif de codification automatique, l'accord avec $f_n$ et la distribution des scores. Les désaccords alimentent l'annotation.
+- **Revenir en arrière** consiste à faire pointer de nouveau la production vers $f_n$.
+
+## Comparer les modèles dans le temps
+
+Des scores obtenus sur des golden sets différents ne sont pas comparables. L'historique des modèles est donc construit en **réévaluant tous les modèles passés** sur le dernier $\bar{G}^{\text{test}}$.
+
+Tant que le golden set n'est pas alimenté en continu, les indicateurs sans annotation (taux de codification automatique, distribution de l'indice de confiance, vocabulaire nouveau, accord avec les moteurs auxiliaires) sont les seuls signaux de dérive. Des seuils d'alerte sur ces indicateurs peuvent déclencher un réentraînement hors cycle.
+
+## Vue d'ensemble
+
+```{mermaid}
+%%| label: fig-cycle
+%%| fig-cap: "Un cycle de réentraînement."
+flowchart TD
+  subgraph Q["Trimestre n : la production utilise f_n, τ_n"]
+    G["G_n"]
+    M["M_n"]
+    A["A_n"]
+    K["K_n"]
+  end
+  A --> C["Curation : règles + moteurs LLM<br/>accord / désaccord"]
+  C -->|"accords"| At["Ã_n"]
+  C -->|"désaccords"| H["Annotation ciblée"] --> At
+  M -.->|"erreurs récurrentes<br/>+ revue experte"| K
+  K --> RL["Règles propagées à tout D"]
+  D0["D_n"] & M & At & RL --> D1["D_n+1 : dédoublonnage, conflits, poids, version"]
+  D1 --> T["Entraînement de f_n+1"]
+  G --> GV["Ḡ val : seuil, calibration, sélection"] --> T
+  G --> GT["Ḡ test"]
+  T --> E{"Portes : K / K', non-infériorité,<br/>couverture à p*"}
+  GT --> E
+  E -->|"échec"| T
+  E -->|"succès"| P["Qualification : latence, parité, shadow"]
+  P --> PR["Production : f_n+1, τ_n+1"]
+```
