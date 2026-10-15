@@ -106,7 +106,7 @@ GRAAL also includes an evaluation module and review applications in which expert
 
 GRAAL **does not replace** the production model. The agents take seconds to minutes per description and need GPUs to serve the LLM, while production needs ~200 ms on CPU. In early benchmarks, the agents were also not more accurate than the supervised model on the flow as a whole. GRAAL's value lies elsewhere, in four offline tasks:
 
-1. **Recoding a stock after a classification change.** LLMs coding with the explanatory notes in context produced most of the NAF 2025 training data ([Data](data.qmd#sec-naf2025)).
+1. **Recoding a stock after a classification change.** Most of the NAF 2025 training data was produced by a dedicated pipeline, [codif-ape-nace-revision](https://github.com/InseeFrLab/codif-ape-nace-revision), in which LLMs code with the explanatory notes in context ([Data](data.qmd#sec-naf2025)). GRAAL generalises this approach with agents that navigate the classification, for future revisions and other classifications.
 2. **Auditing and curating labels.** The MatchVerifier flags dubious labels in the training data, or in automatically coded cases, and proposes alternatives. In the [retraining protocol](retraining.qmd), GRAAL is one of the independent engines whose disagreements with the production model are arbitrated.
 3. **Prioritising human review.** Suspicious cases are sent to experts first. Their judgements are collected in a review application and become new labels.
 4. **Generating synthetic data.** Code2Text produces descriptions for rare codes, and reworded variants of known cases to test that a fix generalises.

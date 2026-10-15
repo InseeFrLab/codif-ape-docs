@@ -36,6 +36,7 @@ Toutes les présentations de l'équipe sont rassemblées sur **[inseefrlab.githu
 | Dépôt | Description |
 |---|---|
 | [codif-ape](https://github.com/InseeFrLab/codif-ape) | Dépôt chapeau regroupant les sous-modules |
+| [codif-ape-nace-revision](https://github.com/InseeFrLab/codif-ape-nace-revision) | Recodage par LLM des données d'entraînement de la NAF rév. 2 vers la NAF 2025 (stratégies CAG et RAG, vote majoritaire) |
 | [codif-ape-preprocess](https://github.com/InseeFrLab/codif-ape-preprocess) | Nettoyage des données, moteur de règles, découpage des échantillons |
 | [codif-ape-train](https://github.com/InseeFrLab/codif-ape-train) | Entraînement, évaluation, empaquetage MLflow |
 | [codif-ape-api](https://github.com/InseeFrLab/codif-ape-api) | Mise à disposition du modèle avec FastAPI |

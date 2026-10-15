@@ -33,7 +33,7 @@ Le développement, l'entraînement et la préproduction se font entièrement sur
 | Mise à disposition | FastAPI sur Kubernetes | API REST exposant le modèle |
 | Livraison continue | GitHub Actions, Argo CD | Construction des images Docker ; synchronisation GitOps du cluster |
 | Annotation | Label Studio | Campagnes d'annotation par les experts |
-| Inférence LLM | vLLM (API compatible OpenAI) | Réétiquetage hors ligne, audit et données synthétiques (voir [GRAAL](companion-projects.qmd#sec-graal)) |
+| Inférence LLM | vLLM (API compatible OpenAI) | Réétiquetage hors ligne ([NAF 2025](data.qmd#sec-naf2025)), audit et données synthétiques ([GRAAL](companion-projects.qmd#sec-graal)) |
 
 : Pile technique. {#tbl-stack}
 
@@ -45,6 +45,7 @@ Le code est organisé en dépôts à vocation unique, regroupés dans l'organisa
 
 | Dépôt | Produit | Consomme |
 |---|---|---|
+| [codif-ape-nace-revision](https://github.com/InseeFrLab/codif-ape-nace-revision) | Labels NAF 2025 des données d'entraînement, recodés par LLM | Extractions Sirene, table de passage, notes explicatives, annotations des experts |
 | [codif-ape-preprocess](https://github.com/InseeFrLab/codif-ape-preprocess) | Données d'entraînement nettoyées et augmentées ; découpages entraînement / validation / test ; journal d'audit de chaque modification de label | Extractions brutes de Sirene, données réétiquetées en NAF 2025, tables de référence |
 | [codif-ape-train](https://github.com/InseeFrLab/codif-ape-train) | Un modèle entraîné, empaqueté sous forme de `pyfunc` MLflow, avec ses métriques et ses figures de diagnostic | Découpages produits par `preprocess` ; [torchTextClassifiers](https://github.com/InseeFrLab/torchTextClassifiers) |
 | [codif-ape-api](https://github.com/InseeFrLab/codif-ape-api) | Une image Docker de l'API REST | Un modèle enregistré dans MLflow, chargé au démarrage |
@@ -73,7 +74,7 @@ flowchart LR
   subgraph SRC["Sources"]
     SIR["Extractions Sirene"]
     ANN["Annotations d'experts<br/>(Label Studio)"]
-    LLM["Réétiquetage par LLM<br/>(GRAAL, vLLM)"]
+    LLM["Réétiquetage par LLM<br/>(codif-ape-nace-revision, vLLM)"]
   end
   subgraph PRE["codif-ape-preprocess"]
     RUL["Moteur de règles<br/>+ journal d'audit"]

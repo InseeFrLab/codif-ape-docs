@@ -33,7 +33,7 @@ All development, training and pre-production work runs on **SSP Cloud**, the dat
 | Serving | FastAPI on Kubernetes | REST API exposing the model |
 | Continuous delivery | GitHub Actions, Argo CD | Building Docker images; GitOps synchronisation of the cluster |
 | Annotation | Label Studio | Expert annotation campaigns |
-| LLM inference | vLLM (OpenAI-compatible API) | Offline relabelling, auditing and synthetic data (see [GRAAL](companion-projects.qmd#sec-graal)) |
+| LLM inference | vLLM (OpenAI-compatible API) | Offline relabelling ([NAF 2025](data.qmd#sec-naf2025)), auditing and synthetic data ([GRAAL](companion-projects.qmd#sec-graal)) |
 
 : Technical stack. {#tbl-stack}
 
@@ -45,6 +45,7 @@ The code is organised as a set of single-purpose repositories under the [InseeFr
 
 | Repository | Produces | Consumes |
 |---|---|---|
+| [codif-ape-nace-revision](https://github.com/InseeFrLab/codif-ape-nace-revision) | NAF 2025 labels for the training data, recoded by LLMs | Sirene extractions, correspondence table, explanatory notes, expert annotations |
 | [codif-ape-preprocess](https://github.com/InseeFrLab/codif-ape-preprocess) | Cleaned and augmented training data; train/validation/test splits; an audit journal of every label change | Raw Sirene extractions, relabelled NAF 2025 data, reference tables |
 | [codif-ape-train](https://github.com/InseeFrLab/codif-ape-train) | A trained model packaged as an MLflow `pyfunc`, with its metrics and diagnostic figures | Splits produced by `preprocess`; [torchTextClassifiers](https://github.com/InseeFrLab/torchTextClassifiers) |
 | [codif-ape-api](https://github.com/InseeFrLab/codif-ape-api) | A Docker image of the REST API | A registered MLflow model, loaded at start-up |
@@ -73,7 +74,7 @@ flowchart LR
   subgraph SRC["Sources"]
     SIR["Sirene extractions"]
     ANN["Expert annotations<br/>(Label Studio)"]
-    LLM["LLM relabelling<br/>(GRAAL, vLLM)"]
+    LLM["LLM relabelling<br/>(codif-ape-nace-revision, vLLM)"]
   end
   subgraph PRE["codif-ape-preprocess"]
     RUL["Rule engine<br/>+ audit journal"]

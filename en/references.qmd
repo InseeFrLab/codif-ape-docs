@@ -36,6 +36,7 @@ All the team's presentations are collected at **[inseefrlab.github.io/codif-ape-
 | Repository | Description |
 |---|---|
 | [codif-ape](https://github.com/InseeFrLab/codif-ape) | Umbrella workspace (submodules) |
+| [codif-ape-nace-revision](https://github.com/InseeFrLab/codif-ape-nace-revision) | LLM recoding of the training data from NAF rev. 2 to NAF 2025 (context- vs retrieval-augmented strategies, majority vote) |
 | [codif-ape-preprocess](https://github.com/InseeFrLab/codif-ape-preprocess) | Data cleaning, rule engine, splits |
 | [codif-ape-train](https://github.com/InseeFrLab/codif-ape-train) | Training, evaluation, MLflow packaging |
 | [codif-ape-api](https://github.com/InseeFrLab/codif-ape-api) | FastAPI serving |
