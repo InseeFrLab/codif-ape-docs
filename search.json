@@ -1,0 +1,1149 @@
+[
+  {
+    "objectID": "fr/serving.html",
+    "href": "fr/serving.html",
+    "title": "Mise à disposition du modèle et déploiement",
+    "section": "",
+    "text": "Le modèle est enregistré dans MLflow sous la forme d’un pyfunc, une enveloppe Python générique qui regroupe tout ce qui est nécessaire à l’inférence :\n\nle réseau entraîné et son tokeniseur ;\nles encodeurs des variables catégorielles et des classes ;\nle code d’inférence : validation de la liasse en entrée, construction des variables, décodage des k meilleurs codes avec leurs libellés et calcul de l’indice de confiance ;\nles ressources nécessaires hors ligne, comme les listes de mots vides, afin que rien ne soit téléchargé à l’exécution dans un environnement fermé.\n\nLe contrat d’entrée et de sortie est défini par des modèles Pydantic dans le dépôt d’entraînement. Le modèle peut donc être chargé et interrogé de la même façon dans un notebook, dans un traitement par lots ou dans l’API. Le modèle servi est exactement celui qui a été évalué.\nChaque modèle enregistré porte un nom, qui identifie la nomenclature (NAF rév. 2 ou NAF 2025), et une version. Chaque réponse contient l’identifiant du modèle qui l’a produite : toute prédiction est ainsi traçable.",
+    "crumbs": [
+      "Mise à disposition du modèle et déploiement"
+    ]
+  },
+  {
+    "objectID": "fr/serving.html#un-modèle-autonome",
+    "href": "fr/serving.html#un-modèle-autonome",
+    "title": "Mise à disposition du modèle et déploiement",
+    "section": "",
+    "text": "Le modèle est enregistré dans MLflow sous la forme d’un pyfunc, une enveloppe Python générique qui regroupe tout ce qui est nécessaire à l’inférence :\n\nle réseau entraîné et son tokeniseur ;\nles encodeurs des variables catégorielles et des classes ;\nle code d’inférence : validation de la liasse en entrée, construction des variables, décodage des k meilleurs codes avec leurs libellés et calcul de l’indice de confiance ;\nles ressources nécessaires hors ligne, comme les listes de mots vides, afin que rien ne soit téléchargé à l’exécution dans un environnement fermé.\n\nLe contrat d’entrée et de sortie est défini par des modèles Pydantic dans le dépôt d’entraînement. Le modèle peut donc être chargé et interrogé de la même façon dans un notebook, dans un traitement par lots ou dans l’API. Le modèle servi est exactement celui qui a été évalué.\nChaque modèle enregistré porte un nom, qui identifie la nomenclature (NAF rév. 2 ou NAF 2025), et une version. Chaque réponse contient l’identifiant du modèle qui l’a produite : toute prédiction est ainsi traçable.",
+    "crumbs": [
+      "Mise à disposition du modèle et déploiement"
+    ]
+  },
+  {
+    "objectID": "fr/serving.html#lapi",
+    "href": "fr/serving.html#lapi",
+    "title": "Mise à disposition du modèle et déploiement",
+    "section": "2 L’API",
+    "text": "2 L’API\ncodif-ape-api est une application FastAPI légère. Elle charge le modèle enregistré au démarrage, à partir de son nom et de sa version, passés en variables d’environnement. Elle expose un unique point d’accès de prédiction :\n\nEntrée : un lot de liasses de déclaration. Chacune comporte un libellé d’activité obligatoire et des champs auxiliaires facultatifs : forme juridique, nature de l’activité, type de liasse, surface, permanence de l’activité. Les valeurs sont contrôlées par rapport aux modalités autorisées avant l’inférence.\nSortie : pour chaque liasse, les k meilleurs codes avec leur probabilité et leur libellé, l’indice de confiance et l’identifiant du modèle.\nParamètres : le nombre de propositions, une probabilité minimale, ainsi que la taille des lots et le nombre de processus. Un même point d’accès sert donc à la fois les appels unitaires du répertoire (une liasse à la fois, latence minimale) et les recodifications en masse (gros lots traités en parallèle).\n\nL’API utilise des versions de PyTorch pour CPU uniquement et n’écrit ses journaux que sur la sortie standard, comme l’exige la plateforme de production. C’est le seul composant appelé par le système d’information Sirene. L’application Java qui gère les déclarations envoie la liasse à l’API, puis l’oriente selon l’indice de confiance.",
+    "crumbs": [
+      "Mise à disposition du modèle et déploiement"
+    ]
+  },
+  {
+    "objectID": "fr/serving.html#intégration-et-livraison-continues",
+    "href": "fr/serving.html#intégration-et-livraison-continues",
+    "title": "Mise à disposition du modèle et déploiement",
+    "section": "3 Intégration et livraison continues",
+    "text": "3 Intégration et livraison continues\n\n\n\n\n\n\nflowchart LR\n  DEV[\"Commit / tag&lt;br/&gt;codif-ape-api\"] --&gt; GHA[\"GitHub Actions&lt;br/&gt;construction + publication de l'image\"]\n  GHA --&gt; HUB[(\"Registre&lt;br/&gt;d'images\")]\n  TRN[\"Entraînement\"] --&gt; REG[(\"Registre&lt;br/&gt;MLflow\")]\n  MAN[\"Modification du manifeste&lt;br/&gt;codif-ape-cd&lt;br/&gt;(tag d'image, version du modèle)\"] --&gt; ARGO[\"Argo CD&lt;br/&gt;synchronisation automatique\"]\n  HUB --&gt; ARGO\n  ARGO --&gt; POD[\"Pod de l'API\"]\n  REG --&gt;|\"chargé au démarrage\"| POD\n\n\n\n\nFigure 1: Du commit au service en fonctionnement.\n\n\n\n\n\nLa chaîne de livraison fonctionne ainsi :\n\nImages. À chaque push sur main et à chaque tag de version, GitHub Actions construit l’image Docker de l’API et la publie dans le registre d’images. Pour chaque pull request, on vérifie que l’image se construit.\nManifestes. codif-ape-cd contient les manifestes Kubernetes bruts de tous les services :\n\nles instances de l’API, pour chaque nomenclature et chaque environnement ;\nle tableau de bord de suivi ;\nles tâches planifiées d’annotation et de suivi ;\nles applications de revue de GRAAL.\n\nSynchronisation. Chaque répertoire du dépôt a son Application Argo CD, avec synchronisation automatique et auto-réparation activées. Le cluster reflète toujours le contenu du dépôt.\n\nDéployer un nouveau modèle revient à modifier une ligne d’un manifeste : la version du modèle, ou le tag de l’image si le code de l’API a changé. La modification est relue et fusionnée, puis Argo CD la déploie. Revenir en arrière, c’est annuler ce commit. L’historique de ce qui a tourné, où et quand, est le journal Git.",
+    "crumbs": [
+      "Mise à disposition du modèle et déploiement"
+    ]
+  },
+  {
+    "objectID": "fr/serving.html#environnements",
+    "href": "fr/serving.html#environnements",
+    "title": "Mise à disposition du modèle et déploiement",
+    "section": "4 Environnements",
+    "text": "4 Environnements\nPlusieurs instances de l’API tournent côte à côte sur la plateforme. Chacune est identifiée par sa nomenclature et sa génération de modèle, par exemple un modèle NAF 2008 et un modèle NAF 2025 construit avec PyTorch. Elles servent :\n\nau développement et aux démonstrations ;\nà la comparaison des générations de modèles sur les mêmes entrées ;\naux traitements de recodification en masse.\n\nAvant la production, le modèle passe par une qualification sur une plateforme de préproduction identique à l’environnement de production :\n\nla latence et la mémoire sont mesurées sur CPU ;\nla parité en ligne/hors ligne est vérifiée : le modèle servi doit reproduire exactement les prédictions de l’évaluation hors ligne ;\nune période en mode shadow peut suivre : le nouveau modèle traite le flux réel sans que ses décisions soient utilisées.\n\nCes étapes sont détaillées dans le protocole de réentraînement.",
+    "crumbs": [
+      "Mise à disposition du modèle et déploiement"
+    ]
+  },
+  {
+    "objectID": "fr/references.html",
+    "href": "fr/references.html",
+    "title": "Références et ressources",
+    "section": "",
+    "text": "Toutes les présentations de l’équipe sont rassemblées sur inseefrlab.github.io/codif-ape-prez. Les plus utiles pour cette note sont listées ci-dessous.\n\n\n\nTable 1: Sélection de présentations.\n\n\n\n\n\nDate\nTitre\nÉvénement\n\n\n\n\n2026-06\ntorchTextClassifiers from an MLOps perspective\nISI World Statistics Congress, Malte\n\n\n2026-06\nWhen Classifications Change but Deadlines Don’t: Scaling Recoding with LLMs\nISI World Statistics Congress, Malte\n\n\n2026-03\nClassification of business activities by ML: the case of France\nWebinaires avec l’Afrique subsaharienne et l’OCDE\n\n\n2025-12\ntorchTextClassifiers: a unified framework for text classification in PyTorch\nPyData Global\n\n\n2025-11\nDonnées d’entraînement générées par LLM pour un changement de nomenclature\nJournées de méthodologie statistique\n\n\n2025-11\ntorchTextClassifiers\nJournées de méthodologie statistique\n\n\n2025-10\ntorchFastText / torchTextClassifiers\nPyData Paris\n\n\n2025-05\nPrésentation du projet national WP10\nAIML4OS\n\n\n2024-05\nRetraining strategies for an economic activity classification model\nQ2024, Estoril",
+    "crumbs": [
+      "Références et ressources"
+    ]
+  },
+  {
+    "objectID": "fr/references.html#présentations",
+    "href": "fr/references.html#présentations",
+    "title": "Références et ressources",
+    "section": "",
+    "text": "Toutes les présentations de l’équipe sont rassemblées sur inseefrlab.github.io/codif-ape-prez. Les plus utiles pour cette note sont listées ci-dessous.\n\n\n\nTable 1: Sélection de présentations.\n\n\n\n\n\nDate\nTitre\nÉvénement\n\n\n\n\n2026-06\ntorchTextClassifiers from an MLOps perspective\nISI World Statistics Congress, Malte\n\n\n2026-06\nWhen Classifications Change but Deadlines Don’t: Scaling Recoding with LLMs\nISI World Statistics Congress, Malte\n\n\n2026-03\nClassification of business activities by ML: the case of France\nWebinaires avec l’Afrique subsaharienne et l’OCDE\n\n\n2025-12\ntorchTextClassifiers: a unified framework for text classification in PyTorch\nPyData Global\n\n\n2025-11\nDonnées d’entraînement générées par LLM pour un changement de nomenclature\nJournées de méthodologie statistique\n\n\n2025-11\ntorchTextClassifiers\nJournées de méthodologie statistique\n\n\n2025-10\ntorchFastText / torchTextClassifiers\nPyData Paris\n\n\n2025-05\nPrésentation du projet national WP10\nAIML4OS\n\n\n2024-05\nRetraining strategies for an economic activity classification model\nQ2024, Estoril",
+    "crumbs": [
+      "Références et ressources"
+    ]
+  },
+  {
+    "objectID": "fr/references.html#articles",
+    "href": "fr/references.html#articles",
+    "title": "Références et ressources",
+    "section": "Articles",
+    "text": "Articles\n\nTayebjee M., Couralet C., Randriamanana N., Pramil J. (2025). fastText, tout juste en production et déjà obsolète ? Présentation du package torchTextClassifiers… Journées de méthodologie statistique.\nRandriamanana N., Faria T. (2025). Changement de nomenclature statistique à l’ère du Machine Learning : réentraînement basé sur les LLM pour la révision de la NAF. Journées de méthodologie statistique.\nAvouac R., Faria T., Comte F. (2025). L’apport des technologies cloud pour industrialiser le processus d’innovation statistique. Insee, Document de travail M2025-05. La section 4 porte sur la codification APE.\nFaria T., Randriamanana N., Seimandi T. (2024). Retraining strategies for an economic activity classification model. Q2024, Estoril.\nAIML4OS WP10 (2025). From text to code (WP10.4): MLOps tutorial. Insee, Statistics Austria, Destatis.",
+    "crumbs": [
+      "Références et ressources"
+    ]
+  },
+  {
+    "objectID": "fr/references.html#code",
+    "href": "fr/references.html#code",
+    "title": "Références et ressources",
+    "section": "Code",
+    "text": "Code\n\n\n\nTable 2: Code source.\n\n\n\n\n\nDépôt\nDescription\n\n\n\n\ncodif-ape\nDépôt chapeau regroupant les sous-modules\n\n\ncodif-ape-nace-revision\nRecodage par LLM des données d’entraînement de la NAF rév. 2 vers la NAF 2025 (stratégies CAG et RAG, vote majoritaire)\n\n\ncodif-ape-preprocess\nNettoyage des données, moteur de règles, découpage des échantillons\n\n\ncodif-ape-train\nEntraînement, évaluation, empaquetage MLflow\n\n\ncodif-ape-api\nMise à disposition du modèle avec FastAPI\n\n\ncodif-ape-cd\nManifestes Kubernetes, Argo CD\n\n\ntorchTextClassifiers\nBibliothèque PyTorch de classification de textes (documentation)\n\n\nGRAAL\nAgents LLM pour les nomenclatures (documentation)\n\n\ncodif-ape-docs\nCe site",
+    "crumbs": [
+      "Références et ressources"
+    ]
+  },
+  {
+    "objectID": "fr/references.html#bibliographie",
+    "href": "fr/references.html#bibliographie",
+    "title": "Références et ressources",
+    "section": "Bibliographie",
+    "text": "Bibliographie",
+    "crumbs": [
+      "Références et ressources"
+    ]
+  },
+  {
+    "objectID": "fr/model.html",
+    "href": "fr/model.html",
+    "title": "Modèle",
+    "section": "",
+    "text": "De grands modèles de langage pré-entraînés, comme CamemBERT, ont été testés dès le début du projet. Sur la codification APE, ils n’apportaient qu’un gain modeste par rapport à un modèle de type fastText : une exactitude (accuracy) d’environ 0,76 contre 0,75 sur le même jeu de test (Faria et al. 2024). Ce gain ne justifiait pas leur coût d’inférence au regard des contraintes de production (appels unitaires, CPU uniquement, quelques centaines de millisecondes).\n\nFaria, Thomas, Nathan Randriamanana, et Tom Seimandi. 2024. Retraining strategies for an economic activity classification model. European Conference on Quality in Official Statistics (Q2024), Estoril. https://inseefrlab.github.io/codif-ape-prez/slides/estoril-paper/index.pdf.\n\nJoulin, Armand, Edouard Grave, Piotr Bojanowski, et Tomas Mikolov. 2016. Bag of Tricks for Efficient Text Classification. https://arxiv.org/abs/1607.01759.\nLe modèle en production est donc un réseau de neurones peu profond d’environ un million de paramètres, de la famille fastText (Joulin et al. 2016). Il est désormais implémenté en PyTorch avec torchTextClassifiers.",
+    "crumbs": [
+      "Modèle"
+    ]
+  },
+  {
+    "objectID": "fr/model.html#pourquoi-un-petit-modèle",
+    "href": "fr/model.html#pourquoi-un-petit-modèle",
+    "title": "Modèle",
+    "section": "",
+    "text": "De grands modèles de langage pré-entraînés, comme CamemBERT, ont été testés dès le début du projet. Sur la codification APE, ils n’apportaient qu’un gain modeste par rapport à un modèle de type fastText : une exactitude (accuracy) d’environ 0,76 contre 0,75 sur le même jeu de test (Faria et al. 2024). Ce gain ne justifiait pas leur coût d’inférence au regard des contraintes de production (appels unitaires, CPU uniquement, quelques centaines de millisecondes).\n\nFaria, Thomas, Nathan Randriamanana, et Tom Seimandi. 2024. Retraining strategies for an economic activity classification model. European Conference on Quality in Official Statistics (Q2024), Estoril. https://inseefrlab.github.io/codif-ape-prez/slides/estoril-paper/index.pdf.\n\nJoulin, Armand, Edouard Grave, Piotr Bojanowski, et Tomas Mikolov. 2016. Bag of Tricks for Efficient Text Classification. https://arxiv.org/abs/1607.01759.\nLe modèle en production est donc un réseau de neurones peu profond d’environ un million de paramètres, de la famille fastText (Joulin et al. 2016). Il est désormais implémenté en PyTorch avec torchTextClassifiers.",
+    "crumbs": [
+      "Modèle"
+    ]
+  },
+  {
+    "objectID": "fr/model.html#architecture",
+    "href": "fr/model.html#architecture",
+    "title": "Modèle",
+    "section": "2 Architecture",
+    "text": "2 Architecture\n\n\n\n\n\n\nflowchart LR\n  T[\"Libellé d'activité&lt;br/&gt;(+ texte complémentaire)\"] --&gt; TOK[\"Tokenizer&lt;br/&gt;(sous-mots / n-grammes)\"]\n  TOK --&gt; EMB[\"Plongements des tokens&lt;br/&gt;(dim. 80)\"]\n  EMB --&gt; AGG[\"Moyenne&lt;br/&gt;(mean pooling)\"]\n  C[\"Variables catégorielles&lt;br/&gt;CJ, NAT, TYP, SRF, CRT\"] --&gt; CEMB[\"Un plongement&lt;br/&gt;par variable (dim. 16)\"]\n  AGG --&gt; CAT[\"Concaténation\"]\n  CEMB --&gt; CAT\n  CAT --&gt; HEAD[\"Couche linéaire&lt;br/&gt;~745 classes\"]\n  HEAD --&gt; SM[\"Softmax&lt;br/&gt;top 5 + indice de confiance\"]\n\n\n\n\nFigure 1: Architecture du modèle.\n\n\n\n\n\nLe modèle comporte trois parties :\n\nTexte. Le libellé est découpé en tokens de sous-mots. Le tokenizer (vocabulaire WordPiece ou n-grammes de caractères à la manière de fastText) est entraîné sur les données d’entraînement et versionné avec elles. Les sous-mots rendent le modèle robuste aux fautes de frappe, aux flexions et aux mots nouveaux. Les plongements des tokens sont moyennés en un vecteur unique qui représente le texte.\nVariables catégorielles. À l’époque de fastText, les variables annexes étaient ajoutées au texte sous forme de tokens artificiels (NAT_21 TYP_X …), ce qui relevait du contournement. Chacune dispose désormais de son propre plongement, appris conjointement avec la représentation du texte.\nTête. Une couche linéaire projette la représentation combinée sur les sous-classes de la nomenclature cible.\n\nLa même bibliothèque prend aussi en charge des couches d’auto-attention, l’attention sur les labels (label attention) et les tokenizers Hugging Face. Ces options sont évaluées sur le jeu de validation. Une architecture plus riche n’est retenue que si elle tient dans le budget de latence.",
+    "crumbs": [
+      "Modèle"
+    ]
+  },
+  {
+    "objectID": "fr/model.html#entraînement",
+    "href": "fr/model.html#entraînement",
+    "title": "Modèle",
+    "section": "3 Entraînement",
+    "text": "3 Entraînement\nL’entraînement est assuré par codif-ape-train, avec les réglages suivants :\n\nConfiguration : Hydra, qui gère le choix de la nomenclature (NAF rév. 2 ou NAF 2025), du modèle, du tokenizer et de l’optimisation.\nCadre logiciel : PyTorch Lightning.\n\nOptimiseur : Adam.\nTaux d’apprentissage : réduit lorsque la perte de validation stagne.\nArrêt précoce (early stopping) sur la perte de validation.\nLe meilleur point de sauvegarde (checkpoint) est conservé.\n\nPondération des observations : les lignes créées par les règles métier ou tirées de certaines sources peuvent être sur- ou sous-pondérées dans la fonction de perte (voir Protocole de réentraînement).\nExécution : un workflow Argo tourne sur un nœud GPU et entraîne en parallèle les modèles NAF rév. 2 et NAF 2025. Chaque exécution part d’un clone propre du dépôt et d’un environnement verrouillé.\nSuivi : chaque exécution enregistre dans MLflow :\n\nla configuration complète ;\nses jeux de données d’entrée ;\nles courbes d’apprentissage ;\nles métriques d’évaluation et les figures de diagnostic ;\nle modèle empaqueté.",
+    "crumbs": [
+      "Modèle"
+    ]
+  },
+  {
+    "objectID": "fr/model.html#indice-de-confiance-et-calibration",
+    "href": "fr/model.html#indice-de-confiance-et-calibration",
+    "title": "Modèle",
+    "section": "4 Indice de confiance et calibration",
+    "text": "4 Indice de confiance et calibration\nPour chaque déclaration, le modèle renvoie ses cinq codes les plus probables et leurs probabilités. La décision de coder automatiquement repose sur un indice de confiance (IC) : l’écart entre les deux plus fortes probabilités, \\(\\text{IC} = p_{(1)} - p_{(2)}\\).\n\nSi l’IC est supérieur ou égal à un seuil \\(\\tau\\), le premier code est attribué automatiquement.\nSinon, la déclaration part en reprise manuelle : un gestionnaire la code, en voyant les cinq suggestions.\n\nLe seuil règle l’arbitrage entre taux de codification automatique et exactitude de la codification automatique. Avec fastText, un seuil d’environ 0,75 envoyait environ 20 % des déclarations en reprise manuelle (Randriamanana et Faria 2025). La distribution des scores change d’un modèle à l’autre : le seuil doit donc être recalibré pour chaque nouveau modèle, sur un échantillon représentatif. Reprendre le seuil précédent déplacerait la charge de reprise manuelle de façon non maîtrisée.\nD’où l’importance de la calibration : une probabilité de 0,9 doit être juste dans environ 90 % des cas. Les scores « un contre tous » de fastText étaient mal calibrés. Le modèle PyTorch, entraîné avec une perte d’entropie croisée sur un softmax, est bien calibré d’emblée, comme l’a montré une mesure sur un échantillon de test de 300 000 libellés (Tayebjee et al. 2025). La calibration est mesurée à chaque exécution par l’erreur de calibration attendue (ECE) et le score de Brier.",
+    "crumbs": [
+      "Modèle"
+    ]
+  },
+  {
+    "objectID": "fr/model.html#évaluation",
+    "href": "fr/model.html#évaluation",
+    "title": "Modèle",
+    "section": "5 Évaluation",
+    "text": "5 Évaluation\nChaque exécution produit, sur les données de validation et de test :\n\nl’exactitude à chaque niveau de la nomenclature, de la section (niveau 1) à la sous-classe (niveau 5), car une erreur qui reste dans la bonne division coûte moins cher qu’une erreur qui change de section ;\nla calibration : ECE, score de Brier, histogramme des confiances ;\nla courbe exactitude–automatisation : l’exactitude des cas codés automatiquement en fonction de la part de cas codés automatiquement, lorsque le seuil varie. C’est sur cette courbe que le métier choisit son point de fonctionnement.\n\n\n\n\n\n\n\nImportantÉvaluer sur les bonnes données\n\n\n\nLes métriques calculées sur un jeu de test tiré des données d’entraînement sont optimistes, car ses labels partagent les biais des labels d’entraînement. Elles ne sont pas non plus représentatives du flux de production. La décision de déployer repose donc sur un « golden set » : un échantillon de référence tiré aléatoirement dans le flux de production et annoté à l’aveugle par des experts, qui ne voient pas la prédiction du modèle. Voir Protocole de réentraînement.",
+    "crumbs": [
+      "Modèle"
+    ]
+  },
+  {
+    "objectID": "fr/model.html#sec-results",
+    "href": "fr/model.html#sec-results",
+    "title": "Modèle",
+    "section": "6 Résultats",
+    "text": "6 Résultats\n\n6.1 fastText face à PyTorch\n\n\n\nTable 1: Comparaison des deux générations de modèles (Tayebjee et al. 2025).\n\n\nTayebjee, Meilame, Cédric Couralet, Nathan Randriamanana, et Julien Pramil. 2025. fastText, tout juste en production et déjà obsolète ? Présentation du package torchTextClassifiers pour la modernisation de la codification automatique via l’exemple de l’APE. Journées de méthodologie statistique (JMS). https://inseefrlab.github.io/codif-ape-prez/papers/jms-torchft/index.pdf.\n\n\n\n\n\n\n\n\n\n\nfastText\ntorchTextClassifiers\n\n\n\n\nTaux de codification automatique\n~80 %\n~80 %\n\n\nTemps moyen d’inférence (CPU, appel unitaire)\n&lt; 100 ms\n&lt; 300 ms\n\n\nCalibration\nLimitée\nExcellente\n\n\nVariables catégorielles\nAjoutées au texte\nPlongements dédiés\n\n\nExplicabilité\nAucune\nGradients intégrés, attention sur les labels\n\n\nEntraînement sur GPU\nNon\nOui\n\n\nMaintenance\nArchivé par l’éditeur (2024)\nMaintenu en interne, open source\n\n\n\n\n\n\nLe modèle PyTorch sacrifie un peu de latence au profit de la maintenabilité, de la calibration et de la capacité d’évolution. Sa latence reste dans le budget de production.\n\n\n6.2 NAF 2025\nExactitude sur le jeu de test du réentraînement en NAF 2025, par niveau (Randriamanana et Faria 2025) :\n\nRandriamanana, Nathan, et Thomas Faria. 2025. Changement de nomenclature statistique à l’ère du Machine Learning : réentraînement basé sur les LLM pour la révision de la NAF. Journées de méthodologie statistique (JMS). https://inseefrlab.github.io/codif-ape-prez/papers/jms2025-llm-relabeling/index.pdf.\n\n\n\nTable 2: Exactitude sur le jeu de test des modèles réentraînés sur les données NAF 2025, avant correction des données.\n\n\n\n\n\nModèle\nSection\nDivision\nGroupe\nClasse\nSous-classe\n\n\n\n\nfastText\n0,855\n0,833\n0,797\n0,784\n0,776\n\n\ntorchTextClassifiers\n0,92\n0,89\n0,86\n0,84\n0,83\n\n\n\n\n\n\nL’application des règles métier aux données d’entraînement (correction des données, ou data editing) a porté l’exactitude au niveau de la sous-classe à environ 0,88–0,90 pour les deux modèles. Le gain est important, mais il doit être interprété avec prudence. Les règles modifient aussi les labels de test : une partie du gain traduit donc un meilleur alignement sur les règles plutôt qu’une meilleure généralisation. Le protocole de réentraînement est justement conçu pour distinguer ces deux effets.",
+    "crumbs": [
+      "Modèle"
+    ]
+  },
+  {
+    "objectID": "fr/index.html",
+    "href": "fr/index.html",
+    "title": "La codification automatique de l’activité économique à l’Insee",
+    "section": "",
+    "text": "Toute entreprise qui s’immatricule en France décrit son activité en quelques mots. L’Insee doit ensuite traduire ce libellé en l’un des quelque 750 codes de la nomenclature d’activités française (NAF, déclinaison nationale de la NACE). Ce code APE structure les statistiques d’entreprises et les comptes nationaux. Il conditionne aussi une partie de la réglementation applicable à l’entreprise.\nDepuis fin 2022, cette codification est assurée par un modèle d’apprentissage automatique, appelé en temps réel par le répertoire Sirene. Cette note présente la chaîne MLOps (pipeline) qui l’entoure :",
+    "crumbs": [
+      "La codification automatique de l'activité économique à l'Insee"
+    ]
+  },
+  {
+    "objectID": "fr/index.html#comment-lire-cette-note",
+    "href": "fr/index.html#comment-lire-cette-note",
+    "title": "La codification automatique de l’activité économique à l’Insee",
+    "section": "Comment lire cette note",
+    "text": "Comment lire cette note\n\n\n\nTable 1: Structure de la note.\n\n\n\n\n\nChapitre\nContenu\n\n\n\n\n1. Contexte et historique\nLe code APE, la réforme du guichet unique, de Sicore à fastText puis à PyTorch\n\n\n2. Architecture\nPlateforme, dépôts, flux de bout en bout\n\n\n3. Données\nDonnées d’entraînement, moteur de règles auditable, passage à la NAF 2025 avec des LLM\n\n\n4. Modèle\nArchitecture, entraînement, indice de confiance, calibration, résultats\n\n\n5. Mise à disposition et déploiement\nEmpaquetage MLflow, API, CI/CD et GitOps\n\n\n6. Suivi et annotation\nDérive, tableaux de bord, Label Studio, audits par LLM\n\n\n7. Protocole de réentraînement\nGolden set, curation des données, règles métier, critères de validation\n\n\n8. Projets associés\ntorchTextClassifiers et GRAAL\n\n\n9. Enseignements\nCe qui a fonctionné, ce que nous referions, questions ouvertes\n\n\nRéférences\nPrésentations, articles, code\n\n\n\n\n\n\nLes lecteurs intéressés avant tout par la méthodologie peuvent aller directement au Protocole de réentraînement. Ceux qui s’intéressent à l’infrastructure commenceront par l’Architecture et la Mise à disposition.\n\n\n\n\n\n\nNoteÀ propos de cette note\n\n\n\nCette note est rédigée par le SSP Lab, l’équipe de data science de l’Insee. Tout le code est en open source sur GitHub. Les présentations de l’équipe sont rassemblées ici. Une version anglaise est disponible.",
+    "crumbs": [
+      "La codification automatique de l'activité économique à l'Insee"
+    ]
+  },
+  {
+    "objectID": "fr/context.html",
+    "href": "fr/context.html",
+    "title": "Contexte et historique",
+    "section": "",
+    "text": "Toute entreprise immatriculée en France reçoit un code APE (activité principale exercée). Ce code situe l’unité dans la NAF (nomenclature d’activités française), déclinaison nationale de la nomenclature européenne NACE. Il est rattaché aux identifiants de l’entreprise dans le répertoire Sirene, que l’Insee gère depuis 1973 et qui fait foi pour les numéros SIREN et SIRET.\nLe code APE n’est pas une simple étiquette administrative. Il sert à :\n\nconstituer les bases de sondage des enquêtes auprès des entreprises et produire les statistiques structurelles d’entreprises ;\nproduire les comptes nationaux et les indicateurs conjoncturels par branche ;\nappliquer des réglementations sectorielles (conventions collectives, assurances, certains impôts et aides).\n\nUne erreur de codification se propage donc à la fois dans les statistiques et dans la vie administrative de l’entreprise.\nLa nomenclature est hiérarchique et compte cinq niveaux :\n\n\n\nTable 1: Taille de la nomenclature NAF à chaque niveau. Pour la NAF 2025, les niveaux supérieurs suivent la NACE Rév. 2.1.\n\n\n\n\n\nNiveau\nNAF rév. 2 (2008)\nNAF 2025 (NACE Rév. 2.1)\n\n\n\n\nSections\n21\n22\n\n\nDivisions\n88\n87\n\n\nGroupes\n272\n287\n\n\nClasses\n615\n651\n\n\nSous-classes (code APE)\n732\n746\n\n\n\n\n\n\n\n\n\n\n\n\nNoteCe que l’on prédit\n\n\n\nLa cible est la sous-classe, le niveau le plus fin, avec environ 750 modalités possibles. Les niveaux supérieurs se déduisent directement du code. Les métriques sont donc calculées à chaque niveau de la hiérarchie.",
+    "crumbs": [
+      "Contexte et historique"
+    ]
+  },
+  {
+    "objectID": "fr/context.html#le-code-ape-et-la-nomenclature-nace",
+    "href": "fr/context.html#le-code-ape-et-la-nomenclature-nace",
+    "title": "Contexte et historique",
+    "section": "",
+    "text": "Toute entreprise immatriculée en France reçoit un code APE (activité principale exercée). Ce code situe l’unité dans la NAF (nomenclature d’activités française), déclinaison nationale de la nomenclature européenne NACE. Il est rattaché aux identifiants de l’entreprise dans le répertoire Sirene, que l’Insee gère depuis 1973 et qui fait foi pour les numéros SIREN et SIRET.\nLe code APE n’est pas une simple étiquette administrative. Il sert à :\n\nconstituer les bases de sondage des enquêtes auprès des entreprises et produire les statistiques structurelles d’entreprises ;\nproduire les comptes nationaux et les indicateurs conjoncturels par branche ;\nappliquer des réglementations sectorielles (conventions collectives, assurances, certains impôts et aides).\n\nUne erreur de codification se propage donc à la fois dans les statistiques et dans la vie administrative de l’entreprise.\nLa nomenclature est hiérarchique et compte cinq niveaux :\n\n\n\nTable 1: Taille de la nomenclature NAF à chaque niveau. Pour la NAF 2025, les niveaux supérieurs suivent la NACE Rév. 2.1.\n\n\n\n\n\nNiveau\nNAF rév. 2 (2008)\nNAF 2025 (NACE Rév. 2.1)\n\n\n\n\nSections\n21\n22\n\n\nDivisions\n88\n87\n\n\nGroupes\n272\n287\n\n\nClasses\n615\n651\n\n\nSous-classes (code APE)\n732\n746\n\n\n\n\n\n\n\n\n\n\n\n\nNoteCe que l’on prédit\n\n\n\nLa cible est la sous-classe, le niveau le plus fin, avec environ 750 modalités possibles. Les niveaux supérieurs se déduisent directement du code. Les métriques sont donc calculées à chaque niveau de la hiérarchie.",
+    "crumbs": [
+      "Contexte et historique"
+    ]
+  },
+  {
+    "objectID": "fr/context.html#dun-formulaire-structuré-au-texte-libre",
+    "href": "fr/context.html#dun-formulaire-structuré-au-texte-libre",
+    "title": "Contexte et historique",
+    "section": "2 D’un formulaire structuré au texte libre",
+    "text": "2 D’un formulaire structuré au texte libre\nÀ chaque création d’entreprise ou modification d’activité, l’entreprise dépose une déclaration (liasse) qui comporte un libellé de son activité. Jusqu’en 2022, un agent d’un centre de formalités des entreprises aidait le déclarant à remplir le formulaire. Les libellés d’activité étaient donc plutôt courts et normalisés.\nDeux réformes ont changé la donne :\n\nLa loi PACTE (2019) a créé un guichet unique en ligne, géré par l’INPI. Depuis le 1er janvier 2023, toutes les formalités d’entreprise passent par lui. Le libellé d’activité est devenu un champ de texte libre, saisi par le déclarant sans aucune aide.\nSirene 4, le nouveau système d’information du répertoire, est passé d’un traitement par lots nocturne à un traitement au fil de l’eau, fondé sur des micro-services. La migration a été progressive, à partir de fin 2022.\n\nRésultat : les textes sont plus longs, plus verbeux et plus variés. Ils comportent aussi toutes les fautes et les particularités d’écriture propres à une saisie libre.\nChaque année, environ 2 millions de libellés doivent être codés.",
+    "crumbs": [
+      "Contexte et historique"
+    ]
+  },
+  {
+    "objectID": "fr/context.html#trois-générations-de-moteurs-de-codification",
+    "href": "fr/context.html#trois-générations-de-moteurs-de-codification",
+    "title": "Contexte et historique",
+    "section": "3 Trois générations de moteurs de codification",
+    "text": "3 Trois générations de moteurs de codification\n\n\n\nTable 2: Moteurs successifs de codification APE.\n\n\n\n\n\nPériode\nMoteur\nPrincipe\nLimites\n\n\n\n\nAnnées 1990 → 2022\nSicore\nRègles déterministes, dictionnaires de mots-clés\nLe taux de codification automatique est tombé à environ 30 % sur les libellés en texte libre. Les règles étaient coûteuses à maintenir.\n\n\nFin 2022 → 2025\nfastText\nModèle supervisé (sac de mots et n-grammes de caractères), les variables annexes étant ajoutées au texte sous forme de tokens\nMeta a archivé la bibliothèque en mars 2024. Ni calibration, ni explicabilité, ni prise en charge des GPU.\n\n\n2025 →\nPyTorch (torchTextClassifiers)\nMême famille de modèles, reconstruite en PyTorch : un plongement (embedding) dédié par variable catégorielle, calibration, explicabilité\nInférence un peu plus lente qu’avec fastText, mais dans le budget.\n\n\n\n\n\n\nSicore a été développé dans les années 1990 (Meyer et Rivière 1997). Il traitait correctement les textes bien structurés de l’ancien système. Sur les libellés en texte libre, en revanche, il ne codait automatiquement qu’environ un cas sur trois. Le reste, soit environ 70 %, passait en reprise manuelle (Avouac et al. 2025).\n\nMeyer, Pascal, et Pascal Rivière. 1997. « SICORE, un outil et une méthode pour le chiffrement automatique à l’INSEE ». Blaise Users Conference. https://www.blaiseusers.org/1997/papers/meyer97.pdf.\n\nAvouac, Romain, Thomas Faria, et Frédéric Comte. 2025. L’apport des technologies cloud pour industrialiser le processus d’innovation statistique. Document de travail -- Méthodologie statistique Nos. M2025-05. Insee. https://www.insee.fr/fr/statistiques/8614378.\nLe modèle fastText a été mis en production progressivement à partir de novembre 2022, avec un seuil d’abord volontairement prudent. Il a ramené le taux de codification automatique à environ 80 %, ce qui a rendu la réforme du guichet unique tenable.\nLorsque Meta a archivé le dépôt fastText en mars 2024, l’équipe a engagé la migration vers PyTorch. Elle en a profité pour corriger les faiblesses structurelles du modèle : traitement des variables catégorielles, calibration et explicabilité. Il en est résulté le package open source torchTextClassifiers, présenté dans Projets associés.",
+    "crumbs": [
+      "Contexte et historique"
+    ]
+  },
+  {
+    "objectID": "fr/context.html#contraintes-de-production",
+    "href": "fr/context.html#contraintes-de-production",
+    "title": "Contexte et historique",
+    "section": "4 Contraintes de production",
+    "text": "4 Contraintes de production\nLe modèle est appelé par le système d’information Sirene pour chaque déclaration, dès son arrivée. Cela impose des contraintes fortes :\n\nInférence unitaire sur CPU dans un environnement fermé : pas de GPU, pas d’accès à internet, et toutes les dépendances embarquées avec le modèle.\nFaible latence : l’objectif est d’environ 200 ms par appel.\nRepli sur l’humain : le modèle renvoie ses cinq codes les plus probables, chacun avec sa probabilité, ainsi qu’un indice de confiance. En dessous d’un seuil, la déclaration part en reprise manuelle : une équipe de gestionnaires la code en s’appuyant sur les suggestions du modèle.\nTraçabilité : chaque prédiction doit pouvoir être rattachée à la version exacte du modèle qui l’a produite.\n\nLe taux de codification automatique est la part des déclarations codées sans intervention humaine, avec une qualité maîtrisée. C’est l’indicateur métier clé, car il détermine la charge de travail des équipes de reprise manuelle.",
+    "crumbs": [
+      "Contexte et historique"
+    ]
+  },
+  {
+    "objectID": "fr/context.html#pourquoi-le-mlops",
+    "href": "fr/context.html#pourquoi-le-mlops",
+    "title": "Contexte et historique",
+    "section": "5 Pourquoi le MLOps",
+    "text": "5 Pourquoi le MLOps\nUn modèle entraîné une fois puis laissé en l’état ne reste pas performant longtemps, pour plusieurs raisons :\n\nla façon dont les déclarants décrivent leur activité dérive avec le temps : nouveaux métiers, nouvelles formes juridiques, nouvelles formulations ;\nles experts métier signalent des erreurs qu’il faut corriger vite et durablement ;\nla nomenclature elle-même évolue : le passage de la NAF rév. 2 à la NAF 2025 a imposé de recoder tout le jeu d’entraînement (voir Données) ;\nles bibliothèques dont dépend le modèle sont abandonnées (fastText) ou changent de version majeure (MLflow, PyTorch).\n\nLa suite de cette note décrit le système qui fait de ce travail une routine : un entraînement reproductible, un registre de modèles versionné, une API déployée en GitOps, un suivi et une annotation en continu, et un protocole de réentraînement doté de critères de validation explicites.",
+    "crumbs": [
+      "Contexte et historique"
+    ]
+  },
+  {
+    "objectID": "fr/architecture.html",
+    "href": "fr/architecture.html",
+    "title": "Architecture",
+    "section": "",
+    "text": "La chaîne repose sur quelques principes, partagés avec le cadre MLOps européen élaboré dans le projet AIML4OS (Tayebjee et al. 2025) :\n\nTayebjee, Meilame, Nina Niederhametner, Bogdan Levagin, et Ariane Lestrade. 2025. From text to code (WP10.4) – MLOps tutorial. AIML4OS project, Work Package 10. https://aiml4os.github.io/WP10_Cluster4_MLOps/.\n\nSéparer données, code et calcul.\n\nLes données sont stockées au format Parquet, dans un stockage objet S3.\nLe code est versionné dans Git.\nLe calcul est assuré par des conteneurs lancés à la demande.\n\nTout rendre reproductible.\n\nChaque entraînement est piloté par un fichier de configuration.\nChaque environnement est figé (fichiers de verrouillage uv, images Docker).\nChaque jeu de données, chaque modèle et chaque image est versionné.\n\nEmpaqueter le modèle avec son prétraitement, pour que ce qui a été évalué soit exactement ce qui est servi (pas d’écart entre entraînement et service, le training/serving skew).\nDécrire les déploiements de façon déclarative. L’état de chaque environnement est un ensemble de manifestes stockés dans Git. Un contrôleur GitOps aligne le cluster sur ces manifestes.\nGarder l’humain dans la boucle. Les prédictions peu sûres partent en reprise manuelle, et c’est l’annotation humaine qui mesure la qualité.",
+    "crumbs": [
+      "Architecture"
+    ]
+  },
+  {
+    "objectID": "fr/architecture.html#principes-de-conception",
+    "href": "fr/architecture.html#principes-de-conception",
+    "title": "Architecture",
+    "section": "",
+    "text": "La chaîne repose sur quelques principes, partagés avec le cadre MLOps européen élaboré dans le projet AIML4OS (Tayebjee et al. 2025) :\n\nTayebjee, Meilame, Nina Niederhametner, Bogdan Levagin, et Ariane Lestrade. 2025. From text to code (WP10.4) – MLOps tutorial. AIML4OS project, Work Package 10. https://aiml4os.github.io/WP10_Cluster4_MLOps/.\n\nSéparer données, code et calcul.\n\nLes données sont stockées au format Parquet, dans un stockage objet S3.\nLe code est versionné dans Git.\nLe calcul est assuré par des conteneurs lancés à la demande.\n\nTout rendre reproductible.\n\nChaque entraînement est piloté par un fichier de configuration.\nChaque environnement est figé (fichiers de verrouillage uv, images Docker).\nChaque jeu de données, chaque modèle et chaque image est versionné.\n\nEmpaqueter le modèle avec son prétraitement, pour que ce qui a été évalué soit exactement ce qui est servi (pas d’écart entre entraînement et service, le training/serving skew).\nDécrire les déploiements de façon déclarative. L’état de chaque environnement est un ensemble de manifestes stockés dans Git. Un contrôleur GitOps aligne le cluster sur ces manifestes.\nGarder l’humain dans la boucle. Les prédictions peu sûres partent en reprise manuelle, et c’est l’annotation humaine qui mesure la qualité.",
+    "crumbs": [
+      "Architecture"
+    ]
+  },
+  {
+    "objectID": "fr/architecture.html#la-plateforme",
+    "href": "fr/architecture.html#la-plateforme",
+    "title": "Architecture",
+    "section": "2 La plateforme",
+    "text": "2 La plateforme\nLe développement, l’entraînement et la préproduction se font entièrement sur le SSP Cloud, la plateforme de data science du service statistique public français. Le SSP Cloud repose sur le projet open source Onyxia (Avouac et al. 2025). Ce choix est possible parce que les libellés d’activité de Sirene ne sont pas des données sensibles.\n\nAvouac, Romain, Thomas Faria, et Frédéric Comte. 2025. « A Cloud-Native Data Science Platform for Official Statistics ». In Foundations and Advances of Machine Learning in Official Statistics. Society, Environment et Statistics. Springer. https://doi.org/10.1007/978-3-032-10004-7_8.\n\n\n\nTable 1: Pile technique.\n\n\n\n\n\nComposant\nOutil\nRôle dans la chaîne\n\n\n\n\nStockage objet\nMinIO (API S3)\nExtractions brutes, jeux de données nettoyés, découpages, tokenizers, artefacts de modèles, exports d’annotation\n\n\nEnvironnements interactifs\nOnyxia (VS Code, Jupyter)\nExploration et développement\n\n\nOrchestration\nArgo Workflows\nTraitements par lots pour la préparation des données et l’entraînement sur nœuds GPU (A2, H100)\n\n\nSuivi des expériences et registre\nMLflow\nParamètres, métriques, figures et jeux de données de chaque exécution ; modèles versionnés\n\n\nMise à disposition\nFastAPI sur Kubernetes\nAPI REST exposant le modèle\n\n\nLivraison continue\nGitHub Actions, Argo CD\nConstruction des images Docker ; synchronisation GitOps du cluster\n\n\nAnnotation\nLabel Studio\nCampagnes d’annotation par les experts\n\n\nInférence LLM\nvLLM (API compatible OpenAI)\nRéétiquetage hors ligne (NAF 2025), audit et données synthétiques (GRAAL)\n\n\n\n\n\n\nLa production tourne sur l’infrastructure Kubernetes interne de l’Insee. Le modèle n’y est promu qu’après avoir été qualifié sur une plateforme de préproduction identique à la production.",
+    "crumbs": [
+      "Architecture"
+    ]
+  },
+  {
+    "objectID": "fr/architecture.html#dépôts",
+    "href": "fr/architecture.html#dépôts",
+    "title": "Architecture",
+    "section": "3 Dépôts",
+    "text": "3 Dépôts\nLe code est organisé en dépôts à vocation unique, regroupés dans l’organisation GitHub InseeFrLab :\n\n\n\nTable 2: Les dépôts et leurs contrats.\n\n\n\n\n\nDépôt\nProduit\nConsomme\n\n\n\n\ncodif-ape-nace-revision\nLabels NAF 2025 des données d’entraînement, recodés par LLM\nExtractions Sirene, table de passage, notes explicatives, annotations des experts\n\n\ncodif-ape-preprocess\nDonnées d’entraînement nettoyées et augmentées ; découpages entraînement / validation / test ; journal d’audit de chaque modification de label\nExtractions brutes de Sirene, données réétiquetées en NAF 2025, tables de référence\n\n\ncodif-ape-train\nUn modèle entraîné, empaqueté sous forme de pyfunc MLflow, avec ses métriques et ses figures de diagnostic\nDécoupages produits par preprocess ; torchTextClassifiers\n\n\ncodif-ape-api\nUne image Docker de l’API REST\nUn modèle enregistré dans MLflow, chargé au démarrage\n\n\ncodif-ape-cd\nLes manifestes Kubernetes de tous les services (API, tableau de bord, ETL d’annotation, applications de revue)\nImages Docker ; noms et versions des modèles\n\n\ntorchTextClassifiers\nUne bibliothèque PyTorch générique de classification de textes (publiée sur PyPI)\n—\n\n\nGRAAL\nDes agents LLM pour coder, auditer et générer des labels ; des applications de revue\nLe graphe de la nomenclature (Neo4j), les notes explicatives, l’API de production\n\n\ncodif-ape-prez\nPrésentations et articles\n—\n\n\n\n\n\n\nLes dépôts ne s’importent pas les uns les autres. Ils communiquent par des artefacts :\n\npreprocess publie l’emplacement du dernier jeu de données, avec les listes de variables, dans un fichier de configuration partagé sur S3 ; train lit ce fichier.\ntrain enregistre dans MLflow un modèle autonome, qui embarque son propre code d’inférence.\napi télécharge ce modèle au démarrage, à partir d’un nom et d’une version de modèle passés en variables d’environnement.\ncd détermine l’image, et la version du modèle, que fait tourner chaque environnement.\n\nDéployer un nouveau modèle dans un environnement revient donc à modifier une ligne d’un manifeste. Cette modification se relit comme n’importe quelle autre modification de code.",
+    "crumbs": [
+      "Architecture"
+    ]
+  },
+  {
+    "objectID": "fr/architecture.html#flux-de-bout-en-bout",
+    "href": "fr/architecture.html#flux-de-bout-en-bout",
+    "title": "Architecture",
+    "section": "4 Flux de bout en bout",
+    "text": "4 Flux de bout en bout\n\n\n\n\n\n\nflowchart LR\n  subgraph SRC[\"Sources\"]\n    SIR[\"Extractions Sirene\"]\n    ANN[\"Annotations d'experts&lt;br/&gt;(Label Studio)\"]\n    LLM[\"Réétiquetage par LLM&lt;br/&gt;(codif-ape-nace-revision, vLLM)\"]\n  end\n  subgraph PRE[\"codif-ape-preprocess\"]\n    RUL[\"Moteur de règles&lt;br/&gt;+ journal d'audit\"]\n    SPL[\"Découpages&lt;br/&gt;entraînement / validation / test\"]\n  end\n  subgraph TRN[\"codif-ape-train\"]\n    TTC[\"torchTextClassifiers&lt;br/&gt;(Lightning, GPU)\"]\n    EVAL[\"Évaluation&lt;br/&gt;calibration, niveaux 1–5\"]\n  end\n  REG[(\"Registre&lt;br/&gt;MLflow\")]\n  subgraph SRV[\"Mise à disposition\"]\n    IMG[\"codif-ape-api&lt;br/&gt;image Docker\"]\n    GIT[\"codif-ape-cd&lt;br/&gt;manifestes\"]\n    K8S[\"Kubernetes&lt;br/&gt;(Argo CD)\"]\n  end\n  SIR --&gt; RUL\n  LLM --&gt; RUL\n  ANN --&gt; RUL\n  RUL --&gt; SPL --&gt; TTC --&gt; EVAL --&gt; REG\n  REG --&gt;|\"nom + version du modèle\"| K8S\n  IMG --&gt; K8S\n  GIT --&gt; K8S\n  K8S --&gt;|\"prédictions, journaux\"| MON[\"Tableau de bord&lt;br/&gt;de suivi\"]\n  MON --&gt;|\"échantillons à annoter\"| ANN\n\n\n\n\nFigure 1: Circulation des données et des modèles entre les dépôts.\n\n\n\n\n\nChaque bloc est détaillé dans un chapitre dédié :\n\nDonnées : sources, nettoyage des labels et passage à la NAF 2025.\nModèle : architecture, entraînement et évaluation.\nMise à disposition et déploiement : empaquetage, API et GitOps.\nSuivi et annotation : boucler la boucle.\nProtocole de réentraînement : comment la boucle aboutit, sans risque, à un nouveau modèle.",
+    "crumbs": [
+      "Architecture"
+    ]
+  },
+  {
+    "objectID": "fr/architecture.html#organisation-du-développement",
+    "href": "fr/architecture.html#organisation-du-développement",
+    "title": "Architecture",
+    "section": "5 Organisation du développement",
+    "text": "5 Organisation du développement\nL’équipe travaille dans un dépôt parapluie, codif-ape, qui rassemble tous les dépôts ci-dessus sous forme de sous-modules Git suivant la branche main. C’est un espace de travail, pas une unité de livraison : chaque dépôt garde ses propres tags de version et sa propre intégration continue.\nTous les dépôts suivent les mêmes conventions :\n\nuv pour les environnements Python ;\npre-commit avec ruff pour la qualité du code ;\nRenovate pour la mise à jour des dépendances ;\nGitHub Actions pour la construction des images et de la documentation.",
+    "crumbs": [
+      "Architecture"
+    ]
+  },
+  {
+    "objectID": "en/retraining.html",
+    "href": "en/retraining.html",
+    "title": "Retraining protocol",
+    "section": "",
+    "text": "Retraining a model is easy. Retraining it so that it is demonstrably no worse than the one in production, under labels that are partly produced by that very model, is hard. This chapter describes the protocol we use for that. It is the methodological core of the pipeline.\nThe protocol follows a quarterly cycle. During quarter \\(n\\), the model \\(f_n\\) is in production with a threshold \\(\\tau_n\\), and the cycle produces \\(f_{n+1}\\) and \\(\\tau_{n+1}\\).",
+    "crumbs": [
+      "Retraining protocol"
+    ]
+  },
+  {
+    "objectID": "en/retraining.html#sec-golden",
+    "href": "en/retraining.html#sec-golden",
+    "title": "Retraining protocol",
+    "section": "1 What the production flow gives us",
+    "text": "1 What the production flow gives us\nThe flow of declarations \\(F_n\\) received during quarter \\(n\\) splits naturally into several sets. Each one has its own value and its own selection bias:\n\n\n\nTable 1: The four sources of labels in a production cycle.\n\n\n\n\n\n\n\n\n\n\n\n\nSet\nWhat it is\nWho labels it\nBias\nUse\n\n\n\n\nGolden set \\(G_n\\)\nA random 1–3 % sample of the flow, annotated blind (without seeing the model’s prediction)\nExperts\nNone\nEvaluation only, never training\n\n\nManual set \\(M_n\\)\nCases below the threshold (~20–25 % of the flow)\nHuman coders\nYes: the cases that are hard for \\(f_n\\)\nTraining\n\n\nAutomatic set \\(A_n\\)\nCases above the threshold\nThe model \\(f_n\\) itself\nYes: the cases that are easy for \\(f_n\\)\nTraining, after curation\n\n\nKnown cases \\(K_n\\)\nValidated business rules (e.g. “LMNP” → furnished rental)\nExperts\nYes: reported errors\nMust pass at ~100 %\n\n\n\n\n\n\n\\(G_n\\), \\(M_n\\) and \\(A_n\\) partition the flow, while \\(K_n\\) comes from outside it. Known cases come from two sources:\n\nbusiness feedback, mostly errors spotted after the fact in automatically coded cases;\nrecurring error patterns mined from the manual set (see below).\n\nWe write \\(\\bar{X}_n = \\bigcup_{k \\le n} X_k\\) for the set accumulated over quarters, possibly within a sliding window.\n\n\n\n\n\n\nflowchart LR\n  F[\"Flow F_n\"] --&gt;|\"random 1–3 %\"| G[\"G_n: blind expert annotation\"]\n  F --&gt; R{\"CI ≥ τ_n ?\"}\n  R --&gt;|\"no (~20–25 %)\"| M[\"M_n: manual coding\"]\n  R --&gt;|\"yes\"| A[\"A_n: automatic coding\"]\n  A -.-&gt;|\"reported errors\"| K[\"K_n: validated rules\"]\n  M -.-&gt;|\"recurring patterns, after review\"| K\n\n\n\n\nFigure 1: How the production flow splits.\n\n\n\n\n\n\n\n\n\n\n\nImportantThe golden set is not optional\n\n\n\nWithout a random, blind sample of the flow, there is no unbiased estimate of the accuracy of automatic coding. It is then impossible to set the threshold, compare two models, or measure drift with labels. Manual corrections cannot replace it, because they are selected on the model’s failures. Running a small, continuous annotation of the flow is the single most important organisational prerequisite of the protocol.\n\n\nThe golden set is split once and for all into two halves, using a hash of each declaration’s identifier. This keeps the split stable as the set grows:\n\n\\(\\bar{G}^{\\text{val}}\\) is used for every choice: the threshold, calibration, architecture and hyper-parameters, and the selection of auxiliary engines and candidate rules;\n\\(\\bar{G}^{\\text{test}}\\) is used only for the final verdict.",
+    "crumbs": [
+      "Retraining protocol"
+    ]
+  },
+  {
+    "objectID": "en/retraining.html#building-the-next-training-set",
+    "href": "en/retraining.html#building-the-next-training-set",
+    "title": "Retraining protocol",
+    "section": "2 Building the next training set",
+    "text": "2 Building the next training set\n\n2.1 The accuracy of automatic coding can be estimated\nWe do not know which automatic codes are wrong, but we can estimate how many are. The golden set is a random sample of the flow, so its above-threshold part \\(G_n^A = \\{x \\in G_n : \\text{CI}_n(x) \\ge \\tau_n\\}\\) is a random sample of \\(A_n\\). The accuracy of \\(f_n\\) on \\(G_n^A\\), with a confidence interval (Wilson or bootstrap), estimates the accuracy of automatic coding. Accumulating over quarters gives enough data for this estimate.\n\n\n2.2 Curating the automatic set: focus on disagreements\nFeeding \\(A_n\\) back into training with the labels of \\(f_n\\) is self-training: the model learns nothing new, and its confident errors get reinforced. To break this loop, we compare \\(f_n\\) with independent engines \\(E\\). None of them is an oracle:\n\nthe rule engine of codif-ape-preprocess applies deterministic rules, which often abstain, plus a cautious extension to similar descriptions;\nthe LLM agents of GRAAL navigate the classification and read the explanatory notes. They are slow, but latency does not matter in an offline batch.\n\nThe global accuracy of an engine on the golden set is not the right question. What matters is who is right when \\(E\\) and \\(f_n\\) disagree on the automatic set:\n\n\n\nTable 2: Decision rule for automatically coded cases.\n\n\n\n\n\n\n\n\n\n\n\nOn \\(A_n\\)\n\\(E\\) abstains\n\\(E\\) agrees with \\(f_n\\)\n\\(E\\) disagrees with \\(f_n\\)\n\n\n\n\nAction\nKeep \\(f_n\\)’s label (its accuracy is known), with a reduced weight\nKeep, with high confidence\nArbitrate\n\n\n\n\n\n\nDisagreements are most likely the confident errors of \\(f_n\\), so they are the most valuable examples. They can be handled in three ways:\n\nTargeted human annotation of the disagreements. This is probably the best use of an annotation budget, in the spirit of query by committee.\nAdopting the engine’s label, if on \\(\\bar{G}^{\\text{val}} \\cap \\{\\text{CI}_n \\ge \\tau_n,\\ E \\ne f_n\\}\\) the engine is right significantly more often than \\(f_n\\). There is no absolute reliability threshold: the criterion is comparative, and conditional on the disagreement zone.\nExcluding unarbitrated disagreements from training. This is the default when there is no budget and no evidence. It removes the hardest automatic cases, which is acceptable because the manual set already covers the hard zone.\n\nThe same criterion is used to choose among the variants of the LLM engine (retrieval-augmented, agentic, full agent, or a vote between them). Three precautions apply:\n\nmeasure on \\(\\bar{G}^{\\text{val}}\\), never on \\(\\bar{G}^{\\text{test}}\\), since this choice shapes the training data;\ncompare at similar coverage, since an engine that abstains often wins the disagreement zone mechanically;\nswitch variants only when the gap exceeds the confidence intervals.\n\nTo control the cost of LLM engines, they can be restricted to a band of moderate confidence \\(\\tau_n \\le \\text{CI} &lt; \\tau'\\): very confident predictions are rarely wrong.\n\n\n2.3 Known cases: propagate rather than overweight\nSimply overweighting known cases rarely works. The training set usually contains the same descriptions with the old code, so the model sees contradictory labels. The protocol therefore:\n\nturns each piece of business feedback into a rule, and applies it to the whole training set through the rule engine;\noptionally, for the very short list of cases where 100 % accuracy is required, adds a rule layer in front of the model in production. The fix is then guaranteed, auditable and immediate, with no retraining needed. This layer must stay small: an ever-growing stock of rules is what made Sicore fail.\n\nChecks before training. Propagation is checked automatically, and the checks block training if they fail:\n\nexact contradictions: a join between the known cases and the new training set on the deduplication key (normalised description plus auxiliary variables) must return no row with a different code;\nnear-duplicates: nearest neighbours of each known case (character n-gram TF-IDF, or the model’s embeddings) that carry another code go to human review, since a similar description may legitimately belong to another code;\nthe number of conflicts, by source and by quarter, is logged. This shows where errors come from, and measures the internal contradiction rate of the training set, a direct indicator of label noise.\n\nMining rules from manual corrections. In the manual set, rows where the human code differs from \\(f_n\\)’s prediction are corrected errors. A single error is not a rule, but a recurring one is a good candidate. The principle is: automation proposes, statistical filters sort, an expert decides.\n\nDetect recurring patterns on the accumulated manual set:\n\nidentical normalised descriptions with enough support and a dominant code that \\(f_n\\) misses;\ndiscriminating tokens, found with association rules (support, confidence, lift), which work well for acronyms like “LMNP”;\nclusters of errors for the same (predicted, corrected) pair, in the model’s embedding space.\n\nDraft the rule with an LLM, which has access to the explanatory notes, without letting it decide.\nFilter automatically. Apply each candidate rule to the training set and to \\(\\bar{G}^{\\text{val}}\\), then measure how many rows it touches and how precise it is. Reject rules that are too broad or too imprecise.\nExpert validation in a review queue that shows the rule, its examples and its counter-examples.\n\nThe rule repository is versioned. Each rule records its origin, its date and who validated it, so that it can be audited or withdrawn.\n\n\n2.4 Assembly\nThe next training set is\n\\[\n\\mathcal{D}_{n+1} = \\mathcal{D}_n \\cup M_n \\cup \\tilde{A}_n \\cup K_n,\n\\]\nwhere \\(\\tilde{A}_n\\) is the curated automatic set. It is then processed as follows:\n\nDeduplicated on (normalised description, auxiliary variables). Conflicts are resolved by source priority, known cases &gt; manual &gt; curated automatic &gt; history, and then by recency.\nTagged: every observation carries its source and quarter. This enables source-dependent weights (e.g. automatic labels weigh less than human ones) and per-source monitoring of the loss.\nHistory is down-weighted by age, or truncated. Old labels are noisier and reflect an older flow.\nVersioned: each training set is a snapshot on S3 with a hash, logged with the training run.\n\nTwo further rules apply:\n\nThe training set is not representative of the flow, since the manual set over-represents hard cases. This is why the threshold and calibration are always set on \\(\\bar{G}^{\\text{val}}\\), never on a validation split drawn from the training data.\nThe golden set never enters training. The flow is very repetitive, so identical descriptions in both are normal. Metrics are therefore also published on never-seen descriptions.\n\nA random validation split of the training set is used only for early stopping.",
+    "crumbs": [
+      "Retraining protocol"
+    ]
+  },
+  {
+    "objectID": "en/retraining.html#quality-gates-f_n1-against-f_n",
+    "href": "en/retraining.html#quality-gates-f_n1-against-f_n",
+    "title": "Retraining protocol",
+    "section": "3 Quality gates: \\(f_{n+1}\\) against \\(f_n\\)",
+    "text": "3 Quality gates: \\(f_{n+1}\\) against \\(f_n\\)\n\n\n\nTable 3: Gates a candidate model must pass.\n\n\n\n\n\n\n\n\n\n\n\nGate\nData\nPurpose\nCriterion\n\n\n\n\n1\nKnown cases \\(\\bar{K}_n\\) and reworded variants \\(K'_n\\) not seen in training\nBusiness non-regression (unit tests)\n≥ 99 %; failures listed one by one\n\n\n2\n\\(\\bar{G}^{\\text{test}}\\)\nGeneralisation\nNon-inferiority against \\(f_n\\), with a paired test (McNemar or paired bootstrap)\n\n\n3\n\\(\\bar{G}^{\\text{test}}\\)\nBusiness KPI\nAutomation rate at target accuracy \\(p^*\\) ≥ that of \\(f_n\\)\n\n\n\n\n\n\nOn known cases, a high score can simply mean the model memorised them. The reworded variants check that the fix generalises. They can be generated by GRAAL’s Code2Text agents.\nWe do not evaluate on the manual set. It is in the training data of \\(f_{n+1}\\), and it is selected on the failures of \\(f_n\\), so by construction it is biased against \\(f_n\\). For a signal on hard cases, we use \\(\\bar{G} \\cap \\{\\text{CI}_n &lt; \\tau_n\\}\\), which is an unbiased random sample of the hard zone.\nMetrics reported on \\(\\bar{G}^{\\text{test}}\\):\n\naccuracy at each level of the classification;\nmacro-F1 and performance on rare classes;\ncalibration (ECE);\nthe risk–coverage curve and the area under it (AURC);\ncoverage at target accuracy \\(p^*\\), the KPI that drives the manual coding workload;\nall of the above by quarter of the golden set, to reveal drift.\n\nThe threshold is recalibrated for each model on \\(\\bar{G}^{\\text{val}}\\).\nThree principles guide the comparison:\n\nHow to beat \\(f_n\\). The levers are the manual set (human labels exactly where the model fails, which amounts to active learning), the curated disagreements, cleaner data and more recent data. Iterating on architectures until the test set improves would amount to overfitting it, so that iteration happens on \\(\\bar{G}^{\\text{val}}\\).\nNon-regression is the gate; improvement is the goal. Requiring a strict improvement every quarter is unrealistic.\nTraining on known cases and manual corrections is not leakage. Leakage begins when a metric computed on training data is presented as a measure of generalisation. As long as \\(\\bar{G}^{\\text{test}}\\) stays untouched, the protocol is clean.\n\nTraceability. The MLflow run of each candidate records:\n\nthe dataset version, the rule repository version and the LLM engine variant;\nthe hyper-parameters and metrics;\na “\\(n\\) vs. \\(n+1\\)” comparison report as an HTML artifact.\n\nThe registry tracks the champion and the challenger.",
+    "crumbs": [
+      "Retraining protocol"
+    ]
+  },
+  {
+    "objectID": "en/retraining.html#sec-preprod",
+    "href": "en/retraining.html#sec-preprod",
+    "title": "Retraining protocol",
+    "section": "4 Qualification and release",
+    "text": "4 Qualification and release\nEven with an unchanged architecture, qualification is not a formality:\n\nIso-production qualification: p95 latency and memory, on CPU, on the pre-production platform.\nOnline/offline parity: the served model must reproduce the offline predictions on \\(\\bar{G}^{\\text{test}}\\) exactly. This is a cheap test that catches preprocessing or library-version mismatches.\nThe threshold and the calibration ship inside the model artifact, not in a separate configuration.\nShadow deployment for a few weeks: \\(f_{n+1}\\) scores the real flow next to \\(f_n\\). We monitor the effective automation rate, the agreement with \\(f_n\\) and the score distribution. Disagreements feed annotation.\nRollback means pointing production back at \\(f_n\\).",
+    "crumbs": [
+      "Retraining protocol"
+    ]
+  },
+  {
+    "objectID": "en/retraining.html#comparing-models-over-time",
+    "href": "en/retraining.html#comparing-models-over-time",
+    "title": "Retraining protocol",
+    "section": "5 Comparing models over time",
+    "text": "5 Comparing models over time\nScores obtained on different golden sets cannot be compared. The model history is therefore built by re-evaluating all past models on the latest \\(\\bar{G}^{\\text{test}}\\).\nUntil the golden set is fed continuously, label-free indicators (automation rate, distribution of the confidence index, new vocabulary, agreement with the auxiliary engines) are the only drift signals, and alert thresholds on them can trigger an out-of-cycle retraining.",
+    "crumbs": [
+      "Retraining protocol"
+    ]
+  },
+  {
+    "objectID": "en/retraining.html#overview",
+    "href": "en/retraining.html#overview",
+    "title": "Retraining protocol",
+    "section": "6 Overview",
+    "text": "6 Overview\n\n\n\n\n\n\nflowchart TD\n  subgraph Q[\"Quarter n: production runs f_n, τ_n\"]\n    G[\"G_n\"]\n    M[\"M_n\"]\n    A[\"A_n\"]\n    K[\"K_n\"]\n  end\n  A --&gt; C[\"Curation: rules + LLM engines&lt;br/&gt;agreement / disagreement\"]\n  C --&gt;|agreements| At[\"Ã_n\"]\n  C --&gt;|disagreements| H[\"Targeted annotation\"] --&gt; At\n  M -.-&gt;|\"recurring patterns&lt;br/&gt;+ expert review\"| K\n  K --&gt; RL[\"Rules propagated to all of D\"]\n  D0[\"D_n\"] & M & At & RL --&gt; D1[\"D_n+1: dedup, conflicts, weights, version\"]\n  D1 --&gt; T[\"Train f_n+1\"]\n  G --&gt; GV[\"Ḡ val: threshold, calibration, selection\"] --&gt; T\n  G --&gt; GT[\"Ḡ test\"]\n  T --&gt; E{\"Gates: K / K', non-inferiority,&lt;br/&gt;coverage at p*\"}\n  GT --&gt; E\n  E --&gt;|fail| T\n  E --&gt;|pass| P[\"Qualification: latency, parity, shadow\"]\n  P --&gt; PR[\"Production: f_n+1, τ_n+1\"]\n\n\n\n\nFigure 2: One retraining cycle.",
+    "crumbs": [
+      "Retraining protocol"
+    ]
+  },
+  {
+    "objectID": "en/monitoring.html",
+    "href": "en/monitoring.html",
+    "title": "Monitoring and annotation",
+    "section": "",
+    "text": "A coding model in production can degrade in several ways, which the European MLOps framework sorts into a taxonomy (Tayebjee et al. 2025, ch. 4):\n\nTayebjee, Meilame, Nina Niederhametner, Bogdan Levagin, and Ariane Lestrade. 2025. From Text to Code (WP10.4) – MLOps Tutorial. AIML4OS project, Work Package 10. https://aiml4os.github.io/WP10_Cluster4_MLOps/.\n\n\n\nTable 1: Sources of degradation.\n\n\n\n\n\n\n\n\n\nDrift\nExample in APE coding\n\n\n\n\nCovariate shift: the inputs change\nNew trades and new phrasings appear, and the one-stop-shop reform made descriptions longer\n\n\nPrior shift: the class mix changes\nWaves of registrations in particular sectors, such as ride-hailing or furnished rentals\n\n\nConcept drift: the input–label relationship changes\nClassification revision (NAF rev. 2 → NAF 2025); a brand that becomes a new activity (e.g. “Uber” → “Uber Eats”)\n\n\nUpstream failure\nA field that is no longer filled in, or a change in the form’s format",
+    "crumbs": [
+      "Monitoring and annotation"
+    ]
+  },
+  {
+    "objectID": "en/monitoring.html#what-can-go-wrong",
+    "href": "en/monitoring.html#what-can-go-wrong",
+    "title": "Monitoring and annotation",
+    "section": "",
+    "text": "A coding model in production can degrade in several ways, which the European MLOps framework sorts into a taxonomy (Tayebjee et al. 2025, ch. 4):\n\nTayebjee, Meilame, Nina Niederhametner, Bogdan Levagin, and Ariane Lestrade. 2025. From Text to Code (WP10.4) – MLOps Tutorial. AIML4OS project, Work Package 10. https://aiml4os.github.io/WP10_Cluster4_MLOps/.\n\n\n\nTable 1: Sources of degradation.\n\n\n\n\n\n\n\n\n\nDrift\nExample in APE coding\n\n\n\n\nCovariate shift: the inputs change\nNew trades and new phrasings appear, and the one-stop-shop reform made descriptions longer\n\n\nPrior shift: the class mix changes\nWaves of registrations in particular sectors, such as ride-hailing or furnished rentals\n\n\nConcept drift: the input–label relationship changes\nClassification revision (NAF rev. 2 → NAF 2025); a brand that becomes a new activity (e.g. “Uber” → “Uber Eats”)\n\n\nUpstream failure\nA field that is no longer filled in, or a change in the form’s format",
+    "crumbs": [
+      "Monitoring and annotation"
+    ]
+  },
+  {
+    "objectID": "en/monitoring.html#label-free-monitoring",
+    "href": "en/monitoring.html#label-free-monitoring",
+    "title": "Monitoring and annotation",
+    "section": "2 Label-free monitoring",
+    "text": "2 Label-free monitoring\nMost predictions are never checked by a human. The first line of monitoring therefore relies on signals that need no label. API logs are converted daily into partitioned Parquet files, queried with DuckDB, and shown in a dashboard that is rebuilt every night (Faria et al. 2024). It shows:\n\nFaria, Thomas, Nathan Randriamanana, and Tom Seimandi. 2024. Retraining Strategies for an Economic Activity Classification Model. European Conference on Quality in Official Statistics (Q2024), Estoril. https://inseefrlab.github.io/codif-ape-prez/slides/estoril-paper/index.pdf.\n\nquery volumes and the automation rate over time, for various thresholds;\nthe distribution of the confidence index, and how it shifts between time windows (Kolmogorov–Smirnov, χ² and similar tests);\nthe distribution of predicted codes;\nstatistics on the input text (length, new vocabulary).\n\nThese indicators raise alerts. For example, a sudden drop in the automation rate, or a shift in the confidence distribution, triggers an analysis. They cannot, however, tell whether the model is right.",
+    "crumbs": [
+      "Monitoring and annotation"
+    ]
+  },
+  {
+    "objectID": "en/monitoring.html#human-annotation",
+    "href": "en/monitoring.html#human-annotation",
+    "title": "Monitoring and annotation",
+    "section": "3 Human annotation",
+    "text": "3 Human annotation\n\n3.1 Label Studio campaigns\nQuality can only be measured against labels produced by experts. Annotation campaigns run on Label Studio, deployed on the platform, with one project per team of experts. Scheduled jobs handle the flow of data:\n\nsampling descriptions to annotate and pushing them into the annotation queues;\nsyncing completed annotations back to object storage;\nconverting them into evaluation and training sets.\n\nAnnotating one description takes about a minute. Two campaigns have been run so far:\n\na NAF rev. 2 gold standard of about 10,000 descriptions, coded blind by the Sirene quality team;\na NAF 2025 campaign of about 30,000 descriptions, used both to evaluate the LLM relabelling and as training data (see Data).\n\n\n\n3.2 Why random, blind annotation matters\nLow-confidence cases are recoded by hand every day, so it is tempting to treat these manual codes as an evaluation set. They are not one: they are selected on the model’s failures, and they say nothing about the cases the model codes automatically. To estimate the accuracy of automatic coding, part of the flow must be annotated at random, by experts who do not see the model’s suggestion. Otherwise their labels are anchored on the prediction they are meant to judge.\nThis sample, called the golden set, is the foundation of the retraining protocol. It is the only data that can be used to:\n\nestimate the accuracy of automatic coding;\nset the threshold;\ncompare two models fairly;\nmeasure drift with labels.",
+    "crumbs": [
+      "Monitoring and annotation"
+    ]
+  },
+  {
+    "objectID": "en/monitoring.html#auditing-with-llms",
+    "href": "en/monitoring.html#auditing-with-llms",
+    "title": "Monitoring and annotation",
+    "section": "4 Auditing with LLMs",
+    "text": "4 Auditing with LLMs\nThe project also uses LLM agents to watch predictions offline. GRAAL’s MatchVerifier checks whether a (description, code) pair is consistent with the explanatory notes of the classification, and suggests an alternative when it is not. It is too slow and too costly to run on every prediction, but it can be run in batch to:\n\nprioritise which cases human reviewers should look at first;\nflag suspicious labels in the training data;\narbitrate disagreements between the production model and other engines.\n\nOn another classification (COICOP), the MatchVerifier found about half of the errors, with few false rejections. That makes it a good tool for prioritising human review, but not a reliable enough one to route cases on its own.",
+    "crumbs": [
+      "Monitoring and annotation"
+    ]
+  },
+  {
+    "objectID": "en/lessons.html",
+    "href": "en/lessons.html",
+    "title": "Lessons learned",
+    "section": "",
+    "text": "A small model, well integrated, beats a large model that cannot be deployed. Pre-trained transformers gave only a marginal gain over a fastText-style model, and they did not fit the latency and CPU budget. The effort went where the returns were: data quality, calibration and the deployment chain.\nDependencies are a risk to manage. fastText was archived upstream barely more than a year after going into production. The move to PyTorch took time and care, “but it’s well worth it”: the model is now maintained in-house, it is calibrated and explainable, and it can evolve. In return, PyTorch requires a strict versioning policy across training, serving and production.\nShip preprocessing with the model. In the early days, the business IT team re-coded the text preprocessing in Java. This duplication was a source of errors. Packaging the model with its preprocessing and its contract (MLflow pyfunc, Pydantic models), and serving it through a Python API, removed it.\nGitOps makes deployment boring, which is what we want. When deploying a model is a one-line, reviewable commit and a rollback is a revert, deployments stop being events.\nCalibration is a business feature. The threshold on the confidence index sets the manual coding workload. It is a methodological decision, not an operational setting. It can only be set on a calibrated model and a representative sample, and must be revisited for every new model.",
+    "crumbs": [
+      "Lessons learned"
+    ]
+  },
+  {
+    "objectID": "en/lessons.html#technical-lessons",
+    "href": "en/lessons.html#technical-lessons",
+    "title": "Lessons learned",
+    "section": "",
+    "text": "A small model, well integrated, beats a large model that cannot be deployed. Pre-trained transformers gave only a marginal gain over a fastText-style model, and they did not fit the latency and CPU budget. The effort went where the returns were: data quality, calibration and the deployment chain.\nDependencies are a risk to manage. fastText was archived upstream barely more than a year after going into production. The move to PyTorch took time and care, “but it’s well worth it”: the model is now maintained in-house, it is calibrated and explainable, and it can evolve. In return, PyTorch requires a strict versioning policy across training, serving and production.\nShip preprocessing with the model. In the early days, the business IT team re-coded the text preprocessing in Java. This duplication was a source of errors. Packaging the model with its preprocessing and its contract (MLflow pyfunc, Pydantic models), and serving it through a Python API, removed it.\nGitOps makes deployment boring, which is what we want. When deploying a model is a one-line, reviewable commit and a rollback is a revert, deployments stop being events.\nCalibration is a business feature. The threshold on the confidence index sets the manual coding workload. It is a methodological decision, not an operational setting. It can only be set on a calibrated model and a representative sample, and must be revisited for every new model.",
+    "crumbs": [
+      "Lessons learned"
+    ]
+  },
+  {
+    "objectID": "en/lessons.html#data-lessons",
+    "href": "en/lessons.html#data-lessons",
+    "title": "Lessons learned",
+    "section": "2 Data lessons",
+    "text": "2 Data lessons\nLabel quality is the main lever. Historical labels mix outputs of a rule engine, of earlier models and of hurried human coding. An auditable rule engine, where every relabelling is logged, did more for accuracy than most architectural changes. Rules have side effects on neighbouring codes, though, so they should stay targeted.\nEvaluation needs a random, blind golden set. Manual corrections are selected on the model’s failures, and annotators who see the prediction are anchored on it. Without a continuously fed random sample, annotated blind, the accuracy of automatic coding cannot be measured, the threshold cannot be set and two models cannot be compared. Monitoring has to be a routine process, not a series of one-off campaigns.\nUse experts as the benchmark and LLMs for scale. For the NAF 2025 revision, a few tens of thousands of expert annotations were enough to choose and validate LLM-based recoding of millions of observations. LLMs’ self-reported confidence was not a usable filter, whereas agreement between models was.\nKnow the ceiling. Even experienced annotators often disagree at the finest level of the classification. Inter-annotator agreement gives a realistic upper bound on what any model can reach, and should frame expectations.",
+    "crumbs": [
+      "Lessons learned"
+    ]
+  },
+  {
+    "objectID": "en/lessons.html#organisational-lessons",
+    "href": "en/lessons.html#organisational-lessons",
+    "title": "Lessons learned",
+    "section": "3 Organisational lessons",
+    "text": "3 Organisational lessons\nMLOps is an organisation as much as a stack. The project involves:\n\nthe business team, which owns the register and the classification;\nthe IT teams that run production;\nthe data science team (SSP Lab).\n\nThe decisive step was to name a model owner in the business team, who is responsible for retraining, qualification and operation, distinct from the innovation team. This mirrors the AIML4OS recommendation that every model in production have a named owner (Tayebjee et al. 2025, ch. 3).\nTrust is built with tools. Business experts trust the model when they can see why it decided (explainability), check what changed between two versions (comparison reports, change journals) and turn their feedback into permanent fixes (rules).\nOpen source pays off. All the code is public. This made exchanges with other statistical offices possible: Statistics Canada, Statec, Statistics Austria, Destatis, the national statistical institutes of sub-Saharan Africa, and the OECD. It also made the tools reusable for other classifications.",
+    "crumbs": [
+      "Lessons learned"
+    ]
+  },
+  {
+    "objectID": "en/lessons.html#a-european-perspective",
+    "href": "en/lessons.html#a-european-perspective",
+    "title": "Lessons learned",
+    "section": "4 A European perspective",
+    "text": "4 A European perspective\nThe pipeline served as one of the reference implementations of the MLOps tutorial written within the European AIML4OS project (Work Package 10, cluster 4 “From text to code”), together with Statistics Austria and Destatis (Tayebjee et al. 2025). The tutorial organises the lifecycle into four stages, each with a checklist:\n\nTayebjee, Meilame, Nina Niederhametner, Bogdan Levagin, and Ariane Lestrade. 2025. From Text to Code (WP10.4) – MLOps Tutorial. AIML4OS project, Work Package 10. https://aiml4os.github.io/WP10_Cluster4_MLOps/.\n\nData: storage, validation, versioning;\nModel: reproducible training, validation beyond accuracy, wrapping, registry;\nServing: APIs, containers, GitOps, bridging development and production;\nMonitoring: drift taxonomy, monitoring layers, retraining and promotion.\n\nThis note can be read as a detailed case study for that framework.",
+    "crumbs": [
+      "Lessons learned"
+    ]
+  },
+  {
+    "objectID": "en/lessons.html#open-questions",
+    "href": "en/lessons.html#open-questions",
+    "title": "Lessons learned",
+    "section": "5 Open questions",
+    "text": "5 Open questions\nSome methodological questions remain open, and they are probably common to every coding pipeline:\n\nAnchoring. If manual coders see the model’s suggestion, their labels are no longer independent of the model. How should this be accounted for when those labels are used for training?\nGolden set size. With about 750 classes, per-class metrics on a single quarter are out of reach. Over what window should the golden set be accumulated?\nTarget accuracy. Who sets \\(p^*\\)? It is a business trade-off between accuracy and manual workload.\nHistory. How fast should old labels lose weight? How should historical observations whose NAF 2025 code is ambiguous be treated: re-annotation, exclusion, or engine labels with a low weight?",
+    "crumbs": [
+      "Lessons learned"
+    ]
+  },
+  {
+    "objectID": "en/data.html",
+    "href": "en/data.html",
+    "title": "Data",
+    "section": "",
+    "text": "The model learns from past declarations stored in the Sirene register. Each observation contains:\n\nthe activity description: free text typed by the declarant, sometimes followed by details on secondary or agricultural activity;\nauxiliary variables from the declaration form:\n\nthe legal form (CJ, catégorie juridique);\nthe nature of the activity (NAT);\nthe type of form (TYP);\nthe surface area of the premises (SRF, grouped into bins);\nwhether the activity is permanent or seasonal (CRT);\n\nthe APE code that was assigned, either automatically or by a human coder.\n\nThe earliest models were trained on about 10 million declarations from the former register (2014–2022). Since the move to the new register and to NAF 2025, the training base is built from about 2.7 million recent declarations (Randriamanana and Faria 2025).\n\n\n\n\n\n\nWarningLabels are not ground truth\n\n\n\nHistorical labels come from Sicore, from earlier versions of the model and from human coders working under time pressure. Some are wrong, and some contradict each other: the same description can carry different codes. Label quality matters as much as model architecture. Two components address it: the rule engine (below) and the annotation campaigns (Monitoring).",
+    "crumbs": [
+      "Data"
+    ]
+  },
+  {
+    "objectID": "en/data.html#training-data",
+    "href": "en/data.html#training-data",
+    "title": "Data",
+    "section": "",
+    "text": "The model learns from past declarations stored in the Sirene register. Each observation contains:\n\nthe activity description: free text typed by the declarant, sometimes followed by details on secondary or agricultural activity;\nauxiliary variables from the declaration form:\n\nthe legal form (CJ, catégorie juridique);\nthe nature of the activity (NAT);\nthe type of form (TYP);\nthe surface area of the premises (SRF, grouped into bins);\nwhether the activity is permanent or seasonal (CRT);\n\nthe APE code that was assigned, either automatically or by a human coder.\n\nThe earliest models were trained on about 10 million declarations from the former register (2014–2022). Since the move to the new register and to NAF 2025, the training base is built from about 2.7 million recent declarations (Randriamanana and Faria 2025).\n\n\n\n\n\n\nWarningLabels are not ground truth\n\n\n\nHistorical labels come from Sicore, from earlier versions of the model and from human coders working under time pressure. Some are wrong, and some contradict each other: the same description can carry different codes. Label quality matters as much as model architecture. Two components address it: the rule engine (below) and the annotation campaigns (Monitoring).",
+    "crumbs": [
+      "Data"
+    ]
+  },
+  {
+    "objectID": "en/data.html#sec-rules",
+    "href": "en/data.html#sec-rules",
+    "title": "Data",
+    "section": "2 Label cleaning: an auditable rule engine",
+    "text": "2 Label cleaning: an auditable rule engine\ncodif-ape-preprocess applies business rules to the training data before every training run. A rule turns knowledge from business experts into code. For example, furnished-rental activities described with the acronym “LMNP”, holding companies, ride-hailing drivers and taxis each go to a precise code.\nRules can do three things:\n\n\n\nTable 1: Rule types.\n\n\n\n\n\n\n\n\n\n\nType\nEffect\nExample\n\n\n\n\nModify\nRelabel the rows that match a pattern\nDescriptions mentioning a passive holding activity → the dedicated holding code\n\n\nAugment\nAdd synthetic, weighted rows so that the model learns a case it rarely sees\nOne “LMNP” row per legal form, so that every legal form is covered\n\n\nSuppress\nRemove rows that cannot be used\nCodes absent from the target classification\n\n\n\n\n\n\nRules are Python functions registered with a decorator. Each one carries a name, tags and a description. A rule matches descriptions using one or more of three methods:\n\nregular expressions on normalised text;\nfuzzy matching, to absorb typos;\nsemantic similarity, using a sentence-embedding model computed on GPU.\n\nFuzzy and semantic matching widen a rule to descriptions that are close to the ones the experts listed. Each rule decides which methods it allows. For instance, a rule on a short acronym is restricted to exact matching.\nEvery change is logged. For each modified, created or deleted row, a journal records the code before and after, the rule that applied and the context of the declaration. These journals are stored next to the cleaned dataset, so any label in the training set can be traced back to its origin.\nRules are what make expert feedback permanent. If an error is fixed only by retraining, it can come back with the next model. A rule, on the other hand, fixes the whole training set for good, and the fix can be audited. How rules are created, checked and propagated is described in the retraining protocol.",
+    "crumbs": [
+      "Data"
+    ]
+  },
+  {
+    "objectID": "en/data.html#splits-and-versioning",
+    "href": "en/data.html#splits-and-versioning",
+    "title": "Data",
+    "section": "3 Splits and versioning",
+    "text": "3 Splits and versioning\nAfter cleaning, the pipeline:\n\nbuilds the final features: the description joined with its complementary text fields, and the categorical variables;\nsplits the data into training, validation and test sets;\nwrites the splits to S3 in a folder named after the extraction date;\nrecords this folder, along with the list of features, in a shared configuration file read by the training code.\n\nEvery training run logs its input datasets in MLflow. The run is therefore tied to an exact snapshot of the data.",
+    "crumbs": [
+      "Data"
+    ]
+  },
+  {
+    "objectID": "en/data.html#sec-naf2025",
+    "href": "en/data.html#sec-naf2025",
+    "title": "Data",
+    "section": "4 Moving to NAF 2025",
+    "text": "4 Moving to NAF 2025\nThe European revision of the activity classification (NACE Rev. 2.1, called NAF 2025 in France) takes effect for all Sirene units on 1 January 2027. The model must be trained on a classification that no historical data was labelled in.\n\n4.1 The correspondence problem\nThe official correspondence table between NAF rev. 2 and NAF 2025 links 732 old sub-classes to 746 new ones (Randriamanana and Faria 2025):\n\nRandriamanana, Nathan, and Thomas Faria. 2025. Changement de Nomenclature Statistique à l’ère Du Machine Learning : Réentraînement Basé Sur Les LLM Pour La Révision de La NAF. Journées de méthodologie statistique (JMS). https://inseefrlab.github.io/codif-ape-prez/papers/jms2025-llm-relabeling/index.pdf.\n\n551 univocal correspondences: the old code maps to a single new code, so translation is mechanical;\n181 multivocal correspondences: the old code splits into several new codes (up to 38), and the description must be read to choose.\n\nMultivocal codes are only 25 % of codes, but they cover 52 % of training observations, about 1.4 million rows. Business experts first requalified some “false multivocals” (cases where one target clearly dominates). This settled about a third of them. Around 500,000 observations still had to be recoded one by one.\n\n\n4.2 Experts as the benchmark, LLMs as the scale\nThe recoding combined human expertise with large language models:\n\nExpert annotation. About 25 business experts annotated around 30,000 multivocal descriptions in NAF 2025, using Label Studio, over roughly five months. The campaign also produced inter-annotator agreement figures, which set a realistic ceiling: three independent experts agree on the sub-class in only about 62 % of cases, while at least two of them agree in 96 % of cases.\nLLMs as virtual annotators. Open-weight LLMs, served on the platform with vLLM, recoded the multivocal observations (codif-ape-nace-revision). Each prompt contained the description, the candidate NAF 2025 codes and their explanatory notes (context-augmented generation). The output was constrained to a JSON schema. Several models were compared against the expert annotations. The best single model reached about 72 % accuracy at the sub-class level, and combining models by vote or cascade added a few points.\nBusiness rules were then applied on top, through the rule engine, to fix systematic errors.\n\nIn the end, about 2.3 million of the 2.7 million observations were rebuilt in NAF 2025. Later iterations, using more recent open-weight models and majority voting, raised LLM accuracy to about 78 % (Pramil 2026).\n\nPramil, Julien. 2026. When Classifications Change but Deadlines Don’t: Scaling Recoding with LLMs. The NACE Transition at Insee. ISI World Statistics Congress, Malta. https://inseefrlab.github.io/codif-ape-prez/slides/isi-malta-relabeling/.\n\n\n\n\n\n\nTipLesson\n\n\n\nExpert annotations are expensive, so they are best used as a benchmark. They guide the choice of prompts and models and measure the result, while LLMs supply the volume. An LLM’s self-reported confidence turned out to be an unreliable filter. Agreement between several models is a better signal.\n\n\nThe model retrained on these data is described in the next chapter.",
+    "crumbs": [
+      "Data"
+    ]
+  },
+  {
+    "objectID": "en/companion-projects.html",
+    "href": "en/companion-projects.html",
+    "title": "Companion projects: TTC and GRAAL",
+    "section": "",
+    "text": "Two projects were born from the needs of APE coding and are developed as general-purpose, open-source tools:\nflowchart LR\n  subgraph OFF[\"Offline (batch)\"]\n    GR[\"GRAAL&lt;br/&gt;LLM agents\"]\n    PRE[\"Data curation&lt;br/&gt;codif-ape-preprocess\"]\n  end\n  subgraph CRIT[\"Critical path\"]\n    TRN[\"Training&lt;br/&gt;codif-ape-train\"] --&gt; MOD[\"Model&lt;br/&gt;(TTC)\"] --&gt; API[\"API&lt;br/&gt;codif-ape-api\"]\n  end\n  GR --&gt;|\"relabelling, audits,&lt;br/&gt;arbitration, synthetic data\"| PRE\n  PRE --&gt; TRN\n  API --&gt;|\"candidate codes,&lt;br/&gt;supervised baseline\"| GR\n  API --&gt;|\"predictions\"| MON[\"Monitoring\"]\n  MON --&gt;|\"cases to audit\"| GR\n\n\n\n\nFigure 1: Where TTC and GRAAL fit in the pipeline.",
+    "crumbs": [
+      "Companion projects: TTC and GRAAL"
+    ]
+  },
+  {
+    "objectID": "en/companion-projects.html#sec-ttc",
+    "href": "en/companion-projects.html#sec-ttc",
+    "title": "Companion projects: TTC and GRAAL",
+    "section": "1 torchTextClassifiers",
+    "text": "1 torchTextClassifiers\ntorchTextClassifiers (documentation, PyPI) is “a unified, extensible framework for text classification with categorical variables, built on PyTorch and PyTorch Lightning” (Couralet and Tayebjee 2025).\n\nCouralet, Cédric, and Meilame Tayebjee. 2025. torchTextClassifiers: A Unified Framework for Text Classification in PyTorch. PyData Global. https://inseefrlab.github.io/codif-ape-prez/slides/pydata-global/.\n\n1.1 Why\nWhen Meta archived the fastText repository in March 2024, the production model was left depending on a compiled C++ library with no maintenance. fastText had other drawbacks:\n\nauxiliary variables could only be handled by appending them to the text;\nit offered no explainability;\nits scores were poorly calibrated;\nit could not train on GPU.\n\nA first PyTorch reimplementation, torchFastText, reproduced the fastText architecture. It then grew into a general framework and was renamed torchTextClassifiers in 2025.\nThere is a reason why the model is a package rather than code inside the training repository. The same model class has to exist in the training repository, in the API, in production and in batch jobs. A versioned package on PyPI, mirrored in INSEE’s internal repository manager, is the single source of truth shared by all of them.\n\n\n1.2 Design\nThe library splits a text classifier into interchangeable components:\n\n\n\nTable 1: torchTextClassifiers building blocks.\n\n\n\n\n\n\n\n\n\nComponent\nOptions\n\n\n\n\nTokenizer\nfastText-style character n-grams, WordPiece, or any Hugging Face tokenizer\n\n\nToken embedder\nEmbedding bag, optionally with self-attention layers (“make your own small BERT”)\n\n\nSentence embedder\nMean, first or last token, or label attention (one representation per class)\n\n\nCategorical variables\nOne embedding per variable, combined with the text by sum, average-and-concatenate, or concatenation\n\n\nHead\nLinear classifier, multi-class or multi-label; a multi-level variant exploits the hierarchy\n\n\n\n\n\n\nA high-level wrapper takes care of encoding the raw categorical values and the labels, training (with optional sample weights), prediction with top-k outputs, and saving and loading. Two forms of explainability are built in:\n\ntoken-level attributions with integrated gradients (Captum);\nlabel attention, which shows which words drive each candidate class.\n\nThe intended users are teams that need accurate text classification but cannot deploy large models: small CPU budgets, unit latency constraints, closed environments. Beyond APE, the library is used for other classifications at INSEE, such as COICOP for product descriptions on receipts. It aims to become a common tool for automatic coding in official statistics.\n\n\n1.3 In the APE pipeline\n\ncodif-ape-train builds and trains the model with TTC, and wraps it in the MLflow pyfunc.\ncodif-ape-api installs TTC so that it can load that pyfunc, but does not call it directly.\nCompared with fastText, TTC gives the same automation rate, much better calibration, explainability and GPU training, for an inference time that remains within budget (see Model).",
+    "crumbs": [
+      "Companion projects: TTC and GRAAL"
+    ]
+  },
+  {
+    "objectID": "en/companion-projects.html#sec-graal",
+    "href": "en/companion-projects.html#sec-graal",
+    "title": "Companion projects: TTC and GRAAL",
+    "section": "2 GRAAL",
+    "text": "2 GRAAL\nGRAAL (documentation), Graph-based Reasoning Agents for Automatic Labelling, is a framework of LLM agents for coding free text into a hierarchical classification.\n\n2.1 Principle\nThe whole classification is stored as a graph in Neo4j:\n\ncodes and labels;\nexplanatory notes: includes, excludes, examples;\nparent–child relations, plus a vector index on the notes.\n\nAgents use tools to explore this graph, the way a human expert browses the classification. All inputs and outputs are typed Pydantic contracts. The agents run against any OpenAI-compatible endpoint, served on the platform with open-weight models.\nBecause all classification knowledge lives in the graph, the framework is independent of the classification. Graphs exist for NAF 2025 (French), NACE Rev. 2.1 (English) and COICOP 2018.\n\n\n2.2 Components\n\n\n\nTable 2: GRAAL agents.\n\n\n\n\n\n\n\n\n\n\nFamily\nAgent\nRole\n\n\n\n\nText → code\nNavigator\nWalks the hierarchy from the root to a leaf, reading notes at each step\n\n\n\nAgentic RAG\nStarts from a vector search, then checks and corrects with the Navigator\n\n\n\nSummary agent\nOne agent with the whole classification summarised in its context\n\n\nClosers\nCodeChooser\nArbitrates between a few candidate codes\n\n\n\nMatchVerifier\nAudits a (description, code) pair: is it consistent with the notes? If not, which code is better?\n\n\nCode → text\nCode2Text\nGenerates realistic synthetic descriptions for a given code\n\n\n\n\n\n\nGRAAL also includes an evaluation module and review applications in which experts judge the agents’ verdicts. The evaluation module offers metrics at each level, stratified samples with weights, bootstrap confidence intervals and paired tests.\n\n\n2.3 Role in the pipeline\nGRAAL does not replace the production model. The agents take seconds to minutes per description and need GPUs to serve the LLM, while production needs ~200 ms on CPU. In early benchmarks, the agents were also not more accurate than the supervised model on the flow as a whole. GRAAL’s value lies elsewhere, in four offline tasks:\n\nRecoding a stock after a classification change. Most of the NAF 2025 training data was produced by a dedicated pipeline, codif-ape-nace-revision, in which LLMs code with the explanatory notes in context (Data). GRAAL generalises this approach with agents that navigate the classification, for future revisions and other classifications.\nAuditing and curating labels. The MatchVerifier flags dubious labels in the training data, or in automatically coded cases, and proposes alternatives. In the retraining protocol, GRAAL is one of the independent engines whose disagreements with the production model are arbitrated.\nPrioritising human review. Suspicious cases are sent to experts first. Their judgements are collected in a review application and become new labels.\nGenerating synthetic data. Code2Text produces descriptions for rare codes, and reworded variants of known cases to test that a fix generalises.\n\nIn return, GRAAL relies on the production API. It uses the API as a supervised baseline, and as a source of candidate codes for agents and annotators.",
+    "crumbs": [
+      "Companion projects: TTC and GRAAL"
+    ]
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "APE coding · MLOps",
+    "section": "",
+    "text": "Read the technical note in English · Lire la note technique en français\n\n\n\n Back to top"
+  },
+  {
+    "objectID": "en/architecture.html",
+    "href": "en/architecture.html",
+    "title": "Architecture",
+    "section": "",
+    "text": "The pipeline is built on a few principles, shared with the European MLOps framework produced within the AIML4OS project (Tayebjee et al. 2025):\n\nTayebjee, Meilame, Nina Niederhametner, Bogdan Levagin, and Ariane Lestrade. 2025. From Text to Code (WP10.4) – MLOps Tutorial. AIML4OS project, Work Package 10. https://aiml4os.github.io/WP10_Cluster4_MLOps/.\n\nSeparate data, code and compute.\n\nData lives in S3 object storage, in Parquet format.\nCode lives in Git.\nCompute is provided by containers that are started on demand.\n\nMake everything reproducible.\n\nEvery training run is driven by a configuration file.\nEvery environment is pinned (uv lock files, Docker images).\nEvery dataset, model and image is versioned.\n\nPackage the model and its preprocessing together, so that what was evaluated is exactly what is served (no training/serving skew).\nDescribe deployments declaratively. The state of each environment is a set of manifests in Git, and a GitOps controller reconciles the cluster with them.\nKeep the human in the loop. Low-confidence predictions go to human coders, and human annotation is what measures quality.",
+    "crumbs": [
+      "Architecture"
+    ]
+  },
+  {
+    "objectID": "en/architecture.html#design-principles",
+    "href": "en/architecture.html#design-principles",
+    "title": "Architecture",
+    "section": "",
+    "text": "The pipeline is built on a few principles, shared with the European MLOps framework produced within the AIML4OS project (Tayebjee et al. 2025):\n\nTayebjee, Meilame, Nina Niederhametner, Bogdan Levagin, and Ariane Lestrade. 2025. From Text to Code (WP10.4) – MLOps Tutorial. AIML4OS project, Work Package 10. https://aiml4os.github.io/WP10_Cluster4_MLOps/.\n\nSeparate data, code and compute.\n\nData lives in S3 object storage, in Parquet format.\nCode lives in Git.\nCompute is provided by containers that are started on demand.\n\nMake everything reproducible.\n\nEvery training run is driven by a configuration file.\nEvery environment is pinned (uv lock files, Docker images).\nEvery dataset, model and image is versioned.\n\nPackage the model and its preprocessing together, so that what was evaluated is exactly what is served (no training/serving skew).\nDescribe deployments declaratively. The state of each environment is a set of manifests in Git, and a GitOps controller reconciles the cluster with them.\nKeep the human in the loop. Low-confidence predictions go to human coders, and human annotation is what measures quality.",
+    "crumbs": [
+      "Architecture"
+    ]
+  },
+  {
+    "objectID": "en/architecture.html#the-platform",
+    "href": "en/architecture.html#the-platform",
+    "title": "Architecture",
+    "section": "2 The platform",
+    "text": "2 The platform\nAll development, training and pre-production work runs on SSP Cloud, the data science platform of the French official statistical system. SSP Cloud is built on the open-source Onyxia project (Avouac et al. 2025). This is possible because Sirene activity descriptions are not sensitive data.\n\nAvouac, Romain, Thomas Faria, and Frédéric Comte. 2025. “A Cloud-Native Data Science Platform for Official Statistics.” In Foundations and Advances of Machine Learning in Official Statistics. Society, Environment and Statistics. Springer. https://doi.org/10.1007/978-3-032-10004-7_8.\n\n\n\nTable 1: Technical stack.\n\n\n\n\n\nComponent\nTool\nRole in the pipeline\n\n\n\n\nObject storage\nMinIO (S3 API)\nRaw extractions, cleaned datasets, splits, tokenizers, model artifacts, annotation exports\n\n\nInteractive environments\nOnyxia (VS Code, Jupyter)\nExploration and development\n\n\nOrchestration\nArgo Workflows\nBatch jobs for data preparation and training on GPU nodes (A2, H100)\n\n\nExperiment tracking and registry\nMLflow\nParameters, metrics, figures and datasets for every run; versioned models\n\n\nServing\nFastAPI on Kubernetes\nREST API exposing the model\n\n\nContinuous delivery\nGitHub Actions, Argo CD\nBuilding Docker images; GitOps synchronisation of the cluster\n\n\nAnnotation\nLabel Studio\nExpert annotation campaigns\n\n\nLLM inference\nvLLM (OpenAI-compatible API)\nOffline relabelling (NAF 2025), auditing and synthetic data (GRAAL)\n\n\n\n\n\n\nProduction runs on INSEE’s internal Kubernetes infrastructure. The model is promoted there once it has been qualified on a pre-production platform that matches production.",
+    "crumbs": [
+      "Architecture"
+    ]
+  },
+  {
+    "objectID": "en/architecture.html#repositories",
+    "href": "en/architecture.html#repositories",
+    "title": "Architecture",
+    "section": "3 Repositories",
+    "text": "3 Repositories\nThe code is organised as a set of single-purpose repositories under the InseeFrLab GitHub organisation:\n\n\n\nTable 2: Repositories and their contracts.\n\n\n\n\n\nRepository\nProduces\nConsumes\n\n\n\n\ncodif-ape-nace-revision\nNAF 2025 labels for the training data, recoded by LLMs\nSirene extractions, correspondence table, explanatory notes, expert annotations\n\n\ncodif-ape-preprocess\nCleaned and augmented training data; train/validation/test splits; an audit journal of every label change\nRaw Sirene extractions, relabelled NAF 2025 data, reference tables\n\n\ncodif-ape-train\nA trained model packaged as an MLflow pyfunc, with its metrics and diagnostic figures\nSplits produced by preprocess; torchTextClassifiers\n\n\ncodif-ape-api\nA Docker image of the REST API\nA registered MLflow model, loaded at start-up\n\n\ncodif-ape-cd\nKubernetes manifests for every service (APIs, dashboard, annotation ETLs, review apps)\nDocker images; model names and versions\n\n\ntorchTextClassifiers\nA generic PyTorch library for text classification (on PyPI)\n—\n\n\nGRAAL\nLLM agents for coding, auditing and generating labels; review apps\nThe classification graph (Neo4j), explanatory notes, the production API\n\n\ncodif-ape-prez\nPresentations and papers\n—\n\n\n\n\n\n\nThe repositories do not import one another. They communicate through artifacts:\n\npreprocess publishes the location of the latest dataset, along with the feature lists, in a shared configuration file on S3, and train reads it.\ntrain logs a self-contained model in MLflow, which embeds its own inference code.\napi downloads that model at start-up, using a model name and version given as environment variables.\ncd decides which image, and which model version, each environment runs.\n\nSo moving a new model to an environment is a one-line change to a manifest, and it can be reviewed like any other code change.",
+    "crumbs": [
+      "Architecture"
+    ]
+  },
+  {
+    "objectID": "en/architecture.html#end-to-end-flow",
+    "href": "en/architecture.html#end-to-end-flow",
+    "title": "Architecture",
+    "section": "4 End-to-end flow",
+    "text": "4 End-to-end flow\n\n\n\n\n\n\nflowchart LR\n  subgraph SRC[\"Sources\"]\n    SIR[\"Sirene extractions\"]\n    ANN[\"Expert annotations&lt;br/&gt;(Label Studio)\"]\n    LLM[\"LLM relabelling&lt;br/&gt;(codif-ape-nace-revision, vLLM)\"]\n  end\n  subgraph PRE[\"codif-ape-preprocess\"]\n    RUL[\"Rule engine&lt;br/&gt;+ audit journal\"]\n    SPL[\"Splits&lt;br/&gt;train / val / test\"]\n  end\n  subgraph TRN[\"codif-ape-train\"]\n    TTC[\"torchTextClassifiers&lt;br/&gt;(Lightning, GPU)\"]\n    EVAL[\"Evaluation&lt;br/&gt;calibration, levels 1–5\"]\n  end\n  REG[(\"MLflow&lt;br/&gt;registry\")]\n  subgraph SRV[\"Serving\"]\n    IMG[\"codif-ape-api&lt;br/&gt;Docker image\"]\n    GIT[\"codif-ape-cd&lt;br/&gt;manifests\"]\n    K8S[\"Kubernetes&lt;br/&gt;(Argo CD)\"]\n  end\n  SIR --&gt; RUL\n  LLM --&gt; RUL\n  ANN --&gt; RUL\n  RUL --&gt; SPL --&gt; TTC --&gt; EVAL --&gt; REG\n  REG --&gt;|\"model name + version\"| K8S\n  IMG --&gt; K8S\n  GIT --&gt; K8S\n  K8S --&gt;|\"predictions, logs\"| MON[\"Monitoring&lt;br/&gt;dashboard\"]\n  MON --&gt;|\"samples to annotate\"| ANN\n\n\n\n\nFigure 1: Data and model flow across repositories.\n\n\n\n\n\nEach block is described in its own chapter:\n\nData: sources, label cleaning and the NAF 2025 revision.\nModel: architecture, training and evaluation.\nServing and deployment: packaging, the API and GitOps.\nMonitoring and annotation: closing the loop.\nRetraining protocol: how the loop turns into a new model, safely.",
+    "crumbs": [
+      "Architecture"
+    ]
+  },
+  {
+    "objectID": "en/architecture.html#development-workflow",
+    "href": "en/architecture.html#development-workflow",
+    "title": "Architecture",
+    "section": "5 Development workflow",
+    "text": "5 Development workflow\nThe team works in an umbrella repository, codif-ape, which gathers all the repositories above as Git submodules that track the main branch. It is a workspace, not a release unit: each repository keeps its own version tags and its own CI.\nAll repositories follow the same conventions:\n\nuv for Python environments;\npre-commit with ruff for code quality;\nRenovate for dependency updates;\nGitHub Actions for building images and documentation.",
+    "crumbs": [
+      "Architecture"
+    ]
+  },
+  {
+    "objectID": "en/context.html",
+    "href": "en/context.html",
+    "title": "Context and history",
+    "section": "",
+    "text": "Every business registered in France receives an APE code (activité principale exercée, principal activity). This code places the unit in the French activity classification, the NAF (nomenclature d’activités française), which is the national version of the European NACE. It is attached to the business’s identifiers in the Sirene register, which INSEE has managed since 1973 and which is the legal reference for the SIREN and SIRET numbers.\nThe APE code is not just an administrative label. It is used to:\n\nbuild the sampling frames of business surveys and the structural business statistics;\nproduce national accounts and short-term indicators broken down by industry;\napply sector-specific regulation (collective agreements, insurance, some taxes and grants).\n\nA coding error therefore spreads into statistics as well as into the administrative life of the business.\nThe classification is hierarchical, with five levels:\n\n\n\nTable 1: Size of the NAF classification at each level. Upper levels for NAF 2025 follow NACE Rev. 2.1.\n\n\n\n\n\nLevel\nNAF rev. 2 (2008)\nNAF 2025 (NACE Rev. 2.1)\n\n\n\n\nSections\n21\n22\n\n\nDivisions\n88\n87\n\n\nGroups\n272\n287\n\n\nClasses\n615\n651\n\n\nSub-classes (APE code)\n732\n746\n\n\n\n\n\n\n\n\n\n\n\n\nNoteWhat we predict\n\n\n\nThe target is the sub-class, the finest level, with about 750 possible labels. The higher levels follow directly from the code, so metrics are reported at every level of the hierarchy.",
+    "crumbs": [
+      "Context and history"
+    ]
+  },
+  {
+    "objectID": "en/context.html#the-ape-code-and-the-nace-classification",
+    "href": "en/context.html#the-ape-code-and-the-nace-classification",
+    "title": "Context and history",
+    "section": "",
+    "text": "Every business registered in France receives an APE code (activité principale exercée, principal activity). This code places the unit in the French activity classification, the NAF (nomenclature d’activités française), which is the national version of the European NACE. It is attached to the business’s identifiers in the Sirene register, which INSEE has managed since 1973 and which is the legal reference for the SIREN and SIRET numbers.\nThe APE code is not just an administrative label. It is used to:\n\nbuild the sampling frames of business surveys and the structural business statistics;\nproduce national accounts and short-term indicators broken down by industry;\napply sector-specific regulation (collective agreements, insurance, some taxes and grants).\n\nA coding error therefore spreads into statistics as well as into the administrative life of the business.\nThe classification is hierarchical, with five levels:\n\n\n\nTable 1: Size of the NAF classification at each level. Upper levels for NAF 2025 follow NACE Rev. 2.1.\n\n\n\n\n\nLevel\nNAF rev. 2 (2008)\nNAF 2025 (NACE Rev. 2.1)\n\n\n\n\nSections\n21\n22\n\n\nDivisions\n88\n87\n\n\nGroups\n272\n287\n\n\nClasses\n615\n651\n\n\nSub-classes (APE code)\n732\n746\n\n\n\n\n\n\n\n\n\n\n\n\nNoteWhat we predict\n\n\n\nThe target is the sub-class, the finest level, with about 750 possible labels. The higher levels follow directly from the code, so metrics are reported at every level of the hierarchy.",
+    "crumbs": [
+      "Context and history"
+    ]
+  },
+  {
+    "objectID": "en/context.html#from-a-structured-form-to-free-text",
+    "href": "en/context.html#from-a-structured-form-to-free-text",
+    "title": "Context and history",
+    "section": "2 From a structured form to free text",
+    "text": "2 From a structured form to free text\nEach time a business is created or changes its activity, it files a declaration that includes a description of its activity. Until 2022, a clerk at a business formalities centre helped the declarant fill in the form, so activity descriptions were fairly short and standardised.\nTwo reforms changed this:\n\nThe PACTE law (2019) set up a single online one-stop shop (guichet unique), run by INPI. Since 1 January 2023, all business formalities go through it. The activity description became a free-text field, typed by the declarant with no one to help.\nSirene 4, the new information system of the register, moved from nightly batch processing to continuous processing built on micro-services. The migration was gradual, starting at the end of 2022.\n\nAs a result, texts are longer, more verbose and more varied. They also include all the spelling quirks you would expect from free input.\nEach year, about 2 million descriptions must be coded.",
+    "crumbs": [
+      "Context and history"
+    ]
+  },
+  {
+    "objectID": "en/context.html#three-generations-of-coding-engines",
+    "href": "en/context.html#three-generations-of-coding-engines",
+    "title": "Context and history",
+    "section": "3 Three generations of coding engines",
+    "text": "3 Three generations of coding engines\n\n\n\nTable 2: Successive APE coding engines.\n\n\n\n\n\nPeriod\nEngine\nPrinciple\nLimits\n\n\n\n\n1990s → 2022\nSicore\nDeterministic rules, keyword dictionaries\nThe automation rate fell to about 30 % on free-text descriptions. The rules were costly to maintain.\n\n\nEnd of 2022 → 2025\nfastText\nSupervised model (bag of words and character n-grams), with auxiliary variables added to the text as tokens\nMeta archived the library in March 2024. It offered no calibration, no explainability and no GPU support.\n\n\n2025 →\nPyTorch (torchTextClassifiers)\nSame family of models, rebuilt in PyTorch: a dedicated embedding per categorical variable, calibration, explainability\nInference is somewhat slower than fastText, but still within budget.\n\n\n\n\n\n\nSicore was developed in the 1990s (Meyer and Rivière 1997). It handled the well-structured texts of the former system well, but on free-text descriptions it automated only about one case in three. The rest, about 70 %, had to be coded by hand (Avouac et al. 2025).\n\nMeyer, Pascal, and Pascal Rivière. 1997. “SICORE, Un Outil Et Une Méthode Pour Le Chiffrement Automatique à l’INSEE.” Blaise Users Conference. https://www.blaiseusers.org/1997/papers/meyer97.pdf.\n\nAvouac, Romain, Thomas Faria, and Frédéric Comte. 2025. L’apport Des Technologies Cloud Pour Industrialiser Le Processus d’innovation Statistique. Document de Travail -- Méthodologie Statistique Nos. M2025-05. Insee. https://www.insee.fr/fr/statistiques/8614378.\nThe fastText model went into production gradually from November 2022, with a deliberately conservative threshold at first. It brought the automation rate back to around 80 %, which made the one-stop-shop reform workable.\nWhen Meta archived the fastText repository in March 2024, the team started moving to PyTorch. The move was also an opportunity to fix the model’s structural weak points: how categorical variables were handled, calibration, and explainability. The result is the open-source package torchTextClassifiers, described in Companion projects.",
+    "crumbs": [
+      "Context and history"
+    ]
+  },
+  {
+    "objectID": "en/context.html#production-constraints",
+    "href": "en/context.html#production-constraints",
+    "title": "Context and history",
+    "section": "4 Production constraints",
+    "text": "4 Production constraints\nThe model is called by the Sirene information system for each declaration as it arrives. This sets strict constraints:\n\nUnit inference on CPU in a closed environment: no GPU, no internet access, and every dependency shipped with the model.\nLow latency: the target is about 200 ms for each call.\nFallback to a human: the model returns its five most likely codes, each with a probability, plus a confidence index. Below a threshold, the declaration goes to a manual coding team, who see the model’s suggestions.\nTraceability: every prediction must be linked to the exact version of the model that produced it.\n\nThe automation rate is the share of declarations coded with no human involvement, at a controlled level of accuracy. It is the key business indicator, because it determines the workload of the manual coding teams.",
+    "crumbs": [
+      "Context and history"
+    ]
+  },
+  {
+    "objectID": "en/context.html#why-mlops",
+    "href": "en/context.html#why-mlops",
+    "title": "Context and history",
+    "section": "5 Why MLOps",
+    "text": "5 Why MLOps\nA model trained once and never touched again does not stay good for long, for several reasons:\n\nthe way declarants describe their activity drifts over time, as new trades, new legal forms and new phrasings appear;\nbusiness experts report errors that must be fixed quickly and permanently;\nthe classification itself changes: the move from NAF rev. 2 to NAF 2025 required recoding the entire training set (see Data);\nthe libraries the model depends on get deprecated (fastText) or move to new major versions (MLflow, PyTorch).\n\nThe rest of this note describes the system that makes this work routine: reproducible training, a versioned model registry, an API deployed through GitOps, continuous monitoring and annotation, and a retraining protocol with explicit quality gates.",
+    "crumbs": [
+      "Context and history"
+    ]
+  },
+  {
+    "objectID": "en/index.html",
+    "href": "en/index.html",
+    "title": "Automatic coding of economic activity at INSEE",
+    "section": "",
+    "text": "Every business that registers in France describes its activity in a few words, and INSEE must turn that description into one of about 750 codes of the national activity classification (NAF, the French version of NACE). This APE code shapes business statistics, national accounts and part of the regulation applied to the business.\nSince the end of 2022, this coding has been done by a machine learning model, called in real time by the Sirene business register. This note reviews the MLOps pipeline behind it:",
+    "crumbs": [
+      "Automatic coding of economic activity at INSEE"
+    ]
+  },
+  {
+    "objectID": "en/index.html#how-to-read-this-note",
+    "href": "en/index.html#how-to-read-this-note",
+    "title": "Automatic coding of economic activity at INSEE",
+    "section": "How to read this note",
+    "text": "How to read this note\n\n\n\nTable 1: Structure of the note.\n\n\n\n\n\nChapter\nContent\n\n\n\n\n1. Context and history\nThe APE code, the one-stop-shop reform, from Sicore to fastText to PyTorch\n\n\n2. Architecture\nPlatform, repositories, end-to-end flow\n\n\n3. Data\nTraining data, auditable rule engine, the NAF 2025 revision with LLMs\n\n\n4. Model\nArchitecture, training, confidence index, calibration, results\n\n\n5. Serving and deployment\nMLflow packaging, API, CI/CD and GitOps\n\n\n6. Monitoring and annotation\nDrift, dashboards, Label Studio, LLM audits\n\n\n7. Retraining protocol\nGolden set, data curation, business rules, quality gates\n\n\n8. Companion projects\ntorchTextClassifiers and GRAAL\n\n\n9. Lessons learned\nWhat worked, what we would do again, open questions\n\n\nReferences\nPresentations, papers, code\n\n\n\n\n\n\nReaders interested mainly in methodology can go straight to the Retraining protocol. Readers interested in infrastructure should start with Architecture and Serving.\n\n\n\n\n\n\nNoteAbout this note\n\n\n\nThis note is written by the SSP Lab, INSEE’s data science team. All the code is open source on GitHub. The team’s slides are collected here. A French version is available.",
+    "crumbs": [
+      "Automatic coding of economic activity at INSEE"
+    ]
+  },
+  {
+    "objectID": "en/model.html",
+    "href": "en/model.html",
+    "title": "Model",
+    "section": "",
+    "text": "Large pre-trained language models such as CamemBERT were tested early in the project. On APE coding, they gave only a small gain over a fastText-style model: about 0.76 against 0.75 accuracy on the same test set (Faria et al. 2024). That gain did not justify their inference cost under the production constraints (unit calls, CPU only, a few hundred milliseconds).\n\nFaria, Thomas, Nathan Randriamanana, and Tom Seimandi. 2024. Retraining Strategies for an Economic Activity Classification Model. European Conference on Quality in Official Statistics (Q2024), Estoril. https://inseefrlab.github.io/codif-ape-prez/slides/estoril-paper/index.pdf.\n\nJoulin, Armand, Edouard Grave, Piotr Bojanowski, and Tomas Mikolov. 2016. Bag of Tricks for Efficient Text Classification. https://arxiv.org/abs/1607.01759.\nThe production model is therefore a shallow neural network of about one million parameters, in the fastText family (Joulin et al. 2016). It is now implemented in PyTorch with torchTextClassifiers.",
+    "crumbs": [
+      "Model"
+    ]
+  },
+  {
+    "objectID": "en/model.html#why-a-small-model",
+    "href": "en/model.html#why-a-small-model",
+    "title": "Model",
+    "section": "",
+    "text": "Large pre-trained language models such as CamemBERT were tested early in the project. On APE coding, they gave only a small gain over a fastText-style model: about 0.76 against 0.75 accuracy on the same test set (Faria et al. 2024). That gain did not justify their inference cost under the production constraints (unit calls, CPU only, a few hundred milliseconds).\n\nFaria, Thomas, Nathan Randriamanana, and Tom Seimandi. 2024. Retraining Strategies for an Economic Activity Classification Model. European Conference on Quality in Official Statistics (Q2024), Estoril. https://inseefrlab.github.io/codif-ape-prez/slides/estoril-paper/index.pdf.\n\nJoulin, Armand, Edouard Grave, Piotr Bojanowski, and Tomas Mikolov. 2016. Bag of Tricks for Efficient Text Classification. https://arxiv.org/abs/1607.01759.\nThe production model is therefore a shallow neural network of about one million parameters, in the fastText family (Joulin et al. 2016). It is now implemented in PyTorch with torchTextClassifiers.",
+    "crumbs": [
+      "Model"
+    ]
+  },
+  {
+    "objectID": "en/model.html#architecture",
+    "href": "en/model.html#architecture",
+    "title": "Model",
+    "section": "2 Architecture",
+    "text": "2 Architecture\n\n\n\n\n\n\nflowchart LR\n  T[\"Activity description&lt;br/&gt;(+ complementary text)\"] --&gt; TOK[\"Tokenizer&lt;br/&gt;(sub-words / n-grams)\"]\n  TOK --&gt; EMB[\"Token embeddings&lt;br/&gt;(dim 80)\"]\n  EMB --&gt; AGG[\"Mean pooling\"]\n  C[\"Categorical variables&lt;br/&gt;CJ, NAT, TYP, SRF, CRT\"] --&gt; CEMB[\"One embedding&lt;br/&gt;per variable (dim 16)\"]\n  AGG --&gt; CAT[\"Concatenation\"]\n  CEMB --&gt; CAT\n  CAT --&gt; HEAD[\"Linear head&lt;br/&gt;~745 classes\"]\n  HEAD --&gt; SM[\"Softmax&lt;br/&gt;top-5 + confidence index\"]\n\n\n\n\nFigure 1: Model architecture.\n\n\n\n\n\nThe model has three parts:\n\nText. The description is split into sub-word tokens. The tokenizer, either a WordPiece vocabulary or fastText-style character n-grams, is trained on the training data and versioned with it. Sub-words make the model robust to typos, inflections and new words. The token embeddings are averaged into a single vector for the text.\nCategorical variables. In the fastText era, auxiliary variables were appended to the text as artificial tokens (NAT_21 TYP_X …), which was a workaround. They now each have their own embedding, learned jointly with the text representation.\nHead. A linear layer maps the combined representation to the sub-classes of the target classification.\n\nThe same library also supports self-attention layers, label attention and Hugging Face tokenizers. These options are evaluated on the validation set. A richer architecture is adopted only if it fits within the latency budget.",
+    "crumbs": [
+      "Model"
+    ]
+  },
+  {
+    "objectID": "en/model.html#training",
+    "href": "en/model.html#training",
+    "title": "Model",
+    "section": "3 Training",
+    "text": "3 Training\nTraining is run by codif-ape-train, with these settings:\n\nConfiguration: Hydra, which handles the choice of classification (NAF rev. 2 or NAF 2025), the model, the tokenizer and the optimisation.\nFramework: PyTorch Lightning.\n\nOptimiser: Adam.\nLearning rate: reduced when the validation loss plateaus.\nEarly stopping on the validation loss.\nThe best checkpoint is kept.\n\nSample weights: rows created by business rules or sampled from particular sources can be weighted up or down in the loss (see Retraining protocol).\nExecution: an Argo workflow runs on a GPU node and trains the NAF rev. 2 and NAF 2025 models in parallel. Each run starts from a clean clone of the repository and a locked environment.\nTracking: each run logs the following in MLflow:\n\nthe full configuration;\nits input datasets;\nthe training curves;\nthe evaluation metrics and diagnostic figures;\nthe packaged model.",
+    "crumbs": [
+      "Model"
+    ]
+  },
+  {
+    "objectID": "en/model.html#confidence-index-and-calibration",
+    "href": "en/model.html#confidence-index-and-calibration",
+    "title": "Model",
+    "section": "4 Confidence index and calibration",
+    "text": "4 Confidence index and calibration\nFor each declaration, the model returns its five most likely codes and their probabilities. The decision to code automatically relies on a confidence index (CI): the gap between the two highest probabilities, \\(\\text{CI} = p_{(1)} - p_{(2)}\\).\n\nIf the CI is at or above a threshold \\(\\tau\\), the first code is assigned automatically.\nOtherwise, the declaration goes to a human coder, who sees the five suggestions.\n\nThe threshold sets the trade-off between automation rate and accuracy of automatic coding. With fastText, a threshold of about 0.75 sent roughly 20 % of declarations to manual coding (Randriamanana and Faria 2025). Since the score distribution changes from one model to the next, the threshold must be recalibrated for every new model on a representative sample. Reusing the previous threshold would shift the manual coding workload in an uncontrolled way.\nThis is why calibration matters. A probability of 0.9 should be right about 90 % of the time. fastText’s one-versus-all scores were poorly calibrated. The PyTorch model, trained with a softmax cross-entropy loss, is well calibrated out of the box, as measured on a test sample of 300,000 descriptions (Tayebjee et al. 2025). Calibration is measured at every run with the expected calibration error (ECE) and the Brier score.",
+    "crumbs": [
+      "Model"
+    ]
+  },
+  {
+    "objectID": "en/model.html#evaluation",
+    "href": "en/model.html#evaluation",
+    "title": "Model",
+    "section": "5 Evaluation",
+    "text": "5 Evaluation\nEvery run reports, on validation and test data:\n\naccuracy at each level of the classification, from section (level 1) to sub-class (level 5), since a mistake that stays within the right division costs less than one across sections;\ncalibration: ECE, Brier score, histogram of confidence;\nthe accuracy–automation curve: accuracy of automatically coded cases as a function of the share of cases coded automatically, as the threshold varies. This is the curve the business uses to choose the operating point.\n\n\n\n\n\n\n\nImportantEvaluating on the right data\n\n\n\nMetrics computed on a test split drawn from the training data are optimistic, since those labels share the biases of the training labels. They are also not representative of the production flow. The decision to deploy relies on a golden set: a random sample of the production flow, annotated by experts who do not see the model’s prediction. See Retraining protocol.",
+    "crumbs": [
+      "Model"
+    ]
+  },
+  {
+    "objectID": "en/model.html#sec-results",
+    "href": "en/model.html#sec-results",
+    "title": "Model",
+    "section": "6 Results",
+    "text": "6 Results\n\n6.1 fastText vs. PyTorch\n\n\n\nTable 1: Comparison of the two model generations (Tayebjee et al. 2025).\n\n\nTayebjee, Meilame, Cédric Couralet, Nathan Randriamanana, and Julien Pramil. 2025. fastText, Tout Juste En Production Et Déjà Obsolète ? Présentation Du Package torchTextClassifiers Pour La Modernisation de La Codification Automatique via l’exemple de l’APE. Journées de méthodologie statistique (JMS). https://inseefrlab.github.io/codif-ape-prez/papers/jms-torchft/index.pdf.\n\n\n\n\n\n\n\n\n\n\nfastText\ntorchTextClassifiers\n\n\n\n\nAutomation rate\n~80 %\n~80 %\n\n\nMean inference time (CPU, unit call)\n&lt; 100 ms\n&lt; 300 ms\n\n\nCalibration\nLimited\nExcellent\n\n\nCategorical variables\nAppended to the text\nDedicated embeddings\n\n\nExplainability\nNone\nIntegrated gradients, label attention\n\n\nGPU training\nNo\nYes\n\n\nMaintenance\nArchived upstream (2024)\nMaintained in-house, open source\n\n\n\n\n\n\nThe PyTorch model trades some latency for maintainability, calibration and the ability to evolve. The latency remains within the production budget.\n\n\n6.2 NAF 2025\nAccuracy on the test set of the NAF 2025 retraining, by level (Randriamanana and Faria 2025):\n\nRandriamanana, Nathan, and Thomas Faria. 2025. Changement de Nomenclature Statistique à l’ère Du Machine Learning : Réentraînement Basé Sur Les LLM Pour La Révision de La NAF. Journées de méthodologie statistique (JMS). https://inseefrlab.github.io/codif-ape-prez/papers/jms2025-llm-relabeling/index.pdf.\n\n\n\nTable 2: Test accuracy of the models retrained on NAF 2025 data, before data editing.\n\n\n\n\n\nModel\nSection\nDivision\nGroup\nClass\nSub-class\n\n\n\n\nfastText\n0.855\n0.833\n0.797\n0.784\n0.776\n\n\ntorchTextClassifiers\n0.92\n0.89\n0.86\n0.84\n0.83\n\n\n\n\n\n\nApplying business rules to the training data (data editing) raised sub-class accuracy to about 0.88–0.90 for both models. The gain is large but must be read with care: rules also change the test labels, so part of the gain reflects closer agreement with the rules rather than better generalisation. The retraining protocol is designed precisely to separate the two effects.",
+    "crumbs": [
+      "Model"
+    ]
+  },
+  {
+    "objectID": "en/references.html",
+    "href": "en/references.html",
+    "title": "References and resources",
+    "section": "",
+    "text": "All the team’s presentations are collected at inseefrlab.github.io/codif-ape-prez. The most relevant to this note are listed below.\n\n\n\nTable 1: Selected presentations.\n\n\n\n\n\nDate\nTitle\nVenue\n\n\n\n\n2026-06\ntorchTextClassifiers from an MLOps perspective\nISI World Statistics Congress, Malta\n\n\n2026-06\nWhen Classifications Change but Deadlines Don’t: Scaling Recoding with LLMs\nISI World Statistics Congress, Malta\n\n\n2026-03\nClassification of business activities by ML: the case of France\nWebinars with sub-Saharan Africa and the OECD\n\n\n2025-12\ntorchTextClassifiers: a unified framework for text classification in PyTorch\nPyData Global\n\n\n2025-11\nLLM-generated training data for a classification change\nJournées de méthodologie statistique\n\n\n2025-11\ntorchTextClassifiers\nJournées de méthodologie statistique\n\n\n2025-10\ntorchFastText / torchTextClassifiers\nPyData Paris\n\n\n2025-05\nWP10 country project presentation\nAIML4OS\n\n\n2024-05\nRetraining strategies for an economic activity classification model\nQ2024, Estoril",
+    "crumbs": [
+      "References and resources"
+    ]
+  },
+  {
+    "objectID": "en/references.html#presentations",
+    "href": "en/references.html#presentations",
+    "title": "References and resources",
+    "section": "",
+    "text": "All the team’s presentations are collected at inseefrlab.github.io/codif-ape-prez. The most relevant to this note are listed below.\n\n\n\nTable 1: Selected presentations.\n\n\n\n\n\nDate\nTitle\nVenue\n\n\n\n\n2026-06\ntorchTextClassifiers from an MLOps perspective\nISI World Statistics Congress, Malta\n\n\n2026-06\nWhen Classifications Change but Deadlines Don’t: Scaling Recoding with LLMs\nISI World Statistics Congress, Malta\n\n\n2026-03\nClassification of business activities by ML: the case of France\nWebinars with sub-Saharan Africa and the OECD\n\n\n2025-12\ntorchTextClassifiers: a unified framework for text classification in PyTorch\nPyData Global\n\n\n2025-11\nLLM-generated training data for a classification change\nJournées de méthodologie statistique\n\n\n2025-11\ntorchTextClassifiers\nJournées de méthodologie statistique\n\n\n2025-10\ntorchFastText / torchTextClassifiers\nPyData Paris\n\n\n2025-05\nWP10 country project presentation\nAIML4OS\n\n\n2024-05\nRetraining strategies for an economic activity classification model\nQ2024, Estoril",
+    "crumbs": [
+      "References and resources"
+    ]
+  },
+  {
+    "objectID": "en/references.html#papers",
+    "href": "en/references.html#papers",
+    "title": "References and resources",
+    "section": "Papers",
+    "text": "Papers\n\nTayebjee M., Couralet C., Randriamanana N., Pramil J. (2025). fastText, tout juste en production et déjà obsolète ? Présentation du package torchTextClassifiers… Journées de méthodologie statistique.\nRandriamanana N., Faria T. (2025). Changement de nomenclature statistique à l’ère du Machine Learning : réentraînement basé sur les LLM pour la révision de la NAF. Journées de méthodologie statistique.\nAvouac R., Faria T., Comte F. (2025). L’apport des technologies cloud pour industrialiser le processus d’innovation statistique. Insee, Document de travail M2025-05. Section 4 covers APE coding.\nFaria T., Randriamanana N., Seimandi T. (2024). Retraining strategies for an economic activity classification model. Q2024, Estoril.\nAIML4OS WP10 (2025). From text to code (WP10.4): MLOps tutorial. Insee, Statistics Austria, Destatis.",
+    "crumbs": [
+      "References and resources"
+    ]
+  },
+  {
+    "objectID": "en/references.html#code",
+    "href": "en/references.html#code",
+    "title": "References and resources",
+    "section": "Code",
+    "text": "Code\n\n\n\nTable 2: Source code.\n\n\n\n\n\nRepository\nDescription\n\n\n\n\ncodif-ape\nUmbrella workspace (submodules)\n\n\ncodif-ape-nace-revision\nLLM recoding of the training data from NAF rev. 2 to NAF 2025 (context- vs retrieval-augmented strategies, majority vote)\n\n\ncodif-ape-preprocess\nData cleaning, rule engine, splits\n\n\ncodif-ape-train\nTraining, evaluation, MLflow packaging\n\n\ncodif-ape-api\nFastAPI serving\n\n\ncodif-ape-cd\nKubernetes manifests, Argo CD\n\n\ntorchTextClassifiers\nPyTorch text classification library (docs)\n\n\nGRAAL\nLLM agents for classifications (docs)\n\n\ncodif-ape-docs\nThis website",
+    "crumbs": [
+      "References and resources"
+    ]
+  },
+  {
+    "objectID": "en/references.html#bibliography",
+    "href": "en/references.html#bibliography",
+    "title": "References and resources",
+    "section": "Bibliography",
+    "text": "Bibliography",
+    "crumbs": [
+      "References and resources"
+    ]
+  },
+  {
+    "objectID": "en/serving.html",
+    "href": "en/serving.html",
+    "title": "Serving and deployment",
+    "section": "",
+    "text": "The model is logged in MLflow as a pyfunc, a generic Python wrapper that bundles everything needed for inference:\n\nthe trained network and its tokenizer;\nthe encoders for categorical variables and for labels;\nthe inference code: validation of the input form, building features, decoding the top-k codes with their labels, and computing the confidence index;\nthe resources needed offline, such as stopword lists, so that nothing is downloaded at run time in a closed environment.\n\nThe input and output contract is defined by Pydantic models in the training repository. The model can therefore be loaded and queried the same way in a notebook, in a batch job or in the API. What has been evaluated is exactly what gets served.\nEach registered model has a name that identifies the classification (NAF rev. 2 or NAF 2025) and a version. Every response includes the identifier of the model that produced it, so every prediction can be traced.",
+    "crumbs": [
+      "Serving and deployment"
+    ]
+  },
+  {
+    "objectID": "en/serving.html#a-self-contained-model",
+    "href": "en/serving.html#a-self-contained-model",
+    "title": "Serving and deployment",
+    "section": "",
+    "text": "The model is logged in MLflow as a pyfunc, a generic Python wrapper that bundles everything needed for inference:\n\nthe trained network and its tokenizer;\nthe encoders for categorical variables and for labels;\nthe inference code: validation of the input form, building features, decoding the top-k codes with their labels, and computing the confidence index;\nthe resources needed offline, such as stopword lists, so that nothing is downloaded at run time in a closed environment.\n\nThe input and output contract is defined by Pydantic models in the training repository. The model can therefore be loaded and queried the same way in a notebook, in a batch job or in the API. What has been evaluated is exactly what gets served.\nEach registered model has a name that identifies the classification (NAF rev. 2 or NAF 2025) and a version. Every response includes the identifier of the model that produced it, so every prediction can be traced.",
+    "crumbs": [
+      "Serving and deployment"
+    ]
+  },
+  {
+    "objectID": "en/serving.html#the-api",
+    "href": "en/serving.html#the-api",
+    "title": "Serving and deployment",
+    "section": "2 The API",
+    "text": "2 The API\ncodif-ape-api is a thin FastAPI application. It loads the registered model at start-up, based on its name and version (passed as environment variables). It exposes one prediction endpoint:\n\nInput: a batch of declaration forms, each with a mandatory activity description and optional auxiliary fields: legal form, nature of activity, type of form, surface area, permanence. Values are validated against the allowed modalities before inference.\nOutput: for each form, the top-k codes with their probability and label, the confidence index and the model identifier.\nParameters: the number of suggestions, a minimum probability, and the batch size and number of workers. One endpoint therefore serves both unit calls from the register (one form at a time, lowest latency) and bulk recoding (large batches in parallel).\n\nThe API runs on CPU-only PyTorch builds and logs to standard output only, as the production platform requires. It is the only component that the Sirene information system calls. The Java application that manages declarations sends the form to the API and routes it according to the confidence index.",
+    "crumbs": [
+      "Serving and deployment"
+    ]
+  },
+  {
+    "objectID": "en/serving.html#continuous-integration-and-delivery",
+    "href": "en/serving.html#continuous-integration-and-delivery",
+    "title": "Serving and deployment",
+    "section": "3 Continuous integration and delivery",
+    "text": "3 Continuous integration and delivery\n\n\n\n\n\n\nflowchart LR\n  DEV[\"Commit / tag&lt;br/&gt;codif-ape-api\"] --&gt; GHA[\"GitHub Actions&lt;br/&gt;build + push image\"]\n  GHA --&gt; HUB[(\"Container&lt;br/&gt;registry\")]\n  TRN[\"Training run\"] --&gt; REG[(\"MLflow&lt;br/&gt;registry\")]\n  MAN[\"Edit manifest&lt;br/&gt;codif-ape-cd&lt;br/&gt;(image tag, model version)\"] --&gt; ARGO[\"Argo CD&lt;br/&gt;auto-sync\"]\n  HUB --&gt; ARGO\n  ARGO --&gt; POD[\"API pod\"]\n  REG --&gt;|\"loaded at start-up\"| POD\n\n\n\n\nFigure 1: From a commit to a running service.\n\n\n\n\n\nThe delivery process works as follows:\n\nImages. On each push to main and on each version tag, GitHub Actions builds the API’s Docker image and pushes it to the container registry. Pull requests check that the image builds.\nManifests. codif-ape-cd holds the plain Kubernetes manifests of every service:\n\nthe API instances for each classification and environment;\nthe monitoring dashboard;\nthe scheduled annotation and monitoring jobs;\nthe GRAAL review applications.\n\nSynchronisation. Each directory of the repository has an Argo CD Application, with automatic sync and self-healing enabled. The cluster always reflects the repository.\n\nDeploying a new model is a one-line change to a manifest: update the model version, or the image tag if the API code changed. The change is reviewed and merged, and Argo CD rolls it out. Rolling back is reverting that commit. The history of what ran where, and when, is the Git log.",
+    "crumbs": [
+      "Serving and deployment"
+    ]
+  },
+  {
+    "objectID": "en/serving.html#environments",
+    "href": "en/serving.html#environments",
+    "title": "Serving and deployment",
+    "section": "4 Environments",
+    "text": "4 Environments\nSeveral API instances run side by side on the platform. Each one is identified by its classification and its model generation, for example a NAF 2008 model and a NAF 2025 model built with PyTorch. They are used for:\n\ndevelopment and demonstrations;\ncomparing model generations on the same inputs;\nbulk recoding jobs.\n\nFor production, the model goes through qualification on a pre-production platform that matches the production environment:\n\nlatency and memory are measured on CPU;\nonline/offline parity is checked: the served model must reproduce the offline evaluation predictions exactly;\na shadow period can follow, during which the new model scores the real flow without its decisions being used.\n\nThese steps are detailed in the retraining protocol.",
+    "crumbs": [
+      "Serving and deployment"
+    ]
+  },
+  {
+    "objectID": "fr/companion-projects.html",
+    "href": "fr/companion-projects.html",
+    "title": "Projets associés : TTC et GRAAL",
+    "section": "",
+    "text": "Deux projets sont nés des besoins de la codification APE. Ils sont développés comme des outils généralistes et open source :\nflowchart LR\n  subgraph OFF[\"Hors ligne (par lots)\"]\n    GR[\"GRAAL&lt;br/&gt;agents LLM\"]\n    PRE[\"Curation des données&lt;br/&gt;codif-ape-preprocess\"]\n  end\n  subgraph CRIT[\"Chemin critique\"]\n    TRN[\"Entraînement&lt;br/&gt;codif-ape-train\"] --&gt; MOD[\"Modèle&lt;br/&gt;(TTC)\"] --&gt; API[\"API&lt;br/&gt;codif-ape-api\"]\n  end\n  GR --&gt;|\"recodification, audits,&lt;br/&gt;arbitrage, données synthétiques\"| PRE\n  PRE --&gt; TRN\n  API --&gt;|\"codes candidats,&lt;br/&gt;référence supervisée\"| GR\n  API --&gt;|\"prédictions\"| MON[\"Suivi\"]\n  MON --&gt;|\"cas à auditer\"| GR\n\n\n\n\nFigure 1: Place de TTC et de GRAAL dans la chaîne.",
+    "crumbs": [
+      "Projets associés : TTC et GRAAL"
+    ]
+  },
+  {
+    "objectID": "fr/companion-projects.html#sec-ttc",
+    "href": "fr/companion-projects.html#sec-ttc",
+    "title": "Projets associés : TTC et GRAAL",
+    "section": "1 torchTextClassifiers",
+    "text": "1 torchTextClassifiers\ntorchTextClassifiers (documentation, PyPI) se définit comme « un cadre unifié et extensible pour la classification de textes avec variables catégorielles, construit sur PyTorch et PyTorch Lightning » (Couralet et Tayebjee 2025).\n\nCouralet, Cédric, et Meilame Tayebjee. 2025. torchTextClassifiers: A unified framework for text classification in PyTorch. PyData Global. https://inseefrlab.github.io/codif-ape-prez/slides/pydata-global/.\n\n1.1 Pourquoi\nLorsque Meta a archivé le dépôt de fastText en mars 2024, le modèle de production s’est retrouvé dépendant d’une bibliothèque C++ compilée et non maintenue. fastText présentait d’autres inconvénients :\n\nles variables auxiliaires ne pouvaient être prises en compte qu’en les ajoutant au texte ;\nil n’offrait aucune explicabilité ;\nses scores étaient mal calibrés ;\nil ne pouvait pas être entraîné sur GPU.\n\nUne première réimplémentation en PyTorch, torchFastText, reproduisait l’architecture de fastText. Elle est ensuite devenue un cadre général, renommé torchTextClassifiers en 2025.\nSi le modèle est un package plutôt que du code dans le dépôt d’entraînement, c’est pour une raison précise. La même classe de modèle doit exister dans le dépôt d’entraînement, dans l’API, en production et dans les traitements par lots. Un package versionné sur PyPI, répliqué dans le gestionnaire de dépôts interne de l’Insee, constitue la source unique de vérité commune à tous ces usages.\n\n\n1.2 Conception\nLa bibliothèque décompose un classifieur de textes en composants interchangeables :\n\n\n\nTable 1: Briques de torchTextClassifiers.\n\n\n\n\n\n\n\n\n\nComposant\nOptions\n\n\n\n\nTokeniseur\nn-grammes de caractères à la manière de fastText, WordPiece, ou tout tokeniseur Hugging Face\n\n\nPlongement des tokens\nSac de plongements (embedding bag), éventuellement avec des couches d’auto-attention (« construisez votre propre petit BERT »)\n\n\nPlongement de la phrase\nMoyenne, premier ou dernier token, ou attention par classe (label attention : une représentation par classe)\n\n\nVariables catégorielles\nUn plongement par variable, combiné au texte par somme, par moyenne puis concaténation, ou par concaténation\n\n\nTête\nClassifieur linéaire, multiclasse ou multilabel ; une variante multiniveau exploite la hiérarchie\n\n\n\n\n\n\nUne interface de haut niveau prend en charge l’encodage des valeurs catégorielles brutes et des classes, l’entraînement (avec pondération facultative des observations), la prédiction des k meilleurs codes, ainsi que la sauvegarde et le chargement. Deux formes d’explicabilité sont intégrées :\n\ndes attributions au niveau des tokens par gradients intégrés (Captum) ;\nl’attention par classe, qui montre quels mots pèsent dans chaque classe candidate.\n\nLa bibliothèque s’adresse aux équipes qui ont besoin d’une classification de textes précise mais ne peuvent pas déployer de grands modèles : budgets CPU réduits, contraintes de latence unitaire, environnements fermés. Au-delà de l’APE, elle sert pour d’autres nomenclatures à l’Insee, comme la COICOP pour les libellés de produits des tickets de caisse. Elle a vocation à devenir un outil commun de codification automatique pour la statistique publique.\n\n\n1.3 Dans la chaîne APE\n\ncodif-ape-train construit et entraîne le modèle avec TTC, puis l’encapsule dans le pyfunc MLflow.\ncodif-ape-api installe TTC pour pouvoir charger ce pyfunc, mais ne l’appelle pas directement.\nPar rapport à fastText, TTC offre le même taux de codification automatique, une bien meilleure calibration, l’explicabilité et l’entraînement sur GPU, pour un temps d’inférence qui reste dans le budget (voir Modèle).",
+    "crumbs": [
+      "Projets associés : TTC et GRAAL"
+    ]
+  },
+  {
+    "objectID": "fr/companion-projects.html#sec-graal",
+    "href": "fr/companion-projects.html#sec-graal",
+    "title": "Projets associés : TTC et GRAAL",
+    "section": "2 GRAAL",
+    "text": "2 GRAAL\nGRAAL (documentation), Graph-based Reasoning Agents for Automatic Labelling, est un cadre d’agents LLM qui codent du texte libre dans une nomenclature hiérarchique.\n\n2.1 Principe\nL’ensemble de la nomenclature est stocké sous forme de graphe dans Neo4j :\n\nles codes et leurs libellés ;\nles notes explicatives : inclusions, exclusions, exemples ;\nles relations parent–enfant, ainsi qu’un index vectoriel sur les notes.\n\nLes agents explorent ce graphe au moyen d’outils, comme un expert humain parcourt la nomenclature. Toutes les entrées et sorties sont des contrats Pydantic typés. Les agents fonctionnent avec tout point d’accès compatible avec l’API d’OpenAI, servi sur la plateforme avec des modèles à poids ouverts.\nComme toute la connaissance de la nomenclature réside dans le graphe, le cadre est indépendant de la nomenclature. Des graphes existent pour la NAF 2025 (en français), la NACE Rev. 2.1 (en anglais) et la COICOP 2018.\n\n\n2.2 Composants\n\n\n\nTable 2: Agents de GRAAL.\n\n\n\n\n\n\n\n\n\n\nFamille\nAgent\nRôle\n\n\n\n\nTexte → code\nNavigator\nParcourt la hiérarchie de la racine jusqu’à une feuille, en lisant les notes à chaque étape\n\n\n\nAgentic RAG\nPart d’une recherche vectorielle, puis vérifie et corrige avec le Navigator\n\n\n\nSummary agent\nUn agent unique, avec l’ensemble de la nomenclature résumé dans son contexte\n\n\nArbitrage\nCodeChooser\nArbitre entre quelques codes candidats\n\n\n\nMatchVerifier\nAudite un couple (libellé, code) : est-il cohérent avec les notes ? Sinon, quel code convient mieux ?\n\n\nCode → texte\nCode2Text\nGénère des libellés synthétiques réalistes pour un code donné\n\n\n\n\n\n\nGRAAL comprend aussi un module d’évaluation et des applications de revue dans lesquelles les experts métier jugent les verdicts des agents. Le module d’évaluation propose des métriques à chaque niveau, des échantillons stratifiés pondérés, des intervalles de confiance par bootstrap et des tests appariés.\n\n\n2.3 Rôle dans la chaîne\nGRAAL ne remplace pas le modèle de production. Les agents mettent de quelques secondes à quelques minutes par libellé et nécessitent des GPU pour servir le LLM, alors que la production exige environ 200 ms sur CPU. Dans les premiers bancs d’essai, les agents n’étaient pas non plus meilleurs que le modèle supervisé sur l’ensemble du flux. L’intérêt de GRAAL est ailleurs, dans quatre tâches hors ligne :\n\nRecoder un stock après un changement de nomenclature. L’essentiel des données d’entraînement NAF 2025 a été produit par une chaîne dédiée, codif-ape-nace-revision, dans laquelle des LLM codent avec les notes explicatives dans leur contexte (Données). GRAAL généralise cette approche avec des agents qui naviguent dans la nomenclature, pour les révisions futures et pour d’autres nomenclatures.\nAuditer et fiabiliser les codes. Le MatchVerifier signale les codes douteux dans les données d’entraînement, ou parmi les cas codés automatiquement, et propose des alternatives. Dans le protocole de réentraînement, GRAAL est l’un des moteurs indépendants dont les désaccords avec le modèle de production sont arbitrés.\nPrioriser la revue humaine. Les cas suspects sont soumis en priorité aux experts métier. Leurs avis sont recueillis dans une application de revue et deviennent de nouvelles annotations.\nGénérer des données synthétiques. Code2Text produit des libellés pour les codes rares, ainsi que des variantes reformulées de cas connus, pour vérifier qu’une correction se généralise.\n\nEn retour, GRAAL s’appuie sur l’API de production. Il l’utilise comme référence supervisée et comme source de codes candidats pour les agents et les annotateurs.",
+    "crumbs": [
+      "Projets associés : TTC et GRAAL"
+    ]
+  },
+  {
+    "objectID": "fr/data.html",
+    "href": "fr/data.html",
+    "title": "Données",
+    "section": "",
+    "text": "Le modèle apprend à partir des déclarations passées, conservées dans le répertoire Sirene. Chaque observation comprend :\n\nle libellé d’activité : texte libre saisi par le déclarant, parfois complété de précisions sur une activité secondaire ou agricole ;\ndes variables annexes issues du formulaire de déclaration :\n\nla catégorie juridique (CJ) ;\nla nature de l’activité (NAT) ;\nle type de liasse (TYP) ;\nla surface du local (SRF, regroupée en tranches) ;\nle caractère permanent ou saisonnier de l’activité (CRT) ;\n\nle code APE attribué, automatiquement ou par un gestionnaire.\n\nLes premiers modèles ont été entraînés sur environ 10 millions de déclarations issues de l’ancien répertoire (2014–2022). Depuis le passage au nouveau répertoire et à la NAF 2025, la base d’entraînement est constituée d’environ 2,7 millions de déclarations récentes (Randriamanana et Faria 2025).\n\n\n\n\n\n\nAvertissementLes labels ne sont pas une vérité terrain\n\n\n\nLes labels historiques proviennent de Sicore, des versions précédentes du modèle et de gestionnaires travaillant sous contrainte de temps. Certains sont faux, d’autres se contredisent : un même libellé peut porter des codes différents. La qualité des labels compte autant que l’architecture du modèle. Deux composants s’en chargent : le moteur de règles (ci-dessous) et les campagnes d’annotation (Suivi).",
+    "crumbs": [
+      "Données"
+    ]
+  },
+  {
+    "objectID": "fr/data.html#données-dentraînement",
+    "href": "fr/data.html#données-dentraînement",
+    "title": "Données",
+    "section": "",
+    "text": "Le modèle apprend à partir des déclarations passées, conservées dans le répertoire Sirene. Chaque observation comprend :\n\nle libellé d’activité : texte libre saisi par le déclarant, parfois complété de précisions sur une activité secondaire ou agricole ;\ndes variables annexes issues du formulaire de déclaration :\n\nla catégorie juridique (CJ) ;\nla nature de l’activité (NAT) ;\nle type de liasse (TYP) ;\nla surface du local (SRF, regroupée en tranches) ;\nle caractère permanent ou saisonnier de l’activité (CRT) ;\n\nle code APE attribué, automatiquement ou par un gestionnaire.\n\nLes premiers modèles ont été entraînés sur environ 10 millions de déclarations issues de l’ancien répertoire (2014–2022). Depuis le passage au nouveau répertoire et à la NAF 2025, la base d’entraînement est constituée d’environ 2,7 millions de déclarations récentes (Randriamanana et Faria 2025).\n\n\n\n\n\n\nAvertissementLes labels ne sont pas une vérité terrain\n\n\n\nLes labels historiques proviennent de Sicore, des versions précédentes du modèle et de gestionnaires travaillant sous contrainte de temps. Certains sont faux, d’autres se contredisent : un même libellé peut porter des codes différents. La qualité des labels compte autant que l’architecture du modèle. Deux composants s’en chargent : le moteur de règles (ci-dessous) et les campagnes d’annotation (Suivi).",
+    "crumbs": [
+      "Données"
+    ]
+  },
+  {
+    "objectID": "fr/data.html#sec-rules",
+    "href": "fr/data.html#sec-rules",
+    "title": "Données",
+    "section": "2 Nettoyage des labels : un moteur de règles auditable",
+    "text": "2 Nettoyage des labels : un moteur de règles auditable\ncodif-ape-preprocess applique des règles métier aux données d’entraînement avant chaque entraînement. Une règle traduit en code une connaissance des experts métier. Par exemple, les activités de location meublée désignées par le sigle « LMNP », les sociétés holding, les chauffeurs VTC et les taxis sont chacun orientés vers un code précis.\nUne règle peut agir de trois façons :\n\n\n\nTable 1: Types de règles.\n\n\n\n\n\n\n\n\n\n\nType\nEffet\nExemple\n\n\n\n\nModifier\nRéétiqueter les lignes qui correspondent à un motif\nLibellés mentionnant une activité de holding passive → le code dédié aux holdings\n\n\nAugmenter\nAjouter des lignes synthétiques, pondérées, pour que le modèle apprenne un cas qu’il voit rarement\nUne ligne « LMNP » par catégorie juridique, pour que toutes soient couvertes\n\n\nSupprimer\nRetirer les lignes inexploitables\nCodes absents de la nomenclature cible\n\n\n\n\n\n\nLes règles sont des fonctions Python enregistrées à l’aide d’un décorateur. Chacune porte un nom, des tags et une description. Une règle repère les libellés concernés par une ou plusieurs de ces trois méthodes :\n\ndes expressions régulières sur le texte normalisé ;\nune correspondance approximative (fuzzy matching), pour absorber les fautes de frappe ;\nune similarité sémantique, à partir d’un modèle de plongements de phrases calculé sur GPU.\n\nLes correspondances approximative et sémantique étendent une règle aux libellés proches de ceux listés par les experts. Chaque règle définit les méthodes qu’elle autorise. Par exemple, une règle portant sur un sigle court est limitée à la correspondance exacte.\nChaque modification est journalisée. Pour chaque ligne modifiée, créée ou supprimée, un journal enregistre le code avant et après, la règle appliquée et le contexte de la déclaration. Ces journaux sont stockés à côté du jeu de données nettoyé. Tout label du jeu d’entraînement peut ainsi être retracé jusqu’à son origine.\nLes règles rendent pérennes les retours des experts. Une erreur corrigée uniquement par réentraînement peut réapparaître avec le modèle suivant. Une règle, elle, corrige définitivement tout le jeu d’entraînement, et la correction est auditable. La création, la vérification et la propagation des règles sont décrites dans le protocole de réentraînement.",
+    "crumbs": [
+      "Données"
+    ]
+  },
+  {
+    "objectID": "fr/data.html#découpage-et-versionnage",
+    "href": "fr/data.html#découpage-et-versionnage",
+    "title": "Données",
+    "section": "3 Découpage et versionnage",
+    "text": "3 Découpage et versionnage\nAprès nettoyage, la chaîne :\n\nconstruit les variables finales : le libellé concaténé avec ses champs texte complémentaires, et les variables catégorielles ;\ndécoupe les données en jeux d’entraînement, de validation et de test ;\nécrit ces jeux sur S3, dans un dossier nommé d’après la date d’extraction ;\ninscrit ce dossier, avec la liste des variables, dans un fichier de configuration partagé, lu par le code d’entraînement.\n\nChaque entraînement enregistre ses jeux de données d’entrée dans MLflow. Il est donc rattaché à un instantané exact des données.",
+    "crumbs": [
+      "Données"
+    ]
+  },
+  {
+    "objectID": "fr/data.html#sec-naf2025",
+    "href": "fr/data.html#sec-naf2025",
+    "title": "Données",
+    "section": "4 Le passage à la NAF 2025",
+    "text": "4 Le passage à la NAF 2025\nLa révision européenne de la nomenclature d’activités (NACE Rév. 2.1, appelée NAF 2025 en France) s’applique à toutes les unités de Sirene au 1er janvier 2027. Le modèle doit donc être entraîné dans une nomenclature dans laquelle aucune donnée historique n’a été codée.\n\n4.1 Le problème de la correspondance\nLa table de correspondance officielle entre la NAF rév. 2 et la NAF 2025 relie 732 anciennes sous-classes à 746 nouvelles (Randriamanana et Faria 2025) :\n\nRandriamanana, Nathan, et Thomas Faria. 2025. Changement de nomenclature statistique à l’ère du Machine Learning : réentraînement basé sur les LLM pour la révision de la NAF. Journées de méthodologie statistique (JMS). https://inseefrlab.github.io/codif-ape-prez/papers/jms2025-llm-relabeling/index.pdf.\n\n551 correspondances univoques : l’ancien code correspond à un seul nouveau code, et la traduction est mécanique ;\n181 correspondances multivoques : l’ancien code éclate en plusieurs nouveaux codes (jusqu’à 38), et il faut lire le libellé pour choisir.\n\nLes codes multivoques ne représentent que 25 % des codes, mais ils couvrent 52 % des observations d’entraînement, soit environ 1,4 million de lignes. Les experts métier ont d’abord requalifié certains « faux multivoques », où une cible domine nettement. Cette étape en a réglé environ un tiers. Il restait néanmoins environ 500 000 observations à recoder une à une.\n\n\n4.2 Les experts comme référence, les LLM pour le volume\nLe recodage a combiné expertise humaine et grands modèles de langage :\n\nAnnotation par les experts. Environ 25 experts métier ont annoté quelque 30 000 libellés multivoques en NAF 2025, dans Label Studio, pendant environ cinq mois. La campagne a aussi fourni des mesures d’accord inter-annotateurs, qui fixent un plafond réaliste : trois experts indépendants ne s’accordent sur la sous-classe que dans 62 % des cas environ, alors qu’au moins deux d’entre eux s’accordent dans 96 % des cas.\nLes LLM comme annotateurs virtuels. Des LLM à poids ouverts, servis sur la plateforme avec vLLM, ont recodé les observations multivoques (codif-ape-nace-revision). Chaque prompt contenait le libellé, les codes NAF 2025 candidats et leurs notes explicatives (génération augmentée par le contexte). La sortie était contrainte par un schéma JSON. Plusieurs modèles ont été comparés aux annotations des experts. Le meilleur modèle isolé atteignait une exactitude d’environ 72 % au niveau de la sous-classe. Combiner les modèles, par vote ou en cascade, apportait quelques points de plus.\nDes règles métier ont ensuite été appliquées par-dessus, via le moteur de règles, pour corriger les erreurs systématiques.\n\nAu total, environ 2,3 millions des 2,7 millions d’observations ont été reconstituées en NAF 2025. Des itérations ultérieures, avec des modèles à poids ouverts plus récents et un vote majoritaire, ont porté l’exactitude des LLM à environ 78 % (Pramil 2026).\n\nPramil, Julien. 2026. When Classifications Change but Deadlines Don’t: Scaling Recoding with LLMs. The NACE Transition at Insee. ISI World Statistics Congress, Malta. https://inseefrlab.github.io/codif-ape-prez/slides/isi-malta-relabeling/.\n\n\n\n\n\n\nAstuceEnseignement\n\n\n\nLes annotations d’experts sont coûteuses : mieux vaut les utiliser comme référence. Elles orientent le choix des prompts et des modèles et mesurent le résultat, tandis que les LLM apportent le volume. La confiance déclarée par un LLM lui-même s’est révélée un filtre peu fiable. L’accord entre plusieurs modèles est un meilleur signal.\n\n\nLe modèle réentraîné sur ces données est présenté dans le chapitre suivant.",
+    "crumbs": [
+      "Données"
+    ]
+  },
+  {
+    "objectID": "fr/lessons.html",
+    "href": "fr/lessons.html",
+    "title": "Enseignements",
+    "section": "",
+    "text": "Un petit modèle bien intégré vaut mieux qu’un grand modèle impossible à déployer. Les transformers pré-entraînés n’apportaient qu’un gain marginal par rapport à un modèle de type fastText, et ils ne tenaient pas dans le budget de latence et de CPU. L’effort a porté là où il était rentable : qualité des données, calibration et chaîne de déploiement.\nLes dépendances sont un risque à gérer. Le dépôt de fastText a été archivé par ses auteurs à peine plus d’un an après la mise en production. Le passage à PyTorch a demandé du temps et du soin, « mais le jeu en vaut la chandelle » : le modèle est désormais maintenu en interne, il est calibré et explicable, et il peut évoluer. En contrepartie, PyTorch impose une politique de versions stricte entre l’entraînement, la mise à disposition et la production.\nLivrer le prétraitement avec le modèle. Au début, l’équipe informatique métier avait recodé en Java le prétraitement du texte. Cette duplication était source d’erreurs. Empaqueter le modèle avec son prétraitement et son contrat (pyfunc MLflow, modèles Pydantic), et le servir au moyen d’une API Python, l’a fait disparaître.\nLe GitOps rend le déploiement banal, et c’est le but. Quand déployer un modèle se résume à un commit d’une ligne, relu, et qu’un retour arrière n’est qu’une annulation de ce commit, les déploiements cessent d’être des événements.\nLa calibration est une fonctionnalité métier. Le seuil sur l’indice de confiance détermine la charge de reprise manuelle. C’est une décision méthodologique, pas un réglage d’exploitation. Il ne peut être fixé que sur un modèle calibré et un échantillon représentatif, et doit être revu pour chaque nouveau modèle.",
+    "crumbs": [
+      "Enseignements"
+    ]
+  },
+  {
+    "objectID": "fr/lessons.html#enseignements-techniques",
+    "href": "fr/lessons.html#enseignements-techniques",
+    "title": "Enseignements",
+    "section": "",
+    "text": "Un petit modèle bien intégré vaut mieux qu’un grand modèle impossible à déployer. Les transformers pré-entraînés n’apportaient qu’un gain marginal par rapport à un modèle de type fastText, et ils ne tenaient pas dans le budget de latence et de CPU. L’effort a porté là où il était rentable : qualité des données, calibration et chaîne de déploiement.\nLes dépendances sont un risque à gérer. Le dépôt de fastText a été archivé par ses auteurs à peine plus d’un an après la mise en production. Le passage à PyTorch a demandé du temps et du soin, « mais le jeu en vaut la chandelle » : le modèle est désormais maintenu en interne, il est calibré et explicable, et il peut évoluer. En contrepartie, PyTorch impose une politique de versions stricte entre l’entraînement, la mise à disposition et la production.\nLivrer le prétraitement avec le modèle. Au début, l’équipe informatique métier avait recodé en Java le prétraitement du texte. Cette duplication était source d’erreurs. Empaqueter le modèle avec son prétraitement et son contrat (pyfunc MLflow, modèles Pydantic), et le servir au moyen d’une API Python, l’a fait disparaître.\nLe GitOps rend le déploiement banal, et c’est le but. Quand déployer un modèle se résume à un commit d’une ligne, relu, et qu’un retour arrière n’est qu’une annulation de ce commit, les déploiements cessent d’être des événements.\nLa calibration est une fonctionnalité métier. Le seuil sur l’indice de confiance détermine la charge de reprise manuelle. C’est une décision méthodologique, pas un réglage d’exploitation. Il ne peut être fixé que sur un modèle calibré et un échantillon représentatif, et doit être revu pour chaque nouveau modèle.",
+    "crumbs": [
+      "Enseignements"
+    ]
+  },
+  {
+    "objectID": "fr/lessons.html#enseignements-sur-les-données",
+    "href": "fr/lessons.html#enseignements-sur-les-données",
+    "title": "Enseignements",
+    "section": "2 Enseignements sur les données",
+    "text": "2 Enseignements sur les données\nLa qualité des annotations est le principal levier. Les codes historiques mêlent des sorties d’un moteur de règles, de modèles antérieurs et d’une codification humaine faite dans l’urgence. Un moteur de règles auditable, où chaque recodification est journalisée, a fait davantage pour l’exactitude que la plupart des changements d’architecture. Les règles ont toutefois des effets de bord sur les codes voisins : elles doivent rester ciblées.\nL’évaluation exige un golden set aléatoire et annoté à l’aveugle. Les corrections manuelles sont sélectionnées sur les échecs du modèle, et les annotateurs qui voient la prédiction s’y ancrent. Sans échantillon aléatoire, alimenté en continu et annoté à l’aveugle, on ne peut ni mesurer l’exactitude de la codification automatique, ni fixer le seuil, ni comparer deux modèles. Le suivi doit être un processus courant, et non une suite de campagnes ponctuelles.\nLes experts métier comme référence, les LLM pour le passage à l’échelle. Pour la révision NAF 2025, quelques dizaines de milliers d’annotations d’experts ont suffi pour choisir et valider la recodification par LLM de millions d’observations. La confiance déclarée par les LLM eux-mêmes n’était pas un filtre utilisable, contrairement à l’accord entre modèles.\nConnaître le plafond. Même des annotateurs expérimentés sont souvent en désaccord au niveau le plus fin de la nomenclature. L’accord inter-annotateurs donne une borne supérieure réaliste de ce qu’un modèle peut atteindre, et doit servir à cadrer les attentes.",
+    "crumbs": [
+      "Enseignements"
+    ]
+  },
+  {
+    "objectID": "fr/lessons.html#enseignements-organisationnels",
+    "href": "fr/lessons.html#enseignements-organisationnels",
+    "title": "Enseignements",
+    "section": "3 Enseignements organisationnels",
+    "text": "3 Enseignements organisationnels\nLe MLOps est une organisation autant qu’une pile technique. Le projet associe :\n\nl’équipe métier, responsable du répertoire et de la nomenclature ;\nles équipes informatiques qui exploitent la production ;\nl’équipe de data science (SSP Lab).\n\nL’étape décisive a été de désigner, au sein de l’équipe métier, un responsable du modèle, chargé du réentraînement, de la qualification et de l’exploitation, distinct de l’équipe d’innovation. Cela rejoint la recommandation d’AIML4OS selon laquelle tout modèle en production doit avoir un responsable nommément désigné (Tayebjee et al. 2025, ch. 3).\nLa confiance se construit avec des outils. Les experts métier font confiance au modèle lorsqu’ils peuvent voir pourquoi il a décidé (explicabilité), vérifier ce qui a changé entre deux versions (rapports de comparaison, journaux des modifications) et transformer leurs retours en corrections durables (règles).\nL’ouverture du code est payante. Tout le code est public. Cela a permis des échanges avec d’autres instituts statistiques : Statistique Canada, le Statec, Statistics Austria, Destatis, les instituts nationaux de statistique d’Afrique subsaharienne et l’OCDE. Les outils ont aussi pu être réutilisés pour d’autres nomenclatures.",
+    "crumbs": [
+      "Enseignements"
+    ]
+  },
+  {
+    "objectID": "fr/lessons.html#une-perspective-européenne",
+    "href": "fr/lessons.html#une-perspective-européenne",
+    "title": "Enseignements",
+    "section": "4 Une perspective européenne",
+    "text": "4 Une perspective européenne\nLa chaîne a servi d’implémentation de référence, aux côtés de Statistics Austria et de Destatis, pour le tutoriel MLOps rédigé dans le cadre du projet européen AIML4OS (Work Package 10, cluster 4 « From text to code ») (Tayebjee et al. 2025). Le tutoriel organise le cycle de vie en quatre étapes, chacune assortie d’une liste de contrôle :\n\nTayebjee, Meilame, Nina Niederhametner, Bogdan Levagin, et Ariane Lestrade. 2025. From text to code (WP10.4) – MLOps tutorial. AIML4OS project, Work Package 10. https://aiml4os.github.io/WP10_Cluster4_MLOps/.\n\nDonnées : stockage, validation, versionnage ;\nModèle : entraînement reproductible, validation au-delà de l’exactitude, empaquetage, registre ;\nMise à disposition : API, conteneurs, GitOps, passerelle entre développement et production ;\nSuivi : typologie des dérives, niveaux de suivi, réentraînement et promotion.\n\nCette note peut se lire comme une étude de cas détaillée de ce cadre.",
+    "crumbs": [
+      "Enseignements"
+    ]
+  },
+  {
+    "objectID": "fr/lessons.html#questions-ouvertes",
+    "href": "fr/lessons.html#questions-ouvertes",
+    "title": "Enseignements",
+    "section": "5 Questions ouvertes",
+    "text": "5 Questions ouvertes\nCertaines questions méthodologiques restent ouvertes. Elles sont probablement communes à toutes les chaînes de codification :\n\nAncrage. Si les gestionnaires voient la proposition du modèle, leurs codes ne sont plus indépendants du modèle. Comment en tenir compte lorsque ces codes servent à l’entraînement ?\nTaille du golden set. Avec environ 750 classes, les métriques par classe sur un seul trimestre sont hors de portée. Sur quelle fenêtre faut-il cumuler le golden set ?\nExactitude cible. Qui fixe \\(p^*\\) ? C’est un arbitrage métier entre exactitude et charge de reprise manuelle.\nHistorique. À quel rythme les anciens codes doivent-ils perdre du poids ? Comment traiter les observations historiques dont le code NAF 2025 est ambigu : nouvelle annotation, exclusion, ou codes issus des moteurs avec un faible poids ?",
+    "crumbs": [
+      "Enseignements"
+    ]
+  },
+  {
+    "objectID": "fr/monitoring.html",
+    "href": "fr/monitoring.html",
+    "title": "Suivi et annotation",
+    "section": "",
+    "text": "Un modèle de codification en production peut se dégrader de plusieurs façons, que le cadre MLOps européen range dans une typologie (Tayebjee et al. 2025, ch. 4) :\n\nTayebjee, Meilame, Nina Niederhametner, Bogdan Levagin, et Ariane Lestrade. 2025. From text to code (WP10.4) – MLOps tutorial. AIML4OS project, Work Package 10. https://aiml4os.github.io/WP10_Cluster4_MLOps/.\n\n\n\nTable 1: Sources de dégradation.\n\n\n\n\n\n\n\n\n\nDérive\nExemple pour la codification APE\n\n\n\n\nDérive des covariables (covariate shift) : les entrées changent\nDe nouveaux métiers et de nouvelles formulations apparaissent, et la réforme du guichet unique a allongé les libellés\n\n\nDérive a priori (prior shift) : la répartition des classes change\nVagues d’immatriculations dans certains secteurs, comme les VTC ou la location meublée\n\n\nDérive conceptuelle (concept drift) : la relation entre entrée et code change\nRévision de la nomenclature (NAF rév. 2 → NAF 2025) ; une marque qui devient une nouvelle activité (par exemple « Uber » → « Uber Eats »)\n\n\nDéfaillance en amont\nUn champ qui n’est plus renseigné, ou un changement de format de la liasse",
+    "crumbs": [
+      "Suivi et annotation"
+    ]
+  },
+  {
+    "objectID": "fr/monitoring.html#les-risques-de-dégradation",
+    "href": "fr/monitoring.html#les-risques-de-dégradation",
+    "title": "Suivi et annotation",
+    "section": "",
+    "text": "Un modèle de codification en production peut se dégrader de plusieurs façons, que le cadre MLOps européen range dans une typologie (Tayebjee et al. 2025, ch. 4) :\n\nTayebjee, Meilame, Nina Niederhametner, Bogdan Levagin, et Ariane Lestrade. 2025. From text to code (WP10.4) – MLOps tutorial. AIML4OS project, Work Package 10. https://aiml4os.github.io/WP10_Cluster4_MLOps/.\n\n\n\nTable 1: Sources de dégradation.\n\n\n\n\n\n\n\n\n\nDérive\nExemple pour la codification APE\n\n\n\n\nDérive des covariables (covariate shift) : les entrées changent\nDe nouveaux métiers et de nouvelles formulations apparaissent, et la réforme du guichet unique a allongé les libellés\n\n\nDérive a priori (prior shift) : la répartition des classes change\nVagues d’immatriculations dans certains secteurs, comme les VTC ou la location meublée\n\n\nDérive conceptuelle (concept drift) : la relation entre entrée et code change\nRévision de la nomenclature (NAF rév. 2 → NAF 2025) ; une marque qui devient une nouvelle activité (par exemple « Uber » → « Uber Eats »)\n\n\nDéfaillance en amont\nUn champ qui n’est plus renseigné, ou un changement de format de la liasse",
+    "crumbs": [
+      "Suivi et annotation"
+    ]
+  },
+  {
+    "objectID": "fr/monitoring.html#un-suivi-sans-annotation",
+    "href": "fr/monitoring.html#un-suivi-sans-annotation",
+    "title": "Suivi et annotation",
+    "section": "2 Un suivi sans annotation",
+    "text": "2 Un suivi sans annotation\nLa plupart des prédictions ne sont jamais vérifiées par un humain. Le premier niveau de suivi repose donc sur des signaux qui ne nécessitent aucune annotation. Les journaux de l’API sont convertis chaque jour en fichiers Parquet partitionnés, interrogés avec DuckDB et présentés dans un tableau de bord reconstruit chaque nuit (Faria et al. 2024). On y trouve :\n\nFaria, Thomas, Nathan Randriamanana, et Tom Seimandi. 2024. Retraining strategies for an economic activity classification model. European Conference on Quality in Official Statistics (Q2024), Estoril. https://inseefrlab.github.io/codif-ape-prez/slides/estoril-paper/index.pdf.\n\nles volumes de requêtes et le taux de codification automatique dans le temps, pour différents seuils ;\nla distribution de l’indice de confiance et son évolution d’une fenêtre temporelle à l’autre (tests de Kolmogorov–Smirnov, du χ² et tests analogues) ;\nla distribution des codes prédits ;\ndes statistiques sur le texte en entrée (longueur, vocabulaire nouveau).\n\nCes indicateurs servent d’alertes. Par exemple, une chute brutale du taux de codification automatique, ou un déplacement de la distribution de l’indice de confiance, déclenche une analyse. Ils ne disent pas, en revanche, si le modèle a raison.",
+    "crumbs": [
+      "Suivi et annotation"
+    ]
+  },
+  {
+    "objectID": "fr/monitoring.html#annotation-humaine",
+    "href": "fr/monitoring.html#annotation-humaine",
+    "title": "Suivi et annotation",
+    "section": "3 Annotation humaine",
+    "text": "3 Annotation humaine\n\n3.1 Campagnes Label Studio\nLa qualité ne peut se mesurer que par rapport à des annotations produites par des experts métier. Les campagnes d’annotation s’appuient sur Label Studio, déployé sur la plateforme, avec un projet par équipe d’experts. Des tâches planifiées gèrent la circulation des données :\n\nl’échantillonnage des libellés à annoter et leur envoi dans les files d’annotation ;\nla synchronisation des annotations terminées vers le stockage objet ;\nleur conversion en jeux d’évaluation et d’entraînement.\n\nAnnoter un libellé prend environ une minute. Deux campagnes ont été menées à ce jour :\n\nun référentiel NAF rév. 2 d’environ 10 000 libellés, codés à l’aveugle par l’équipe qualité de Sirene ;\nune campagne NAF 2025 d’environ 30 000 libellés, utilisée à la fois pour évaluer la recodification par LLM et comme données d’entraînement (voir Données).\n\n\n\n3.2 Pourquoi l’annotation doit être aléatoire et à l’aveugle\nLes cas à faible confiance font chaque jour l’objet d’une reprise manuelle. Il est donc tentant d’utiliser ces codes comme jeu d’évaluation. Ce serait une erreur : ils sont sélectionnés sur les échecs du modèle et ne disent rien des cas que le modèle code automatiquement. Pour estimer l’exactitude de la codification automatique, une partie du flux doit être annotée au hasard, par des experts qui ne voient pas la proposition du modèle. Sinon, leurs annotations sont ancrées sur la prédiction qu’elles sont censées juger.\nCet échantillon aléatoire du flux, annoté à l’aveugle, est appelé « golden set ». Il est le fondement du protocole de réentraînement. Ce sont les seules données qui permettent :\n\nd’estimer l’exactitude de la codification automatique ;\nde fixer le seuil ;\nde comparer équitablement deux modèles ;\nde mesurer la dérive à partir d’annotations.",
+    "crumbs": [
+      "Suivi et annotation"
+    ]
+  },
+  {
+    "objectID": "fr/monitoring.html#audit-par-llm",
+    "href": "fr/monitoring.html#audit-par-llm",
+    "title": "Suivi et annotation",
+    "section": "4 Audit par LLM",
+    "text": "4 Audit par LLM\nLe projet utilise aussi des agents LLM pour contrôler les prédictions hors ligne. Le MatchVerifier de GRAAL vérifie si un couple (libellé, code) est cohérent avec les notes explicatives (notices) de la nomenclature, et propose une alternative dans le cas contraire. Trop lent et trop coûteux pour être appliqué à chaque prédiction, il peut en revanche être exécuté par lots pour :\n\nprioriser les cas que les relecteurs humains doivent examiner en premier ;\nsignaler les codes douteux dans les données d’entraînement ;\narbitrer les désaccords entre le modèle de production et d’autres moteurs.\n\nSur une autre nomenclature (COICOP), le MatchVerifier a détecté environ la moitié des erreurs, avec peu de faux rejets. C’est donc un bon outil pour prioriser la revue humaine, mais il n’est pas assez fiable pour orienter seul les cas.",
+    "crumbs": [
+      "Suivi et annotation"
+    ]
+  },
+  {
+    "objectID": "fr/retraining.html",
+    "href": "fr/retraining.html",
+    "title": "Protocole de réentraînement",
+    "section": "",
+    "text": "Réentraîner un modèle est facile. Le réentraîner de sorte qu’il soit, de façon démontrable, au moins aussi bon que celui en production, avec des annotations produites en partie par ce même modèle, est difficile. Ce chapitre décrit le protocole que nous utilisons à cette fin. C’est le cœur méthodologique de la chaîne.\nLe protocole suit un cycle trimestriel. Pendant le trimestre \\(n\\), le modèle \\(f_n\\) est en production avec un seuil \\(\\tau_n\\), et le cycle produit \\(f_{n+1}\\) et \\(\\tau_{n+1}\\).",
+    "crumbs": [
+      "Protocole de réentraînement"
+    ]
+  },
+  {
+    "objectID": "fr/retraining.html#sec-golden",
+    "href": "fr/retraining.html#sec-golden",
+    "title": "Protocole de réentraînement",
+    "section": "1 Ce que fournit le flux de production",
+    "text": "1 Ce que fournit le flux de production\nLe flux de déclarations \\(F_n\\) reçu pendant le trimestre \\(n\\) se décompose naturellement en plusieurs ensembles. Chacun a sa propre valeur et son propre biais de sélection :\n\n\n\nTable 1: Les quatre sources d’annotations d’un cycle de production.\n\n\n\n\n\n\n\n\n\n\n\n\nEnsemble\nDéfinition\nQui l’annote\nBiais\nUsage\n\n\n\n\nGolden set \\(G_n\\)\nUn échantillon aléatoire de 1 à 3 % du flux, annoté à l’aveugle (sans voir la prédiction du modèle)\nExperts métier\nAucun\nÉvaluation uniquement, jamais l’entraînement\n\n\nReprises manuelles \\(M_n\\)\nCas sous le seuil (20 à 25 % du flux environ)\nGestionnaires\nOui : les cas difficiles pour \\(f_n\\)\nEntraînement\n\n\nCodifications automatiques \\(A_n\\)\nCas au-dessus du seuil\nLe modèle \\(f_n\\) lui-même\nOui : les cas faciles pour \\(f_n\\)\nEntraînement, après curation\n\n\nCas connus \\(K_n\\)\nRègles métier validées (par exemple « LMNP » → location meublée)\nExperts métier\nOui : erreurs signalées\nDoivent être réussis à 100 % ou presque\n\n\n\n\n\n\n\\(G_n\\), \\(M_n\\) et \\(A_n\\) forment une partition du flux, tandis que \\(K_n\\) vient de l’extérieur. Les cas connus ont deux origines :\n\nles retours métier, surtout des erreurs repérées a posteriori parmi les cas codés automatiquement ;\nles erreurs récurrentes extraites de l’ensemble des reprises manuelles (voir plus bas).\n\nOn note \\(\\bar{X}_n = \\bigcup_{k \\le n} X_k\\) l’ensemble cumulé au fil des trimestres, éventuellement sur une fenêtre glissante.\n\n\n\n\n\n\nflowchart LR\n  F[\"Flux F_n\"] --&gt;|\"aléatoire 1 à 3 %\"| G[\"G_n : annotation experte à l'aveugle\"]\n  F --&gt; R{\"IC ≥ τ_n ?\"}\n  R --&gt;|\"non (20 à 25 %)\"| M[\"M_n : reprise manuelle\"]\n  R --&gt;|\"oui\"| A[\"A_n : codification automatique\"]\n  A -.-&gt;|\"erreurs signalées\"| K[\"K_n : règles validées\"]\n  M -.-&gt;|\"erreurs récurrentes, après revue\"| K\n\n\n\n\nFigure 1: Décomposition du flux de production.\n\n\n\n\n\n\n\n\n\n\n\nImportantLe golden set n’est pas facultatif\n\n\n\nSans échantillon aléatoire du flux annoté à l’aveugle, il n’existe pas d’estimation sans biais de l’exactitude de la codification automatique. Il est alors impossible de fixer le seuil, de comparer deux modèles ou de mesurer la dérive à partir d’annotations. Les reprises manuelles ne peuvent pas le remplacer, car elles sont sélectionnées sur les échecs du modèle. Une annotation continue du flux, même modeste, est le prérequis organisationnel le plus important du protocole.\n\n\nLe golden set est scindé une fois pour toutes en deux moitiés, à l’aide d’un hachage de l’identifiant de chaque déclaration. Ce partage reste ainsi stable à mesure que l’ensemble grandit :\n\n\\(\\bar{G}^{\\text{val}}\\) sert à tous les choix : seuil, calibration, architecture et hyperparamètres, sélection des moteurs auxiliaires et des règles candidates ;\n\\(\\bar{G}^{\\text{test}}\\) ne sert qu’au verdict final.",
+    "crumbs": [
+      "Protocole de réentraînement"
+    ]
+  },
+  {
+    "objectID": "fr/retraining.html#construire-le-prochain-jeu-dentraînement",
+    "href": "fr/retraining.html#construire-le-prochain-jeu-dentraînement",
+    "title": "Protocole de réentraînement",
+    "section": "2 Construire le prochain jeu d’entraînement",
+    "text": "2 Construire le prochain jeu d’entraînement\n\n2.1 L’exactitude de la codification automatique peut être estimée\nOn ne sait pas quels codes automatiques sont faux, mais on peut estimer combien le sont. Le golden set étant un échantillon aléatoire du flux, sa partie au-dessus du seuil, \\(G_n^A = \\{x \\in G_n : \\text{IC}_n(x) \\ge \\tau_n\\}\\), est un échantillon aléatoire de \\(A_n\\). L’exactitude de \\(f_n\\) sur \\(G_n^A\\), assortie d’un intervalle de confiance (Wilson ou bootstrap), estime l’exactitude de la codification automatique. Le cumul sur plusieurs trimestres fournit assez de données pour cette estimation.\n\n\n2.2 Curation des codifications automatiques : se concentrer sur les désaccords\nRéinjecter \\(A_n\\) dans l’entraînement avec les codes de \\(f_n\\), c’est faire du self-training : le modèle n’apprend rien de nouveau, et ses erreurs à forte confiance sont renforcées. Pour briser cette boucle, on compare \\(f_n\\) à des moteurs indépendants \\(E\\). Aucun n’est un oracle :\n\nle moteur de règles de codif-ape-preprocess applique des règles déterministes, qui s’abstiennent souvent, complétées par une extension prudente aux libellés similaires ;\nles agents LLM de GRAAL parcourent la nomenclature et lisent les notes explicatives. Ils sont lents, mais la latence importe peu dans un traitement par lots hors ligne.\n\nL’exactitude globale d’un moteur sur le golden set n’est pas la bonne question. Ce qui compte, c’est de savoir qui a raison quand \\(E\\) et \\(f_n\\) sont en désaccord sur les codifications automatiques :\n\n\n\nTable 2: Règle de décision pour les cas codés automatiquement.\n\n\n\n\n\n\n\n\n\n\n\nSur \\(A_n\\)\n\\(E\\) s’abstient\n\\(E\\) est d’accord avec \\(f_n\\)\n\\(E\\) est en désaccord avec \\(f_n\\)\n\n\n\n\nAction\nConserver le code de \\(f_n\\) (son exactitude est connue), avec un poids réduit\nConserver, avec une confiance élevée\nArbitrer\n\n\n\n\n\n\nLes désaccords sont très probablement les erreurs à forte confiance de \\(f_n\\) : ce sont donc les exemples les plus précieux. Ils peuvent être traités de trois façons :\n\nAnnotation humaine ciblée des désaccords. C’est sans doute le meilleur usage d’un budget d’annotation, dans l’esprit du query by committee.\nAdoption du code du moteur, si, sur \\(\\bar{G}^{\\text{val}} \\cap \\{\\text{IC}_n \\ge \\tau_n,\\ E \\ne f_n\\}\\), le moteur a raison significativement plus souvent que \\(f_n\\). Il n’y a pas de seuil de fiabilité absolu : le critère est comparatif, et conditionnel à la zone de désaccord.\nExclusion des désaccords non arbitrés de l’entraînement. C’est l’option par défaut, faute de budget et d’éléments probants. Elle retire les cas automatiques les plus difficiles, ce qui est acceptable puisque les reprises manuelles couvrent déjà la zone difficile.\n\nLe même critère sert à choisir entre les variantes du moteur LLM (recherche augmentée, agentique, agent complet, ou vote entre elles). Trois précautions s’imposent :\n\nmesurer sur \\(\\bar{G}^{\\text{val}}\\), jamais sur \\(\\bar{G}^{\\text{test}}\\), puisque ce choix façonne les données d’entraînement ;\ncomparer à couverture comparable, car un moteur qui s’abstient souvent l’emporte mécaniquement dans la zone de désaccord ;\nne changer de variante que lorsque l’écart dépasse les intervalles de confiance.\n\nPour maîtriser le coût des moteurs LLM, on peut les limiter à une bande de confiance intermédiaire, \\(\\tau_n \\le \\text{IC} &lt; \\tau'\\) : les prédictions très confiantes sont rarement fausses.\n\n\n2.3 Cas connus : propager plutôt que surpondérer\nSurpondérer simplement les cas connus fonctionne rarement. Le jeu d’entraînement contient en général les mêmes libellés avec l’ancien code, si bien que le modèle voit des codes contradictoires. Le protocole consiste donc à :\n\ntransformer chaque retour métier en règle, et l’appliquer à l’ensemble du jeu d’entraînement au moyen du moteur de règles ;\néventuellement, pour la très courte liste de cas où une exactitude de 100 % est exigée, ajouter en production une couche de règles en amont du modèle. La correction est alors garantie, auditable et immédiate, sans réentraînement. Cette couche doit rester réduite : c’est l’accumulation sans fin de règles qui a fait échouer Sicore.\n\nContrôles avant entraînement. La propagation est vérifiée automatiquement, et les contrôles bloquent l’entraînement en cas d’échec :\n\ncontradictions exactes : une jointure entre les cas connus et le nouveau jeu d’entraînement sur la clé de dédoublonnage (libellé normalisé et variables auxiliaires) ne doit renvoyer aucune ligne avec un code différent ;\nquasi-doublons : les plus proches voisins de chaque cas connu (TF-IDF sur n-grammes de caractères, ou plongements du modèle) qui portent un autre code sont soumis à une revue humaine, car un libellé similaire peut légitimement relever d’un autre code ;\nle nombre de conflits, par source et par trimestre, est journalisé. On voit ainsi d’où viennent les erreurs, et l’on mesure le taux de contradiction interne du jeu d’entraînement, indicateur direct du bruit sur les codes.\n\nExtraire des règles des corrections manuelles. Parmi les reprises manuelles, les lignes où le code humain diffère de la prédiction de \\(f_n\\) sont des erreurs corrigées. Une erreur isolée ne fait pas une règle, mais une erreur récurrente est une bonne candidate. Le principe est le suivant : l’automatisation propose, des filtres statistiques trient, un expert décide.\n\nDétecter les erreurs récurrentes sur l’ensemble cumulé des reprises manuelles :\n\nlibellés normalisés identiques, avec un support suffisant et un code dominant que \\(f_n\\) manque ;\nmots discriminants, repérés par des règles d’association (support, confiance, lift), efficaces pour des sigles comme « LMNP » ;\ngroupes d’erreurs portant sur un même couple (code prédit, code corrigé), dans l’espace des plongements du modèle.\n\nRédiger la règle avec un LLM, qui a accès aux notes explicatives, sans le laisser décider.\nFiltrer automatiquement. Appliquer chaque règle candidate au jeu d’entraînement et à \\(\\bar{G}^{\\text{val}}\\), puis mesurer combien de lignes elle touche et quelle est sa précision. Rejeter les règles trop larges ou trop imprécises.\nFaire valider par un expert, dans une file de revue qui présente la règle, ses exemples et ses contre-exemples.\n\nLe dépôt des règles est versionné. Chaque règle indique son origine, sa date et la personne qui l’a validée, afin de pouvoir être auditée ou retirée.\n\n\n2.4 Assemblage\nLe prochain jeu d’entraînement est\n\\[\n\\mathcal{D}_{n+1} = \\mathcal{D}_n \\cup M_n \\cup \\tilde{A}_n \\cup K_n,\n\\]\noù \\(\\tilde{A}_n\\) désigne les codifications automatiques après curation. Ce jeu est ensuite :\n\nDédoublonné sur le couple (libellé normalisé, variables auxiliaires). Les conflits sont résolus par priorité de source (cas connus &gt; reprises manuelles &gt; codifications automatiques après curation &gt; historique), puis au profit du plus récent.\nMarqué : chaque observation porte sa source et son trimestre. Cela permet des poids qui dépendent de la source (par exemple, les codes automatiques pèsent moins que les codes humains) et un suivi de la perte par source.\nPondéré selon l’ancienneté : l’historique est sous-pondéré, voire tronqué. Les anciens codes sont plus bruités et reflètent un flux plus ancien.\nVersionné : chaque jeu d’entraînement est un instantané sur S3 avec son empreinte (hash), enregistré avec l’exécution d’entraînement.\n\nDeux règles s’ajoutent :\n\nLe jeu d’entraînement n’est pas représentatif du flux, puisque les reprises manuelles surreprésentent les cas difficiles. C’est pourquoi le seuil et la calibration sont toujours fixés sur \\(\\bar{G}^{\\text{val}}\\), jamais sur un échantillon de validation tiré des données d’entraînement.\nLe golden set n’entre jamais dans l’entraînement. Le flux étant très répétitif, il est normal de trouver des libellés identiques dans les deux. Les métriques sont donc aussi publiées sur les libellés jamais vus.\n\nUn échantillon de validation aléatoire, tiré du jeu d’entraînement, sert uniquement à l’arrêt précoce.",
+    "crumbs": [
+      "Protocole de réentraînement"
+    ]
+  },
+  {
+    "objectID": "fr/retraining.html#portes-de-qualité-gates-f_n1-face-à-f_n",
+    "href": "fr/retraining.html#portes-de-qualité-gates-f_n1-face-à-f_n",
+    "title": "Protocole de réentraînement",
+    "section": "3 Portes de qualité (gates) : \\(f_{n+1}\\) face à \\(f_n\\)",
+    "text": "3 Portes de qualité (gates) : \\(f_{n+1}\\) face à \\(f_n\\)\n\n\n\nTable 3: Portes qu’un modèle candidat doit franchir.\n\n\n\n\n\n\n\n\n\n\n\nPorte\nDonnées\nObjectif\nCritère\n\n\n\n\n1\nCas connus \\(\\bar{K}_n\\) et variantes reformulées \\(K'_n\\) absentes de l’entraînement\nNon-régression métier (tests unitaires)\n≥ 99 % ; échecs listés un par un\n\n\n2\n\\(\\bar{G}^{\\text{test}}\\)\nGénéralisation\nNon-infériorité par rapport à \\(f_n\\), avec un test apparié (McNemar ou bootstrap apparié)\n\n\n3\n\\(\\bar{G}^{\\text{test}}\\)\nIndicateur métier\nTaux de codification automatique à l’exactitude cible \\(p^*\\) ≥ celui de \\(f_n\\)\n\n\n\n\n\n\nSur les cas connus, un score élevé peut simplement signifier que le modèle les a mémorisés. Les variantes reformulées vérifient que la correction se généralise. Elles peuvent être produites par les agents Code2Text de GRAAL.\nOn n’évalue pas sur les reprises manuelles. Elles font partie des données d’entraînement de \\(f_{n+1}\\) et sont sélectionnées sur les échecs de \\(f_n\\) : par construction, elles sont biaisées en défaveur de \\(f_n\\). Pour obtenir un signal sur les cas difficiles, on utilise \\(\\bar{G} \\cap \\{\\text{IC}_n &lt; \\tau_n\\}\\), échantillon aléatoire et sans biais de la zone difficile.\nMétriques publiées sur \\(\\bar{G}^{\\text{test}}\\) :\n\nexactitude à chaque niveau de la nomenclature ;\nmacro-F1 et performance sur les classes rares ;\ncalibration (ECE) ;\ncourbe risque–couverture et aire sous cette courbe (AURC) ;\ncouverture à l’exactitude cible \\(p^*\\), l’indicateur qui détermine la charge de reprise manuelle ;\nl’ensemble de ces indicateurs par trimestre du golden set, pour révéler la dérive.\n\nLe seuil est recalibré pour chaque modèle sur \\(\\bar{G}^{\\text{val}}\\).\nTrois principes guident la comparaison :\n\nComment faire mieux que \\(f_n\\). Les leviers sont les reprises manuelles (des annotations humaines exactement là où le modèle échoue, ce qui revient à de l’apprentissage actif), les désaccords arbitrés, des données plus propres et des données plus récentes. Itérer sur les architectures jusqu’à améliorer le score sur le jeu de test reviendrait à surajuster ce jeu : ces itérations se font donc sur \\(\\bar{G}^{\\text{val}}\\).\nLa non-régression conditionne le passage ; l’amélioration est l’objectif. Exiger une amélioration stricte à chaque trimestre n’est pas réaliste.\nEntraîner sur les cas connus et les corrections manuelles n’est pas une fuite de données. La fuite commence lorsqu’une métrique calculée sur les données d’entraînement est présentée comme une mesure de la capacité de généralisation. Tant que \\(\\bar{G}^{\\text{test}}\\) reste intact, le protocole est sain.\n\nTraçabilité. L’exécution MLflow de chaque candidat enregistre :\n\nla version du jeu de données, la version du dépôt de règles et la variante du moteur LLM ;\nles hyperparamètres et les métriques ;\nun rapport de comparaison « \\(n\\) vs \\(n+1\\) » sous forme d’artefact HTML.\n\nLe registre identifie le champion et le challenger.",
+    "crumbs": [
+      "Protocole de réentraînement"
+    ]
+  },
+  {
+    "objectID": "fr/retraining.html#sec-preprod",
+    "href": "fr/retraining.html#sec-preprod",
+    "title": "Protocole de réentraînement",
+    "section": "4 Qualification et mise en production",
+    "text": "4 Qualification et mise en production\nMême à architecture inchangée, la qualification n’est pas une formalité :\n\nQualification iso-production : latence au 95e centile (p95) et mémoire, sur CPU, sur la plateforme de préproduction.\nParité en ligne/hors ligne : le modèle servi doit reproduire exactement les prédictions hors ligne sur \\(\\bar{G}^{\\text{test}}\\). Ce test peu coûteux détecte les écarts de prétraitement ou de versions de bibliothèques.\nLe seuil et la calibration sont livrés dans l’artefact du modèle, et non dans une configuration séparée.\nDéploiement en mode shadow pendant quelques semaines : \\(f_{n+1}\\) traite le flux réel en parallèle de \\(f_n\\). On suit le taux effectif de codification automatique, l’accord avec \\(f_n\\) et la distribution des scores. Les désaccords alimentent l’annotation.\nRevenir en arrière consiste à faire pointer de nouveau la production vers \\(f_n\\).",
+    "crumbs": [
+      "Protocole de réentraînement"
+    ]
+  },
+  {
+    "objectID": "fr/retraining.html#comparer-les-modèles-dans-le-temps",
+    "href": "fr/retraining.html#comparer-les-modèles-dans-le-temps",
+    "title": "Protocole de réentraînement",
+    "section": "5 Comparer les modèles dans le temps",
+    "text": "5 Comparer les modèles dans le temps\nDes scores obtenus sur des golden sets différents ne sont pas comparables. L’historique des modèles est donc construit en réévaluant tous les modèles passés sur le dernier \\(\\bar{G}^{\\text{test}}\\).\nTant que le golden set n’est pas alimenté en continu, les indicateurs sans annotation (taux de codification automatique, distribution de l’indice de confiance, vocabulaire nouveau, accord avec les moteurs auxiliaires) sont les seuls signaux de dérive. Des seuils d’alerte sur ces indicateurs peuvent déclencher un réentraînement hors cycle.",
+    "crumbs": [
+      "Protocole de réentraînement"
+    ]
+  },
+  {
+    "objectID": "fr/retraining.html#vue-densemble",
+    "href": "fr/retraining.html#vue-densemble",
+    "title": "Protocole de réentraînement",
+    "section": "6 Vue d’ensemble",
+    "text": "6 Vue d’ensemble\n\n\n\n\n\n\nflowchart TD\n  subgraph Q[\"Trimestre n : la production utilise f_n, τ_n\"]\n    G[\"G_n\"]\n    M[\"M_n\"]\n    A[\"A_n\"]\n    K[\"K_n\"]\n  end\n  A --&gt; C[\"Curation : règles + moteurs LLM&lt;br/&gt;accord / désaccord\"]\n  C --&gt;|\"accords\"| At[\"Ã_n\"]\n  C --&gt;|\"désaccords\"| H[\"Annotation ciblée\"] --&gt; At\n  M -.-&gt;|\"erreurs récurrentes&lt;br/&gt;+ revue experte\"| K\n  K --&gt; RL[\"Règles propagées à tout D\"]\n  D0[\"D_n\"] & M & At & RL --&gt; D1[\"D_n+1 : dédoublonnage, conflits, poids, version\"]\n  D1 --&gt; T[\"Entraînement de f_n+1\"]\n  G --&gt; GV[\"Ḡ val : seuil, calibration, sélection\"] --&gt; T\n  G --&gt; GT[\"Ḡ test\"]\n  T --&gt; E{\"Portes : K / K', non-infériorité,&lt;br/&gt;couverture à p*\"}\n  GT --&gt; E\n  E --&gt;|\"échec\"| T\n  E --&gt;|\"succès\"| P[\"Qualification : latence, parité, shadow\"]\n  P --&gt; PR[\"Production : f_n+1, τ_n+1\"]\n\n\n\n\nFigure 2: Un cycle de réentraînement.",
+    "crumbs": [
+      "Protocole de réentraînement"
+    ]
+  }
+]

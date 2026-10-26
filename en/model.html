@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.19">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="SSP Lab">
+<meta name="description" content="A small, calibrated PyTorch text classifier with categorical variables, trained reproducibly and evaluated at every level of the classification.">
+
+<title>Model – APE coding · MLOps</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../en/serving.html" rel="next">
+<link href="../en/data.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-fc581236a46ad31b3ea501458e50ff32.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<meta name="mermaid-theme" content="neutral">
+<script src="../site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="../site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<meta property="og:title" content="Model – APE coding · MLOps">
+<meta property="og:description" content="A small, calibrated PyTorch text classifier with categorical variables, trained reproducibly and evaluated at every level of the classification.">
+<meta property="og:site_name" content="APE coding · MLOps">
+</head>
+
+<body class="nav-sidebar docked nav-fixed slimcontent quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">APE coding · MLOps</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="https://inseefrlab.github.io/codif-ape-prez/"> 
+<span class="menu-text">Slides</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/InseeFrLab/codif-ape-docs"> <i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <a class="flex-grow-1 no-decor" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+          <h1 class="quarto-secondary-nav-title">Model</h1>
+        </a>     
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Automatic coding of economic activity at INSEE</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/context.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Context and history</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/architecture.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Architecture</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Data</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/model.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Model</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/serving.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Serving and deployment</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/monitoring.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Monitoring and annotation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/retraining.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Retraining protocol</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/companion-projects.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Companion projects: TTC and GRAAL</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/lessons.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Lessons learned</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">References and resources</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#why-a-small-model" id="toc-why-a-small-model" class="nav-link active" data-scroll-target="#why-a-small-model"><span class="header-section-number">1</span> Why a small model</a></li>
+  <li><a href="#architecture" id="toc-architecture" class="nav-link" data-scroll-target="#architecture"><span class="header-section-number">2</span> Architecture</a></li>
+  <li><a href="#training" id="toc-training" class="nav-link" data-scroll-target="#training"><span class="header-section-number">3</span> Training</a></li>
+  <li><a href="#confidence-index-and-calibration" id="toc-confidence-index-and-calibration" class="nav-link" data-scroll-target="#confidence-index-and-calibration"><span class="header-section-number">4</span> Confidence index and calibration</a></li>
+  <li><a href="#evaluation" id="toc-evaluation" class="nav-link" data-scroll-target="#evaluation"><span class="header-section-number">5</span> Evaluation</a></li>
+  <li><a href="#sec-results" id="toc-sec-results" class="nav-link" data-scroll-target="#sec-results"><span class="header-section-number">6</span> Results</a>
+  <ul class="collapse">
+  <li><a href="#fasttext-vs.-pytorch" id="toc-fasttext-vs.-pytorch" class="nav-link" data-scroll-target="#fasttext-vs.-pytorch"><span class="header-section-number">6.1</span> fastText vs.&nbsp;PyTorch</a></li>
+  <li><a href="#naf-2025" id="toc-naf-2025" class="nav-link" data-scroll-target="#naf-2025"><span class="header-section-number">6.2</span> NAF 2025</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/InseeFrLab/codif-ape-docs/edit/main/en/model.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/InseeFrLab/codif-ape-docs/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content page-columns page-full" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title d-none d-lg-block">Model</h1>
+</div>
+
+<div>
+  <div class="description">
+    A small, calibrated PyTorch text classifier with categorical variables, trained reproducibly and evaluated at every level of the classification.
+  </div>
+</div>
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">SSP Lab </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Insee
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="why-a-small-model" class="level2 page-columns page-full" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="why-a-small-model"><span class="header-section-number">1</span> Why a small model</h2>
+<p>Large pre-trained language models such as CamemBERT were tested early in the project. On APE coding, they gave only a small gain over a fastText-style model: about 0.76 against 0.75 accuracy on the same test set <span class="citation" data-cites="faria2024estoril">(<a href="#ref-faria2024estoril" role="doc-biblioref">Faria et al. 2024</a>)</span>. That gain did not justify their inference cost under the production constraints (unit calls, CPU only, a few hundred milliseconds).</p>
+<div class="no-row-height column-margin column-container"><div id="ref-faria2024estoril" class="csl-entry" role="listitem">
+Faria, Thomas, Nathan Randriamanana, and Tom Seimandi. 2024. <em>Retraining Strategies for an Economic Activity Classification Model</em>. European Conference on Quality in Official Statistics (Q2024), Estoril. <a href="https://inseefrlab.github.io/codif-ape-prez/slides/estoril-paper/index.pdf">https://inseefrlab.github.io/codif-ape-prez/slides/estoril-paper/index.pdf</a>.
+</div><div id="ref-joulin2016" class="csl-entry" role="listitem">
+Joulin, Armand, Edouard Grave, Piotr Bojanowski, and Tomas Mikolov. 2016. <em>Bag of Tricks for Efficient Text Classification</em>. <a href="https://arxiv.org/abs/1607.01759">https://arxiv.org/abs/1607.01759</a>.
+</div></div><p>The production model is therefore a <strong>shallow neural network</strong> of about <strong>one million parameters</strong>, in the fastText family <span class="citation" data-cites="joulin2016">(<a href="#ref-joulin2016" role="doc-biblioref">Joulin et al. 2016</a>)</span>. It is now implemented in PyTorch with <a href="../en/companion-projects.html#sec-ttc">torchTextClassifiers</a>.</p>
+</section>
+<section id="architecture" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="architecture"><span class="header-section-number">2</span> Architecture</h2>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-model" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-model-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-model">flowchart LR
+  T["Activity description&lt;br/&gt;(+ complementary text)"] --&gt; TOK["Tokenizer&lt;br/&gt;(sub-words / n-grams)"]
+  TOK --&gt; EMB["Token embeddings&lt;br/&gt;(dim 80)"]
+  EMB --&gt; AGG["Mean pooling"]
+  C["Categorical variables&lt;br/&gt;CJ, NAT, TYP, SRF, CRT"] --&gt; CEMB["One embedding&lt;br/&gt;per variable (dim 16)"]
+  AGG --&gt; CAT["Concatenation"]
+  CEMB --&gt; CAT
+  CAT --&gt; HEAD["Linear head&lt;br/&gt;~745 classes"]
+  HEAD --&gt; SM["Softmax&lt;br/&gt;top-5 + confidence index"]
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-model-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Model architecture.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The model has three parts:</p>
+<ul>
+<li><strong>Text.</strong> The description is split into sub-word tokens. The tokenizer, either a WordPiece vocabulary or fastText-style character n-grams, is trained on the training data and versioned with it. Sub-words make the model robust to typos, inflections and new words. The token embeddings are averaged into a single vector for the text.</li>
+<li><strong>Categorical variables.</strong> In the fastText era, auxiliary variables were appended to the text as artificial tokens (<code>NAT_21 TYP_X …</code>), which was a workaround. They now each have their <strong>own embedding</strong>, learned jointly with the text representation.</li>
+<li><strong>Head.</strong> A linear layer maps the combined representation to the sub-classes of the target classification.</li>
+</ul>
+<p>The same library also supports self-attention layers, label attention and Hugging Face tokenizers. These options are evaluated on the validation set. A richer architecture is adopted only if it fits within the latency budget.</p>
+</section>
+<section id="training" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="training"><span class="header-section-number">3</span> Training</h2>
+<p>Training is run by <a href="https://github.com/InseeFrLab/codif-ape-train">codif-ape-train</a>, with these settings:</p>
+<ul>
+<li><strong>Configuration:</strong> Hydra, which handles the choice of classification (NAF rev. 2 or NAF 2025), the model, the tokenizer and the optimisation.</li>
+<li><strong>Framework:</strong> PyTorch Lightning.
+<ul>
+<li>Optimiser: Adam.</li>
+<li>Learning rate: reduced when the validation loss plateaus.</li>
+<li>Early stopping on the validation loss.</li>
+<li>The best checkpoint is kept.</li>
+</ul></li>
+<li><strong>Sample weights:</strong> rows created by business rules or sampled from particular sources can be weighted up or down in the loss (see <a href="../en/retraining.html#sec-assembly">Retraining protocol</a>).</li>
+<li><strong>Execution:</strong> an Argo workflow runs on a GPU node and trains the NAF rev. 2 and NAF 2025 models in parallel. Each run starts from a clean clone of the repository and a locked environment.</li>
+<li><strong>Tracking:</strong> each run logs the following in MLflow:
+<ul>
+<li>the full configuration;</li>
+<li>its input datasets;</li>
+<li>the training curves;</li>
+<li>the evaluation metrics and diagnostic figures;</li>
+<li>the packaged model.</li>
+</ul></li>
+</ul>
+</section>
+<section id="confidence-index-and-calibration" class="level2 page-columns page-full" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="confidence-index-and-calibration"><span class="header-section-number">4</span> Confidence index and calibration</h2>
+<p>For each declaration, the model returns its five most likely codes and their probabilities. The decision to code automatically relies on a <strong>confidence index (CI)</strong>: the gap between the two highest probabilities, <span class="math inline">\(\text{CI} = p_{(1)} - p_{(2)}\)</span>.</p>
+<ul>
+<li>If the CI is at or above a threshold <span class="math inline">\(\tau\)</span>, the first code is assigned automatically.</li>
+<li>Otherwise, the declaration goes to a human coder, who sees the five suggestions.</li>
+</ul>
+<p>The threshold sets the trade-off between <strong>automation rate</strong> and <strong>accuracy of automatic coding</strong>. With fastText, a threshold of about 0.75 sent roughly 20 % of declarations to manual coding <span class="citation" data-cites="randriamanana2025jms">(<a href="#ref-randriamanana2025jms" role="doc-biblioref">Randriamanana and Faria 2025</a>)</span>. Since the score distribution changes from one model to the next, the threshold must be <strong>recalibrated for every new model</strong> on a representative sample. Reusing the previous threshold would shift the manual coding workload in an uncontrolled way.</p>
+<div class="no-row-height column-margin column-container"></div><p>This is why <strong>calibration</strong> matters. A probability of 0.9 should be right about 90 % of the time. fastText’s one-versus-all scores were poorly calibrated. The PyTorch model, trained with a softmax cross-entropy loss, is well calibrated out of the box, as measured on a test sample of 300,000 descriptions <span class="citation" data-cites="tayebjee2025jms">(<a href="#ref-tayebjee2025jms" role="doc-biblioref">Tayebjee et al. 2025</a>)</span>. Calibration is measured at every run with the expected calibration error (ECE) and the Brier score.</p>
+</section>
+<section id="evaluation" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="evaluation"><span class="header-section-number">5</span> Evaluation</h2>
+<p>Every run reports, on validation and test data:</p>
+<ul>
+<li><strong>accuracy at each level</strong> of the classification, from section (level 1) to sub-class (level 5), since a mistake that stays within the right division costs less than one across sections;</li>
+<li><strong>calibration</strong>: ECE, Brier score, histogram of confidence;</li>
+<li><strong>the accuracy–automation curve</strong>: accuracy of automatically coded cases as a function of the share of cases coded automatically, as the threshold varies. This is the curve the business uses to choose the operating point.</li>
+</ul>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Evaluating on the right data
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Metrics computed on a test split drawn from the training data are optimistic, since those labels share the biases of the training labels. They are also not representative of the production flow. The decision to deploy relies on a <strong>golden set</strong>: a random sample of the production flow, annotated by experts who do not see the model’s prediction. See <a href="../en/retraining.html#sec-golden">Retraining protocol</a>.</p>
+</div>
+</div>
+</section>
+<section id="sec-results" class="level2 page-columns page-full" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="sec-results"><span class="header-section-number">6</span> Results</h2>
+<section id="fasttext-vs.-pytorch" class="level3 page-columns page-full" data-number="6.1">
+<h3 data-number="6.1" class="anchored" data-anchor-id="fasttext-vs.-pytorch"><span class="header-section-number">6.1</span> fastText vs.&nbsp;PyTorch</h3>
+<div id="tbl-ft-vs-ttc" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
+<figure class="quarto-float quarto-float-tbl figure page-columns page-full">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-ft-vs-ttc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Comparison of the two model generations <span class="citation" data-cites="tayebjee2025jms">(<a href="#ref-tayebjee2025jms" role="doc-biblioref">Tayebjee et al. 2025</a>)</span>.
+</figcaption>
+<div class="no-row-height column-margin column-container"><div id="ref-tayebjee2025jms" class="csl-entry" role="listitem">
+Tayebjee, Meilame, Cédric Couralet, Nathan Randriamanana, and Julien Pramil. 2025. <em><span class="nocase">fastText</span>, Tout Juste En Production Et Déjà Obsolète ? Présentation Du Package torchTextClassifiers Pour La Modernisation de La Codification Automatique via l’exemple de l’<span>APE</span></em>. Journées de méthodologie statistique (JMS). <a href="https://inseefrlab.github.io/codif-ape-prez/papers/jms-torchft/index.pdf">https://inseefrlab.github.io/codif-ape-prez/papers/jms-torchft/index.pdf</a>.
+</div></div><div aria-describedby="tbl-ft-vs-ttc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>fastText</th>
+<th>torchTextClassifiers</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Automation rate</td>
+<td>~80 %</td>
+<td>~80 %</td>
+</tr>
+<tr class="even">
+<td>Mean inference time (CPU, unit call)</td>
+<td>&lt; 100 ms</td>
+<td>&lt; 300 ms</td>
+</tr>
+<tr class="odd">
+<td>Calibration</td>
+<td>Limited</td>
+<td>Excellent</td>
+</tr>
+<tr class="even">
+<td>Categorical variables</td>
+<td>Appended to the text</td>
+<td>Dedicated embeddings</td>
+</tr>
+<tr class="odd">
+<td>Explainability</td>
+<td>None</td>
+<td>Integrated gradients, label attention</td>
+</tr>
+<tr class="even">
+<td>GPU training</td>
+<td>No</td>
+<td>Yes</td>
+</tr>
+<tr class="odd">
+<td>Maintenance</td>
+<td>Archived upstream (2024)</td>
+<td>Maintained in-house, open source</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>The PyTorch model trades some latency for maintainability, calibration and the ability to evolve. The latency remains within the production budget.</p>
+</section>
+<section id="naf-2025" class="level3 page-columns page-full" data-number="6.2">
+<h3 data-number="6.2" class="anchored" data-anchor-id="naf-2025"><span class="header-section-number">6.2</span> NAF 2025</h3>
+<p>Accuracy on the test set of the NAF 2025 retraining, by level <span class="citation" data-cites="randriamanana2025jms">(<a href="#ref-randriamanana2025jms" role="doc-biblioref">Randriamanana and Faria 2025</a>)</span>:</p>
+<div class="no-row-height column-margin column-container"><div id="ref-randriamanana2025jms" class="csl-entry" role="listitem">
+Randriamanana, Nathan, and Thomas Faria. 2025. <em>Changement de Nomenclature Statistique à l’ère Du Machine Learning : Réentraînement Basé Sur Les <span>LLM</span> Pour La Révision de La <span>NAF</span></em>. Journées de méthodologie statistique (JMS). <a href="https://inseefrlab.github.io/codif-ape-prez/papers/jms2025-llm-relabeling/index.pdf">https://inseefrlab.github.io/codif-ape-prez/papers/jms2025-llm-relabeling/index.pdf</a>.
+</div></div><div id="tbl-naf2025" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-naf2025-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: Test accuracy of the models retrained on NAF 2025 data, before data editing.
+</figcaption>
+<div aria-describedby="tbl-naf2025-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Model</th>
+<th>Section</th>
+<th>Division</th>
+<th>Group</th>
+<th>Class</th>
+<th>Sub-class</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>fastText</td>
+<td>0.855</td>
+<td>0.833</td>
+<td>0.797</td>
+<td>0.784</td>
+<td>0.776</td>
+</tr>
+<tr class="even">
+<td>torchTextClassifiers</td>
+<td>0.92</td>
+<td>0.89</td>
+<td>0.86</td>
+<td>0.84</td>
+<td>0.83</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>Applying business rules to the training data (data editing) raised sub-class accuracy to about 0.88–0.90 for both models. The gain is large but must be read with care: rules also change the test labels, so part of the gain reflects closer agreement with the rules rather than better generalisation. The <a href="../en/retraining.html">retraining protocol</a> is designed precisely to separate the two effects.</p>
+
+
+
+</section>
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
+<!--
+  EN | FR switch in the navbar. en/ and fr/ use the same file names and the
+  same anchors, so the switch links to the same page and section in the other
+  language. The choice is remembered for the root page redirect (index.qmd).
+-->
+<script>
+(function () {
+  var KEY = "codif-ape-lang";
+  var LANGS = ["en", "fr"];
+  var TITLES = {
+    en: { label: "EN", hint: "Read this page in English", brand: "APE coding · MLOps" },
+    fr: { label: "FR", hint: "Lire cette page en français", brand: "Codification APE · MLOps" }
+  };
+
+  var m = window.location.pathname.match(/^(.*\/)(en|fr)(\/.*)?$/);
+  if (!m) return;
+  var base = m[1], current = m[2], rest = m[3] || "/";
+
+  try { localStorage.setItem(KEY, current); } catch (e) {}
+
+  var brand = document.querySelector(".navbar-brand");
+  if (brand) brand.setAttribute("href", base + current + "/index.html");
+  var brandTitle = document.querySelector(".navbar-title");
+  if (brandTitle) brandTitle.textContent = TITLES[current].brand;
+
+  var group = document.createElement("div");
+  group.className = "lang-switch";
+  group.setAttribute("role", "group");
+  group.setAttribute("aria-label", current === "fr" ? "Langue" : "Language");
+
+  LANGS.forEach(function (lang) {
+    var a = document.createElement("a");
+    a.textContent = TITLES[lang].label;
+    a.setAttribute("lang", lang);
+    a.setAttribute("hreflang", lang);
+    a.setAttribute("title", TITLES[lang].hint);
+    if (lang === current) {
+      a.className = "active";
+      a.setAttribute("aria-current", "true");
+    }
+    a.href = base + lang + rest + window.location.hash;
+    a.addEventListener("click", function () {
+      try { localStorage.setItem(KEY, lang); } catch (e) {}
+      // Keep the section the reader is on, even after scrolling.
+      a.href = base + lang + rest + window.location.hash;
+    });
+    group.appendChild(a);
+  });
+
+  var slot = document.querySelector(".quarto-navbar-tools") ||
+             document.querySelector(".navbar-container");
+  if (slot) slot.insertBefore(group, slot.firstChild);
+})();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/inseefrlab\.github\.io\/codif-ape-docs\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+            // default icon
+            link.classList.add("external");
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../en/data.html" class="pagination-link" aria-label="Data">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Data</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../en/serving.html" class="pagination-link" aria-label="Serving and deployment">
+        <span class="nav-page-text">Serving and deployment</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>Insee — SSP Lab</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/InseeFrLab/codif-ape-docs/edit/main/en/model.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/InseeFrLab/codif-ape-docs/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p>Built with <a href="https://quarto.org/">Quarto</a></p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>
