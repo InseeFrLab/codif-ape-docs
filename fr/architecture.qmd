@@ -2,9 +2,11 @@
 title: "Architecture"
 description: "La plateforme, les dépôts, et la circulation des données et des modèles entre eux."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - SSP Lab, Insee
 lang: fr
 ---
 
@@ -37,7 +39,7 @@ Le développement, l'entraînement et la préproduction se font entièrement sur
 | Mise à disposition | FastAPI sur Kubernetes | API REST exposant le modèle |
 | Livraison continue | GitHub Actions, Argo CD | Construction des images Docker ; synchronisation GitOps du cluster |
 | Annotation | Label Studio | Campagnes d'annotation par les experts |
-| Inférence LLM | vLLM (API compatible OpenAI) | Réétiquetage hors ligne ([NAF 2025](data.qmd#sec-naf2025)), audit et données synthétiques ([GRAAL](companion-projects.qmd#sec-graal)) |
+| Inférence LLM | vLLM (API compatible OpenAI) | Réétiquetage hors ligne ([NAF 2025](data.qmd#sec-naf2025)), audit et données synthétiques ([GRAAL](data.qmd#sec-graal)) |
 
 : Pile technique. {#tbl-stack}
 
@@ -108,12 +110,15 @@ flowchart LR
 Chaque bloc est détaillé dans un chapitre dédié :
 
 - [Données](data.qmd) : sources, nettoyage des labels et passage à la NAF 2025.
-- [Modèle](model.qmd) : architecture, entraînement et évaluation.
+- [Données](data.qmd) présente aussi GRAAL, les agents LLM qui auditent et proposent des codes hors ligne.
+- [Modèle](model.qmd) : architecture, torchTextClassifiers et entraînement.
+- [Évaluation](evaluation.qmd) : quelles métriques, sur quelles données.
 - [Mise à disposition et déploiement](serving.qmd) : empaquetage, API et GitOps.
 - [Suivi et annotation](monitoring.qmd) : boucler la boucle.
 - [Protocole de réentraînement](retraining.qmd) : comment la boucle aboutit, sans risque, à un nouveau modèle.
+- [Défis organisationnels et d'infrastructure](organisation.qmd) : qui fait quoi, et la plateforme de qualification.
 
-## Organisation du développement
+<!-- ## Organisation du développement
 
 L'équipe travaille dans un dépôt parapluie, [codif-ape](https://github.com/InseeFrLab/codif-ape), qui rassemble tous les dépôts ci-dessus sous forme de sous-modules Git suivant la branche `main`. C'est un espace de travail, pas une unité de livraison : chaque dépôt garde ses propres tags de version et sa propre intégration continue.
 
@@ -122,4 +127,4 @@ Tous les dépôts suivent les mêmes conventions :
 - `uv` pour les environnements Python ;
 - `pre-commit` avec `ruff` pour la qualité du code ;
 - Renovate pour la mise à jour des dépendances ;
-- GitHub Actions pour la construction des images et de la documentation.
+- GitHub Actions pour la construction des images et de la documentation. -->

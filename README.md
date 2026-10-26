@@ -6,12 +6,13 @@ Live site: <https://inseefrlab.github.io/codif-ape-docs/>
 
 ## Structure
 
-- `index.qmd`: root page, redirects to `en/` or `fr/` (the reader's last choice, otherwise their browser's language)
+- `index.qmd`: root page, redirects to `en/`, or to `fr/` if the reader last chose French
 - `en/*.qmd`: English version
 - `fr/*.qmd`: French version, with the same file names and the same anchors (`#sec-…`, `#tbl-…`, `fig-…`)
 - `references.bib`: bibliography shared by both versions
 - `style/styles.scss`: theme (Bootswatch `litera` with a few rules)
-- `style/lang-switch.html`: EN | FR switch in the navbar, which opens the same page and section in the other language
+- `style/nav.html`: the single, collapsible table of contents in the left sidebar, and the EN | FR switch in the navbar, which swaps the page to the other language in place (same page, same section, no reload)
+- `scripts/outline.py`: post-render script that writes `_site/outline.json`, the plan of the note (chapters, sections, sub-sections) read by `style/nav.html`
 - `codif-ape-prez/`: submodule holding the presentations. It is **not** rendered here: the site links to <https://inseefrlab.github.io/codif-ape-prez/>.
 
 Every change must be made in **both languages**.

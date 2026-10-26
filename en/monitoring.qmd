@@ -2,9 +2,11 @@
 title: "Monitoring and annotation"
 description: "Watching the model in production and collecting the human labels that measure, and improve, its quality."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - SSP Lab, Insee
 lang: en
 ---
 
@@ -23,10 +25,10 @@ A coding model in production can degrade in several ways, which the European MLO
 
 ## Label-free monitoring
 
-Most predictions are never checked by a human. The first line of monitoring therefore relies on signals that need no label. API logs are converted daily into partitioned Parquet files, queried with DuckDB, and shown in a **dashboard** that is rebuilt every night [@faria2024estoril]. It shows:
+Most predictions are never checked by a human. The first line of monitoring therefore relies on signals that need no label. With the first model, API logs were converted daily into partitioned Parquet files, queried with DuckDB, and shown in a **dashboard** rebuilt every night [@faria2024estoril]. The collection of production logs is currently suspended, and restoring it is part of the [target protocol](retraining.qmd#sec-status). The dashboard shows:
 
 - query volumes and the **automation rate** over time, for various thresholds;
-- the **distribution of the confidence index**, and how it shifts between time windows (Kolmogorov–Smirnov, χ² and similar tests);
+- the **distribution of the confidence index**, and how it shifts between time windows (automated tests such as Kolmogorov–Smirnov or χ² are a target);
 - the distribution of predicted codes;
 - statistics on the input text (length, new vocabulary).
 
@@ -60,7 +62,7 @@ This sample, called the **golden set**, is the foundation of the [retraining pro
 
 ## Auditing with LLMs
 
-The project also uses LLM agents to watch predictions offline. [GRAAL](companion-projects.qmd#sec-graal)'s *MatchVerifier* checks whether a (description, code) pair is consistent with the explanatory notes of the classification, and suggests an alternative when it is not. It is too slow and too costly to run on every prediction, but it can be run in batch to:
+The project also uses LLM agents to watch predictions offline. [GRAAL](data.qmd#sec-graal)'s *MatchVerifier* checks whether a (description, code) pair is consistent with the explanatory notes of the classification, and suggests an alternative when it is not. It is too slow and too costly to run on every prediction, but it can be run in batch to:
 
 - **prioritise** which cases human reviewers should look at first;
 - flag suspicious labels in the training data;

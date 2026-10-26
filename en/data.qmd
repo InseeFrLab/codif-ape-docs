@@ -2,10 +2,15 @@
 title: "Data"
 description: "Training data, label cleaning with an auditable rule engine, and the move to NAF 2025."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - SSP Lab, Insee
 lang: en
+# GRAAL used to be in the chapter on companion projects.
+aliases:
+  - companion-projects.html#sec-graal
 ---
 
 ## Training data
@@ -50,6 +55,11 @@ Rules are Python functions registered with a decorator. Each one carries a name,
 
 Fuzzy and semantic matching widen a rule to descriptions that are close to the ones the experts listed. Each rule decides which methods it allows. For instance, a rule on a short acronym is restricted to exact matching.
 
+The rule engine therefore has two parts, which are not judged the same way:
+
+- the **deterministic part** (exact patterns validated by experts) encodes the *known cases*, written $K_n$ in the [retraining protocol](retraining.qmd#sec-golden). It is checked like a unit test: the model must reproduce it;
+- the **probabilistic part** (fuzzy and semantic extensions) makes a guess on descriptions that no expert has seen. It is an automatic coding engine in its own right, and its precision must be [measured](evaluation.qmd#sec-eval-engines) before its labels are trusted.
+
 **Every change is logged.** For each modified, created or deleted row, a journal records the code before and after, the rule that applied and the context of the declaration. These journals are stored next to the cleaned dataset, so any label in the training set can be traced back to its origin.
 
 Rules are what make expert feedback **permanent**. If an error is fixed only by retraining, it can come back with the next model. A rule, on the other hand, fixes the whole training set for good, and the fix can be audited. How rules are created, checked and propagated is described in the [retraining protocol](retraining.qmd#sec-known-cases).
@@ -93,4 +103,68 @@ In the end, about 2.3 million of the 2.7 million observations were rebuilt in NA
 Expert annotations are expensive, so they are best used as a **benchmark**. They guide the choice of prompts and models and measure the result, while LLMs supply the volume. An LLM's self-reported confidence turned out to be an unreliable filter. Agreement between several models is a better signal.
 :::
 
-The model retrained on these data is described in the [next chapter](model.qmd#sec-results).
+The model retrained on these data is described in the [Model](model.qmd#sec-results) chapter.
+
+## GRAAL {#sec-graal}
+
+[GRAAL](https://github.com/InseeFrLab/GRAAL) ([documentation](https://inseefrlab.github.io/GRAAL/)), *Graph-based Reasoning Agents for Automatic Labelling*, is a framework of LLM agents for coding free text into a hierarchical classification. Like [torchTextClassifiers](model.qmd#sec-ttc), it was born from the needs of APE coding and is developed as a general-purpose, open-source tool. Unlike it, GRAAL sits **off the critical path**: it works offline, on data rather than on live requests. It belongs in this chapter because what it produces is labels.
+
+```{mermaid}
+%%| label: fig-graal
+%%| fig-cap: "Where GRAAL fits in the pipeline."
+flowchart LR
+  subgraph OFF["Offline (batch)"]
+    GR["GRAAL<br/>LLM agents"]
+    PRE["Data curation<br/>codif-ape-preprocess"]
+  end
+  subgraph CRIT["Critical path"]
+    TRN["Training<br/>codif-ape-train"] --> MOD["Model<br/>(TTC)"] --> API["API<br/>codif-ape-api"]
+  end
+  GR -->|"relabelling, audits,<br/>arbitration, synthetic data"| PRE
+  PRE --> TRN
+  API -->|"candidate codes,<br/>supervised baseline"| GR
+  API -->|"predictions"| MON["Monitoring"]
+  MON -->|"cases to audit"| GR
+```
+
+### Principle
+
+The whole classification is stored as a **graph** in Neo4j:
+
+- codes and labels;
+- **explanatory notes**: includes, excludes, examples;
+- parent–child relations, plus a vector index on the notes.
+
+Agents use tools to explore this graph, the way a human expert browses the classification. All inputs and outputs are typed Pydantic contracts. The agents run against any OpenAI-compatible endpoint, served on the platform with open-weight models.
+
+Because all classification knowledge lives in the graph, the framework is **independent of the classification**. Graphs exist for NAF 2025 (French), NACE Rev. 2.1 (English) and COICOP 2018.
+
+### Components
+
+| Family | Agent | Role |
+|---|---|---|
+| *Text → code* | **Navigator** | Walks the hierarchy from the root to a leaf, reading notes at each step |
+| | **Agentic RAG** | Starts from a vector search, then checks and corrects with the Navigator |
+| | **Summary agent** | One agent with the whole classification summarised in its context |
+| *Closers* | **CodeChooser** | Arbitrates between a few candidate codes |
+| | **MatchVerifier** | Audits a (description, code) pair: is it consistent with the notes? If not, which code is better? |
+| *Code → text* | **Code2Text** | Generates realistic synthetic descriptions for a given code |
+
+: GRAAL agents. {#tbl-graal}
+
+GRAAL also includes an evaluation module and review applications in which experts judge the agents' verdicts. The evaluation module offers metrics at each level, stratified samples with weights, bootstrap confidence intervals and paired tests.
+
+### Role in the pipeline
+
+GRAAL **does not replace** the production model. The agents take seconds to minutes per description and need GPUs to serve the LLM, while production needs ~200 ms on CPU. In early benchmarks, the agents were also not more accurate than the supervised model on the flow as a whole. GRAAL's value lies elsewhere, in four offline tasks:
+
+1. **Recoding a stock after a classification change.** Most of the NAF 2025 training data was produced by a dedicated pipeline, [codif-ape-nace-revision](https://github.com/InseeFrLab/codif-ape-nace-revision), in which LLMs code with the explanatory notes in context ([above](#sec-naf2025)). GRAAL generalises this approach with agents that navigate the classification, for future revisions and other classifications.
+2. **Auditing and curating labels.** The MatchVerifier flags dubious labels in the training data, or in automatically coded cases, and proposes alternatives. In the [retraining protocol](retraining.qmd#sec-curation), GRAAL is one of the independent engines whose disagreements with the production model are arbitrated.
+3. **Prioritising human review.** Suspicious cases are sent to experts first. Their judgements are collected in a review application and become new labels.
+4. **Generating synthetic data.** Code2Text produces descriptions for rare codes, and reworded variants of known cases to test that a fix [generalises](retraining.qmd#sec-gates).
+
+In return, GRAAL relies on the production API. It uses the API as a supervised baseline, and as a source of candidate codes for agents and annotators.
+
+### Labels from engines must be earned
+
+GRAAL and the probabilistic part of the [rule engine](#sec-rules) play the same role: they propose labels that no human has checked. Before either one feeds training, it is evaluated where it matters, **on the cases where it disagrees with the production model**, against the golden set. The criterion and its precautions are set out in the [retraining protocol](retraining.qmd#sec-curation) and the [Evaluation](evaluation.qmd#sec-eval-engines) chapter.

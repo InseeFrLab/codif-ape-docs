@@ -2,9 +2,11 @@
 title: "Suivi et annotation"
 description: "Surveiller le modèle en production et recueillir les annotations humaines qui mesurent, et améliorent, sa qualité."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - SSP Lab, Insee
 lang: fr
 ---
 
@@ -23,10 +25,10 @@ Un modèle de codification en production peut se dégrader de plusieurs façons,
 
 ## Un suivi sans annotation
 
-La plupart des prédictions ne sont jamais vérifiées par un humain. Le premier niveau de suivi repose donc sur des signaux qui ne nécessitent aucune annotation. Les journaux de l'API sont convertis chaque jour en fichiers Parquet partitionnés, interrogés avec DuckDB et présentés dans un **tableau de bord** reconstruit chaque nuit [@faria2024estoril]. On y trouve :
+La plupart des prédictions ne sont jamais vérifiées par un humain. Le premier niveau de suivi repose donc sur des signaux qui ne nécessitent aucune annotation. Avec le premier modèle, les journaux de l'API étaient convertis chaque jour en fichiers Parquet partitionnés, interrogés avec DuckDB et présentés dans un **tableau de bord** reconstruit chaque nuit [@faria2024estoril]. La collecte des journaux de production est actuellement suspendue, et son rétablissement fait partie du [protocole cible](retraining.qmd#sec-status). On trouve dans le tableau de bord :
 
 - les volumes de requêtes et le **taux de codification automatique** dans le temps, pour différents seuils ;
-- la **distribution de l'indice de confiance** et son évolution d'une fenêtre temporelle à l'autre (tests de Kolmogorov–Smirnov, du χ² et tests analogues) ;
+- la **distribution de l'indice de confiance** et son évolution d'une fenêtre temporelle à l'autre (des tests automatiques, de Kolmogorov–Smirnov ou du χ², sont une cible) ;
 - la distribution des codes prédits ;
 - des statistiques sur le texte en entrée (longueur, vocabulaire nouveau).
 
@@ -60,7 +62,7 @@ Cet échantillon aléatoire du flux, annoté à l'aveugle, est appelé « golde
 
 ## Audit par LLM
 
-Le projet utilise aussi des agents LLM pour contrôler les prédictions hors ligne. Le *MatchVerifier* de [GRAAL](companion-projects.qmd#sec-graal) vérifie si un couple (libellé, code) est cohérent avec les notes explicatives (notices) de la nomenclature, et propose une alternative dans le cas contraire. Trop lent et trop coûteux pour être appliqué à chaque prédiction, il peut en revanche être exécuté par lots pour :
+Le projet utilise aussi des agents LLM pour contrôler les prédictions hors ligne. Le *MatchVerifier* de [GRAAL](data.qmd#sec-graal) vérifie si un couple (libellé, code) est cohérent avec les notes explicatives (notices) de la nomenclature, et propose une alternative dans le cas contraire. Trop lent et trop coûteux pour être appliqué à chaque prédiction, il peut en revanche être exécuté par lots pour :
 
 - **prioriser** les cas que les relecteurs humains doivent examiner en premier ;
 - signaler les codes douteux dans les données d'entraînement ;

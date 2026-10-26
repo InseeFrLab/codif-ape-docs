@@ -2,11 +2,14 @@
 // Litera, as is: white navbar, serif body text, sans-serif headings.
 
 // Wider text column (Quarto default: 800px).
-$grid-body-width: 1000px;
+$grid-body-width: 4000px;
+
+// Wider left sidebar, which holds the whole table of contents (default: 250px).
+$grid-sidebar-width: 300px;
 
 /*-- scss:rules --*/
 
-// EN | FR switch, injected in the navbar by lang-switch.html.
+// EN | FR switch, injected in the navbar by nav.html.
 .lang-switch {
   display: inline-flex;
   align-items: center;
@@ -82,18 +85,165 @@ $grid-body-width: 1000px;
   color: $gray-600;
 }
 
-// Chapter numbers in the left sidebar. The landing page (first item) and the
-// references (last item) are not numbered.
-#quarto-sidebar .sidebar-menu-container > ul {
-  counter-reset: chapter;
+// Single table of contents in the left sidebar, built by nav.html.
+#quarto-sidebar .site-toc {
+  font-family: $font-family-sans-serif;
+  font-size: 0.88rem;
+  line-height: 1.35;
 
-  > li:not(:first-child):not(:last-child) .menu-text::before {
-    counter-increment: chapter;
-    content: counter(chapter) ". ";
-    color: $gray-600;
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
   }
+
+  .toc-children .toc-children {
+    margin-left: 0.85rem;
+    padding-left: 0.35rem;
+    border-left: 1px solid $gray-200;
+  }
+
+  .toc-item:not(.is-open) > .toc-children {
+    display: none;
+  }
+
+  .toc-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.15rem;
+  }
+
+  .toc-toggle,
+  .toc-spacer {
+    flex: 0 0 1.25rem;
+    height: 1.6rem;
+  }
+
+  .toc-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    background: none;
+    color: $gray-500;
+    cursor: pointer;
+
+    &::before {
+      content: "";
+      width: 0.4rem;
+      height: 0.4rem;
+      border-right: 1.5px solid currentColor;
+      border-bottom: 1.5px solid currentColor;
+      transform: rotate(-45deg);
+      transition: transform 0.15s;
+    }
+
+    &:hover {
+      color: $primary;
+      background-color: $gray-100;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $primary;
+      outline-offset: 1px;
+    }
+  }
+
+  .toc-item.is-open > .toc-row > .toc-toggle::before {
+    transform: rotate(45deg);
+  }
+
+  .toc-link {
+    flex: 1 1 auto;
+    display: block;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    color: $gray-700;
+    text-decoration: none;
+
+    &:hover {
+      color: $primary;
+      background-color: $gray-100;
+    }
+
+    &.active {
+      color: $primary;
+      font-weight: 600;
+    }
+  }
+
+  .toc-depth-0 > .toc-row > .toc-link {
+    font-weight: 600;
+    color: $gray-800;
+
+    &.is-current {
+      color: $primary;
+    }
+  }
+
+  .toc-depth-0 + .toc-depth-0 {
+    margin-top: 0.15rem;
+  }
+
+  .toc-depth-2 .toc-link {
+    font-size: 0.82rem;
+  }
+
+  .toc-number {
+    margin-right: 0.35rem;
+    color: $gray-600;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+// The page's own table of contents, in the right margin, is now in the
+// sidebar. The edit and issue links stay.
+body.has-site-toc #quarto-margin-sidebar #TOC {
+  > h2,
+  > ul {
+    display: none;
+  }
+}
+
+// Leave room for the navbar when jumping to a section.
+html {
+  scroll-padding-top: 4.5rem;
+}
+
+// Language switch in progress (nav.html).
+html.lang-switching main.content {
+  opacity: 0.35;
+  transition: opacity 0.15s;
 }
 
 table {
   font-size: 0.92rem;
+}
+
+// Status labels in the status table of the retraining protocol.
+.status {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-family: $font-family-sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-done {
+  background-color: rgba($success, 0.15);
+  color: darken($success, 15%);
+}
+
+.status-partial {
+  background-color: rgba($warning, 0.2);
+  color: darken($warning, 25%);
+}
+
+.status-target {
+  background-color: $gray-200;
+  color: $gray-700;
 }

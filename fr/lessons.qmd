@@ -2,9 +2,11 @@
 title: "Enseignements"
 description: "Ce que quatre années d'apprentissage automatique en production pour la codification APE nous ont appris, et les questions qui restent ouvertes."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - SSP Lab, Insee
 lang: fr
 ---
 
@@ -38,7 +40,7 @@ lang: fr
 - les équipes informatiques qui exploitent la production ;
 - l'équipe de data science (SSP Lab).
 
-L'étape décisive a été de désigner, au sein de l'équipe métier, un **responsable du modèle**, chargé du réentraînement, de la qualification et de l'exploitation, distinct de l'équipe d'innovation. Cela rejoint la recommandation d'AIML4OS selon laquelle tout modèle en production doit avoir un responsable nommément désigné [@aiml4os2025, ch. 3].
+L'étape décisive a été de désigner, au sein de l'équipe métier, un **responsable du modèle**, chargé du réentraînement, de la qualification et de l'exploitation, distinct de l'équipe d'innovation. Cela rejoint la recommandation d'AIML4OS selon laquelle tout modèle en production doit avoir un responsable nommément désigné [@aiml4os2025, ch. 3]. Ce rôle est décrit dans [Défis organisationnels et d'infrastructure](organisation.qmd#sec-business-ds).
 
 **La confiance se construit avec des outils.** Les experts métier font confiance au modèle lorsqu'ils peuvent voir pourquoi il a décidé (explicabilité), vérifier ce qui a changé entre deux versions (rapports de comparaison, journaux des modifications) et transformer leurs retours en corrections durables (règles).
 

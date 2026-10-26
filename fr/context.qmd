@@ -2,9 +2,11 @@
 title: "Contexte et historique"
 description: "Pourquoi l'Insee code automatiquement l'activité économique, et comment le système est passé d'un moteur de règles à l'apprentissage profond."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - SSP Lab, Insee
 lang: fr
 ---
 
@@ -56,7 +58,7 @@ Chaque année, environ **2 millions** de libellés doivent être codés.
 |---|---|---|---|
 | Années 1990 → 2022 | **Sicore** | Règles déterministes, dictionnaires de mots-clés | Le taux de codification automatique est tombé à environ 30 % sur les libellés en texte libre. Les règles étaient coûteuses à maintenir. |
 | Fin 2022 → 2025 | **fastText** | Modèle supervisé (sac de mots et n-grammes de caractères), les variables annexes étant ajoutées au texte sous forme de tokens | Meta a archivé la bibliothèque en mars 2024. Ni calibration, ni explicabilité, ni prise en charge des GPU. |
-| 2025 → | **PyTorch** ([torchTextClassifiers](companion-projects.qmd#sec-ttc)) | Même famille de modèles, reconstruite en PyTorch : un plongement (*embedding*) dédié par variable catégorielle, calibration, explicabilité | Inférence un peu plus lente qu'avec fastText, mais dans le budget. |
+| 2025 → | **PyTorch** ([torchTextClassifiers](model.qmd#sec-ttc)) | Même famille de modèles, reconstruite en PyTorch : un plongement (*embedding*) dédié par variable catégorielle, calibration, explicabilité | Inférence un peu plus lente qu'avec fastText, mais dans le budget. |
 
 : Moteurs successifs de codification APE. {#tbl-history}
 
@@ -64,7 +66,7 @@ Chaque année, environ **2 millions** de libellés doivent être codés.
 
 Le modèle **fastText** a été mis en production progressivement à partir de novembre 2022, avec un seuil d'abord volontairement prudent. Il a ramené le taux de codification automatique à environ **80 %**, ce qui a rendu la réforme du guichet unique tenable.
 
-Lorsque Meta a archivé le dépôt fastText en mars 2024, l'équipe a engagé la migration vers **PyTorch**. Elle en a profité pour corriger les faiblesses structurelles du modèle : traitement des variables catégorielles, calibration et explicabilité. Il en est résulté le package open source torchTextClassifiers, présenté dans [Projets associés](companion-projects.qmd).
+Lorsque Meta a archivé le dépôt fastText en mars 2024, l'équipe a engagé la migration vers **PyTorch**. Elle en a profité pour corriger les faiblesses structurelles du modèle : traitement des variables catégorielles, calibration et explicabilité. Il en est résulté le package open source torchTextClassifiers, présenté dans le chapitre [Modèle](model.qmd#sec-ttc).
 
 ## Contraintes de production
 

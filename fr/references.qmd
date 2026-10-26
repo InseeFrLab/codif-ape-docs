@@ -2,9 +2,11 @@
 title: "Références et ressources"
 description: "Présentations, articles, code et travaux connexes."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - SSP Lab, Insee
 lang: fr
 number-sections: false
 ---
@@ -17,6 +19,7 @@ Toutes les présentations de l'équipe sont rassemblées sur **[inseefrlab.githu
 |---|---|---|
 | 2026-06 | [torchTextClassifiers from an MLOps perspective](https://inseefrlab.github.io/codif-ape-prez/slides/isi-malta/) | ISI World Statistics Congress, Malte |
 | 2026-06 | [When Classifications Change but Deadlines Don't: Scaling Recoding with LLMs](https://inseefrlab.github.io/codif-ape-prez/slides/isi-malta-relabeling/) | ISI World Statistics Congress, Malte |
+| 2026-05 | [From Accuracy to Trust: practical methods for uncertainty-aware automatic coding](https://meilame-tayebjee.github.io/IAOS-Vilnius-conference/presentations/accuracy2trust/) | Conférence de l'IAOS, Vilnius |
 | 2026-03 | [Classification of business activities by ML: the case of France](https://inseefrlab.github.io/codif-ape-prez/slides/webinar-subsaharan-africa-2026/) | Webinaires avec l'Afrique subsaharienne et l'OCDE |
 | 2025-12 | [torchTextClassifiers: a unified framework for text classification in PyTorch](https://inseefrlab.github.io/codif-ape-prez/slides/pydata-global/) | PyData Global |
 | 2025-11 | [Données d'entraînement générées par LLM pour un changement de nomenclature](https://inseefrlab.github.io/codif-ape-prez/slides/jms2025-llm-relabeling/) | Journées de méthodologie statistique |

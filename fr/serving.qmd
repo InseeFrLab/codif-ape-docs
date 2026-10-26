@@ -2,9 +2,11 @@
 title: "Mise à disposition du modèle et déploiement"
 description: "Un modèle autonome, une API légère et un déploiement en GitOps."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - SSP Lab, Insee
 lang: fr
 ---
 
@@ -66,7 +68,7 @@ Plusieurs instances de l'API tournent côte à côte sur la plateforme. Chacune 
 - à la comparaison des générations de modèles sur les mêmes entrées ;
 - aux traitements de recodification en masse.
 
-Avant la production, le modèle passe par une **qualification** sur une plateforme de préproduction identique à l'environnement de production :
+Avant la production, le modèle passe par une **qualification** sur une plateforme de préproduction identique à l'environnement de production (voir [Défis organisationnels et d'infrastructure](organisation.qmd#sec-qualification-platform)) :
 
 - la **latence** et la mémoire sont mesurées sur CPU ;
 - la **parité en ligne/hors ligne** est vérifiée : le modèle servi doit reproduire exactement les prédictions de l'évaluation hors ligne ;

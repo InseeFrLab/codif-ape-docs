@@ -2,17 +2,23 @@
 title: "Modèle"
 description: "Un petit classifieur de textes PyTorch, calibré, intégrant des variables catégorielles, entraîné de façon reproductible et évalué à chaque niveau de la nomenclature."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - SSP Lab, Insee
 lang: fr
+# The former chapter on TTC and GRAAL, now split between Model and Data.
+aliases:
+  - companion-projects.html
+  - companion-projects.html#sec-ttc
 ---
 
 ## Pourquoi un petit modèle
 
 De grands modèles de langage pré-entraînés, comme CamemBERT, ont été testés dès le début du projet. Sur la codification APE, ils n'apportaient qu'un gain modeste par rapport à un modèle de type fastText : une exactitude (*accuracy*) d'environ 0,76 contre 0,75 sur le même jeu de test [@faria2024estoril]. Ce gain ne justifiait pas leur coût d'inférence au regard des contraintes de production (appels unitaires, CPU uniquement, quelques centaines de millisecondes).
 
-Le modèle en production est donc un **réseau de neurones peu profond** d'environ **un million de paramètres**, de la famille fastText [@joulin2016]. Il est désormais implémenté en PyTorch avec [torchTextClassifiers](companion-projects.qmd#sec-ttc).
+Le modèle en production est donc un **réseau de neurones peu profond** d'environ **un million de paramètres**, de la famille fastText [@joulin2016]. Il est désormais implémenté en PyTorch avec [torchTextClassifiers](#sec-ttc).
 
 ## Architecture
 
@@ -38,6 +44,50 @@ Le modèle comporte trois parties :
 
 La même bibliothèque prend aussi en charge des couches d'auto-attention, l'attention sur les labels (*label attention*) et les tokenizers Hugging Face. Ces options sont évaluées sur le jeu de validation. Une architecture plus riche n'est retenue que si elle tient dans le budget de latence.
 
+## torchTextClassifiers {#sec-ttc}
+
+[torchTextClassifiers](https://github.com/InseeFrLab/torchTextClassifiers) ([documentation](https://inseefrlab.github.io/torchTextClassifiers/), [PyPI](https://pypi.org/project/torchtextclassifiers/)) se définit comme « un cadre unifié et extensible pour la classification de textes avec variables catégorielles, construit sur PyTorch et PyTorch Lightning » [@couralet2025pydata]. Née des besoins de la codification APE, elle est développée comme un outil généraliste et open source. Elle se trouve **sur le chemin critique** : chaque prédiction passe par elle.
+
+### Pourquoi une bibliothèque dédiée
+
+Lorsque Meta a archivé le dépôt de fastText en mars 2024, le modèle de production s'est retrouvé dépendant d'une bibliothèque C++ compilée et non maintenue. fastText présentait d'autres inconvénients :
+
+- les variables auxiliaires ne pouvaient être prises en compte qu'en les ajoutant au texte ;
+- il n'offrait aucune explicabilité ;
+- ses scores étaient mal calibrés ;
+- il ne pouvait pas être entraîné sur GPU.
+
+Une première réimplémentation en PyTorch, *torchFastText*, reproduisait l'architecture de fastText. Elle est ensuite devenue un cadre général, renommé torchTextClassifiers en 2025.
+
+Si le modèle est un **package** plutôt que du code dans le dépôt d'entraînement, c'est pour une raison précise. La même classe de modèle doit exister dans le dépôt d'entraînement, dans l'API, en production et dans les traitements par lots. Un package versionné sur PyPI, répliqué dans le gestionnaire de dépôts interne de l'Insee, constitue la **source unique de vérité** commune à tous ces usages.
+
+### Conception
+
+La bibliothèque décompose un classifieur de textes en composants interchangeables :
+
+| Composant | Options |
+|---|---|
+| Tokeniseur | n-grammes de caractères à la manière de fastText, WordPiece, ou tout tokeniseur Hugging Face |
+| Plongement des tokens | Sac de plongements (*embedding bag*), éventuellement avec des couches d'auto-attention (« construisez votre propre petit BERT ») |
+| Plongement de la phrase | Moyenne, premier ou dernier token, ou **attention par classe** (*label attention* : une représentation par classe) |
+| Variables catégorielles | Un plongement par variable, combiné au texte par somme, par moyenne puis concaténation, ou par concaténation |
+| Tête | Classifieur linéaire, multiclasse ou multilabel ; une variante multiniveau exploite la hiérarchie |
+
+: Briques de torchTextClassifiers. {#tbl-ttc}
+
+Une interface de haut niveau prend en charge l'encodage des valeurs catégorielles brutes et des classes, l'entraînement (avec pondération facultative des observations), la prédiction des *k* meilleurs codes, ainsi que la sauvegarde et le chargement. Deux formes d'explicabilité sont intégrées :
+
+- des attributions au niveau des tokens par **gradients intégrés** (Captum) ;
+- l'**attention par classe**, qui montre quels mots pèsent dans chaque classe candidate.
+
+La bibliothèque s'adresse aux équipes qui ont besoin d'une classification de textes précise mais **ne peuvent pas déployer de grands modèles** : budgets CPU réduits, contraintes de latence unitaire, environnements fermés. Au-delà de l'APE, elle sert pour d'autres nomenclatures à l'Insee, comme la COICOP pour les libellés de produits des tickets de caisse. Elle a vocation à devenir un outil commun de codification automatique pour la statistique publique.
+
+### Dans la chaîne APE
+
+- `codif-ape-train` construit et entraîne le modèle avec TTC, puis l'encapsule dans le `pyfunc` MLflow.
+- `codif-ape-api` installe TTC pour pouvoir charger ce `pyfunc`, mais ne l'appelle pas directement.
+- Par rapport à fastText, TTC offre le même taux de codification automatique, une bien meilleure calibration, l'explicabilité et l'entraînement sur GPU, pour un temps d'inférence qui reste dans le budget (voir @tbl-ft-vs-ttc).
+
 ## Entraînement
 
 L'entraînement est assuré par [codif-ape-train](https://github.com/InseeFrLab/codif-ape-train), avec les réglages suivants :
@@ -57,7 +107,7 @@ L'entraînement est assuré par [codif-ape-train](https://github.com/InseeFrLab/
   - les métriques d'évaluation et les figures de diagnostic ;
   - le modèle empaqueté.
 
-## Indice de confiance et calibration
+## Indice de confiance et calibration {#sec-calibration}
 
 Pour chaque déclaration, le modèle renvoie ses cinq codes les plus probables et leurs probabilités. La décision de coder automatiquement repose sur un **indice de confiance (IC)** : l'écart entre les deux plus fortes probabilités, $\text{IC} = p_{(1)} - p_{(2)}$.
 
@@ -70,16 +120,7 @@ D'où l'importance de la **calibration** : une probabilité de 0,9 doit être j
 
 ## Évaluation
 
-Chaque exécution produit, sur les données de validation et de test :
-
-- l'**exactitude à chaque niveau** de la nomenclature, de la section (niveau 1) à la sous-classe (niveau 5), car une erreur qui reste dans la bonne division coûte moins cher qu'une erreur qui change de section ;
-- la **calibration** : ECE, score de Brier, histogramme des confiances ;
-- la **courbe exactitude–automatisation** : l'exactitude des cas codés automatiquement en fonction de la part de cas codés automatiquement, lorsque le seuil varie. C'est sur cette courbe que le métier choisit son point de fonctionnement.
-
-::: {.callout-important}
-## Évaluer sur les bonnes données
-Les métriques calculées sur un jeu de test tiré des données d'entraînement sont optimistes, car ses labels partagent les biais des labels d'entraînement. Elles ne sont pas non plus représentatives du flux de production. La décision de déployer repose donc sur un **« golden set »** : un échantillon de référence tiré aléatoirement dans le flux de production et annoté à l'aveugle par des experts, qui ne voient pas la prédiction du modèle. Voir [Protocole de réentraînement](retraining.qmd#sec-golden).
-:::
+Chaque entraînement enregistre l'exactitude à chaque niveau de la nomenclature, des mesures de calibration et la courbe exactitude–automatisation. Le sens de ces métriques, les données sur lesquelles elles sont calculées et la façon de juger un modèle sont présentés dans le chapitre [Évaluation](evaluation.qmd).
 
 ## Résultats {#sec-results}
 

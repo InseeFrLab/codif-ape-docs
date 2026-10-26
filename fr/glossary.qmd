@@ -1,0 +1,70 @@
+---
+title: "Glossaire et notations"
+description: "Les notations du protocole de réentraînement et de l'évaluation, et les termes employés dans la note."
+author:
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
+    affiliations:
+      - SSP Lab, Insee
+lang: fr
+number-sections: false
+---
+
+## Notations {#sec-notation}
+
+Le [protocole de réentraînement](retraining.qmd) suit un cycle trimestriel. Le trimestre $n$ est le trimestre en cours : son modèle est en production, et le cycle prépare le suivant.
+
+| Symbole | Signification | Défini dans |
+|:---|:---|:---|
+| $n$ | Indice du trimestre (cycle de production) | [Réentraînement](retraining.qmd) |
+| $f_n$ | Modèle en production pendant le trimestre $n$ ; $f_{n+1}$ est le candidat qui peut le remplacer | [Réentraînement](retraining.qmd) |
+| $p_{(1)}, p_{(2)}$ | Les deux plus fortes probabilités prédites par le modèle pour un libellé | [Modèle](model.qmd#sec-calibration) |
+| $\text{IC}$ | Indice de confiance, $\text{IC} = p_{(1)} - p_{(2)}$ | [Modèle](model.qmd#sec-calibration) |
+| $\tau$, $\tau_n$ | Seuil sur l'indice de confiance : au-dessus, le libellé est codé automatiquement ; en dessous, il part en reprise manuelle | [Modèle](model.qmd#sec-calibration) |
+| $\tau'$ | Borne haute d'une bande de confiance modérée $\tau_n \le \text{IC} < \tau'$, à laquelle on peut restreindre les moteurs coûteux | [Réentraînement](retraining.qmd#sec-curation) |
+| $p^*$ | Exactitude cible de la codification automatique, fixée par le métier | [Évaluation](evaluation.qmd#sec-metrics) |
+| $F_n$ | Flux des déclarations reçues pendant le trimestre $n$ | [Réentraînement](retraining.qmd#sec-golden) |
+| $G_n$ | *Golden set* : échantillon aléatoire de $F_n$, annoté à l'aveugle par des experts. Réservé à l'évaluation | [Réentraînement](retraining.qmd#sec-golden) |
+| $G_n^A$ | Partie de $G_n$ au-dessus du seuil, échantillon aléatoire de $A_n$ | [Réentraînement](retraining.qmd#sec-next-training-set) |
+| $M_n$ | Reprises manuelles : libellés sous le seuil, codés par des gestionnaires | [Réentraînement](retraining.qmd#sec-golden) |
+| $A_n$ | Codifications automatiques : libellés au-dessus du seuil, codés par $f_n$ | [Réentraînement](retraining.qmd#sec-golden) |
+| $\tilde{A}_n$ | $A_n$ après curation (accords conservés, désaccords arbitrés ou exclus) | [Réentraînement](retraining.qmd#sec-curation) |
+| $K_n$ | Cas connus : règles métier validées par les experts, encodées par la partie déterministe du moteur de règles | [Réentraînement](retraining.qmd#sec-known-cases), [Données](data.qmd#sec-rules) |
+| $K'_n$ | Variantes reformulées des cas connus, absentes de l'entraînement | [Réentraînement](retraining.qmd#sec-gates) |
+| $\bar{X}_n$ | Ensemble $X$ cumulé sur les trimestres jusqu'à $n$, éventuellement sur une fenêtre glissante | [Réentraînement](retraining.qmd#sec-golden) |
+| $\bar{G}^{\text{val}}$, $\bar{G}^{\text{test}}$ | Les deux moitiés fixes du *golden set* cumulé : l'une pour tous les choix, l'autre pour le verdict final | [Réentraînement](retraining.qmd#sec-golden) |
+| $E$ | Un moteur de codification auxiliaire (moteur de règles, agents GRAAL), comparé à $f_n$ | [Réentraînement](retraining.qmd#sec-curation) |
+| $\mathcal{D}_n$ | Jeu d'entraînement de $f_n$ | [Réentraînement](retraining.qmd#sec-assembly) |
+
+: Notations. {#tbl-notation}
+
+## Termes {#sec-terms}
+
+| Terme | Signification |
+|:---|:---|
+| **Code APE** | Activité principale exercée par une entreprise, codée dans la NAF |
+| **NAF**, **NACE** | Nomenclature d'activités française (NAF) et son équivalent européen (NACE). La NAF rév. 2 date de 2008 ; la NAF 2025 suit la NACE Rév. 2.1 |
+| **Sous-classe** | Niveau le plus fin de la NAF, celui que prédit le modèle (niveau 5) |
+| **Sirene** | Le répertoire des entreprises géré par l'Insee |
+| **Notes explicatives** | Les notes de la nomenclature : ce que chaque code comprend, ce qu'il exclut, et des exemples |
+| **Univoque / multivoque** | Correspondance d'un ancien code vers un seul nouveau code, ou vers plusieurs |
+| **Taux de codification automatique**, **couverture** | Part des libellés codés automatiquement, sans intervention humaine |
+| **Risque** | Taux d'erreur parmi les libellés codés automatiquement |
+| **Courbe risque–couverture**, **AURC** | Le risque en fonction de la couverture lorsque le seuil varie ; l'aire sous cette courbe |
+| **Calibration** | Accord entre la confiance annoncée par le modèle et l'exactitude qu'il atteint |
+| **ECE**, **score de Brier** | Erreur de calibration attendue ; erreur quadratique moyenne des probabilités prédites |
+| ***Golden set*** | Échantillon aléatoire du flux de production, annoté par des experts qui ne voient pas la prédiction du modèle |
+| **Reprise manuelle** | Codification par un gestionnaire des libellés sous le seuil, avec les suggestions du modèle sous les yeux |
+| **Cas connu** | Un libellé dont le code a été fixé par une règle métier, et que le modèle doit reproduire |
+| **Moteur de règles** | Le composant de codif-ape-preprocess qui applique les règles métier aux données d'entraînement. Sa partie déterministe encode les cas connus ; sa partie probabiliste (correspondances approximative et sémantique) les étend aux libellés proches |
+| **Porte de qualité** | Un test qu'un modèle candidat doit réussir avant sa mise en production |
+| **Non-infériorité** | Critère selon lequel un nouveau modèle est accepté s'il n'est pas significativement moins bon que le précédent |
+| **Champion / challenger** | Le modèle en production, et le candidat qu'on lui compare |
+| **Parité en ligne / hors ligne** | Le modèle servi reproduit exactement les prédictions calculées hors ligne |
+| **Plateforme de qualification**, **iso-production** | Un environnement qui reproduit la production, où un modèle est testé avant sa mise en production |
+| **Déploiement fantôme** (*shadow*) | Le modèle candidat code le flux réel à côté du modèle de production, sans que ses décisions soient utilisées |
+| **TTC** | [torchTextClassifiers](model.qmd#sec-ttc), la bibliothèque PyTorch avec laquelle le modèle est construit |
+| **GRAAL** | [Graph-based Reasoning Agents for Automatic Labelling](data.qmd#sec-graal), des agents LLM qui travaillent hors ligne sur la nomenclature |
+
+: Termes. {#tbl-terms}

@@ -2,9 +2,11 @@
 title: "Lessons learned"
 description: "What four years of machine learning in production for APE coding taught us, and the questions that remain open."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - SSP Lab, Insee
 lang: en
 ---
 
@@ -38,7 +40,7 @@ lang: en
 - the IT teams that run production;
 - the data science team (SSP Lab).
 
-The decisive step was to name a **model owner** in the business team, who is responsible for retraining, qualification and operation, distinct from the innovation team. This mirrors the AIML4OS recommendation that every model in production have a named owner [@aiml4os2025, ch. 3].
+The decisive step was to name a **model owner** in the business team, who is responsible for retraining, qualification and operation, distinct from the innovation team. This mirrors the AIML4OS recommendation that every model in production have a named owner [@aiml4os2025, ch. 3]. The role is described in [Organisational and infrastructural challenges](organisation.qmd#sec-business-ds).
 
 **Trust is built with tools.** Business experts trust the model when they can see why it decided (explainability), check what changed between two versions (comparison reports, change journals) and turn their feedback into permanent fixes (rules).
 

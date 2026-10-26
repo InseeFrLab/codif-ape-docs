@@ -1,0 +1,117 @@
+---
+title: "Evaluation"
+description: "Which metrics say whether a coding model can be trusted, on which data they are computed, and how auxiliary engines and inference time are judged."
+author:
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
+    affiliations:
+      - SSP Lab, Insee
+lang: en
+---
+
+## Beyond accuracy
+
+A model with 95 % test accuracy can still be unfit for production. On 2 million descriptions a year, 5 % of errors is 100,000 wrong codes. What matters is **which** of them reach the register without anyone looking. An error made with low confidence is caught by the threshold and goes to a human coder. An error made with high confidence is coded automatically and goes straight into the statistics. Accuracy says how often the model is right. It does not say **when it can be trusted** [@tayebjee2026iaos].
+
+The evaluation of the APE model therefore answers four questions, in this order. The notation is that of the [retraining protocol](retraining.qmd), gathered in the [glossary](glossary.qmd#sec-notation).
+
+| Question | Tool |
+|---|---|
+| Is the model right, and how close are its errors? | Accuracy at each level of the classification, macro-F1 |
+| Do its probabilities mean what they say? | Reliability diagram, expected calibration error (ECE), Brier score |
+| How much can be coded automatically, at what error rate? | Risk–coverage curve, coverage at target accuracy $p^*$ |
+| Does it fit the production constraints? | Latency, throughput and memory, measured on the qualification platform |
+
+: What the evaluation must answer. {#tbl-eval-questions}
+
+::: {.callout-note}
+This chapter describes how the model should be judged. Some of these metrics and tests are already computed with each run, others are a target: see the [status table](retraining.qmd#sec-status).
+:::
+
+## Metrics {#sec-metrics}
+
+### Accuracy at every level
+
+The model predicts a sub-class, but every higher level follows from it. Accuracy is therefore reported from section (level 1) to sub-class (level 5). An error that stays within the right division costs less than one across sections, and a model whose errors stay close is preferable at equal sub-class accuracy.
+
+Overall accuracy is dominated by the most frequent codes. **Macro-F1** and accuracy on rare classes show whether the model simply ignores the tail of the classification.
+
+### Calibration
+
+A probability of 0.8 should be right about 80 % of the time. Calibration and accuracy are distinct properties: modern neural networks tend to be accurate but overconfident [@guo2017calibration]. Calibration is checked with:
+
+- the **reliability diagram**, which plots observed accuracy against predicted confidence, by bins;
+- the **expected calibration error (ECE)**, the weighted gap between the two;
+- the **Brier score**, which combines calibration and sharpness.
+
+If a model is poorly calibrated, post-hoc methods such as temperature scaling or isotonic regression fix it without retraining. The current PyTorch model is well calibrated out of the box (see [Model](model.qmd#sec-calibration)).
+
+### Risk–coverage: choosing the operating point
+
+The threshold $\tau$ on the confidence index splits the flow in two. **Coverage** is the share of descriptions coded automatically. **Risk** is the error rate among them. Raising $\tau$ lowers both. The **risk–coverage curve** traces this trade-off for every threshold [@geifman2017selective]:
+
+- a better model sits lower at every coverage;
+- the area under the curve (**AURC**) summarises it in one number;
+- the business indicator is the **coverage at target accuracy $p^*$**: how much can be automated while keeping automatic coding at least $p^*$ accurate.
+
+This curve turns the question "is the model good?" into "how much manual work does it save at a risk we accept?". Choosing $p^*$ is a business decision. The curve only states its price.
+
+### Stability over time
+
+Every metric above is also computed **by quarter** of the golden set. A model whose coverage at $p^*$ slowly drops is drifting, even if its average accuracy looks stable. Label-free signals (distribution of the confidence index, automation rate) complement these measures between two annotation waves (see [Monitoring](monitoring.qmd)).
+
+## Evaluating on the right data {#sec-eval-data}
+
+A metric is only as good as the sample it is computed on.
+
+- **A test split drawn from the training data** is optimistic. Its labels share the biases of the training labels, and its mix of cases is not that of the production flow. It is used for development only.
+- **The golden set** is a random sample of the production flow, annotated by experts who do not see the model's prediction. It is the only sample on which the metrics above estimate what happens in production. It is split once and for all into $\bar{G}^{\text{val}}$, used for every choice, and $\bar{G}^{\text{test}}$, used for the final verdict (see [Retraining protocol](retraining.qmd#sec-golden)).
+- **Never-seen descriptions.** The flow is repetitive, so many golden set descriptions also appear in the training data. Metrics are also reported on the descriptions that do not, to measure generalisation rather than memory.
+- **Known cases** $K_n$, and reworded variants of them, are not a sample: they are unit tests that the model must pass (see [Quality gates](retraining.qmd#sec-gates)).
+- **Manual corrections** are never an evaluation set: they are selected on the model's failures.
+
+The inter-annotator agreement measured during the NAF 2025 campaign sets the ceiling: three experts agree on the sub-class in only about 62 % of cases (see [Data](data.qmd#sec-naf2025)). No metric should be read without it in mind.
+
+## Uncertainty and comparisons
+
+The golden set is small compared with 750 classes. Every metric therefore comes with a **confidence interval** (Wilson or bootstrap), and two models are compared with a **paired test** (McNemar or paired bootstrap) on the same descriptions. A new model is accepted on **non-inferiority**, not on a point estimate that happens to be higher (see [Quality gates](retraining.qmd#sec-gates)).
+
+Scores obtained on different golden sets cannot be compared. To track progress over time, every past model is re-evaluated on the latest $\bar{G}^{\text{test}}$.
+
+## Evaluating auxiliary engines {#sec-eval-engines}
+
+Two components propose labels without a human: the LLM agents of [GRAAL](data.qmd#sec-graal) and the probabilistic part (fuzzy and semantic matching) of the [rule engine](data.qmd#sec-rules) in codif-ape-preprocess. Both feed the next training set, so both must be evaluated before their labels are used. The deterministic part of the rule engine is a different matter: it encodes the known cases $K_n$ validated by experts and is checked as a unit test.
+
+For these engines, global accuracy is **not** the right question. An engine that is less accurate than the production model overall can still be very useful if it is right where the model is wrong. The criterion is **conditional and comparative** (see [Retraining protocol](retraining.qmd#sec-curation)):
+
+- on $\bar{G}^{\text{val}}$, restricted to the automatically coded cases where the engine **disagrees** with the production model, who is right more often?
+- compare engines at **similar coverage**, since an engine that often abstains wins the disagreement zone mechanically;
+- for each rule extension, measure how many rows it touches and how precise it is on $\bar{G}^{\text{val}}$, and reject the extensions that are too broad or too imprecise.
+
+GRAAL ships its own evaluation module (metrics at each level, weighted stratified samples, bootstrap intervals, paired tests), so the same protocol applies to its successive variants.
+
+## Architecture choices that serve trust
+
+Some model features exist mainly to make the metrics above better, or the errors easier to handle [@tayebjee2026iaos]. Both are available in [torchTextClassifiers](model.qmd#sec-ttc):
+
+- **Multi-level heads.** With one prediction head per level of the classification, an uncertain model can fall back to the finest level it can trust (a class or a group rather than a wrong sub-class). This reduces the errors that contradict even the section.
+- **Label attention.** Each code gets its own view of the description, which shows the words that drive each candidate. A reviewer can see why the model hesitates.
+
+Whether these options pay off for APE coding is decided with the metrics of this chapter, on $\bar{G}^{\text{val}}$, and within the latency budget.
+
+## Inference time and other production metrics {#sec-eval-nonfunctional}
+
+A model that is accurate but too slow cannot be deployed. The production constraints (unit calls, CPU only, closed environment) make the following measures part of the evaluation:
+
+| Metric | Why it matters |
+|---|---|
+| Latency of a unit call (median, p95, p99) | Each declaration waits for the model in the register's processing chain |
+| Throughput in batch mode | Bulk recoding jobs, for example after a classification change |
+| Memory footprint | Sets the number of replicas a node can host |
+| Start-up time | Loading the model and its tokenizer delays every restart and every rollout |
+| Online/offline parity | The served model must reproduce the offline predictions exactly |
+
+: Non-functional metrics. {#tbl-eval-nonfunctional}
+
+These numbers are only meaningful on hardware and software that match production. Measured on a development notebook or a GPU node, they say little about the production CPU, its resource limits and its network constraints. They are therefore measured on the **qualification platform**, which reproduces production (see [Organisational and infrastructural challenges](organisation.qmd#sec-qualification-platform)). For the record, the current PyTorch model stays under 300 ms per unit call on CPU, against under 100 ms for fastText (see [Model](model.qmd#tbl-ft-vs-ttc)).

@@ -2,15 +2,44 @@
 title: "Retraining protocol"
 description: "How each quarter's production flow becomes a better model, without fooling ourselves: golden set, data curation, business rules, quality gates and qualification."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - SSP Lab, Insee
 lang: en
 ---
 
-Retraining a model is easy. Retraining it so that it is **demonstrably no worse** than the one in production, under labels that are partly produced by that very model, is hard. This chapter describes the protocol we use for that. It is the methodological core of the pipeline.
+Retraining a model is easy. Retraining it so that it is **demonstrably no worse** than the one in production, under labels that are partly produced by that very model, is hard. This chapter describes the protocol we are putting in place for that. It is the methodological core of the pipeline.
 
-The protocol follows a quarterly cycle. During quarter $n$, the model $f_n$ is in production with a threshold $\tau_n$, and the cycle produces $f_{n+1}$ and $\tau_{n+1}$.
+The protocol follows a quarterly cycle. During quarter $n$, the model $f_n$ is in production with a threshold $\tau_n$, and the cycle produces $f_{n+1}$ and $\tau_{n+1}$. All the notation is gathered in the [glossary](glossary.qmd#sec-notation).
+
+::: {.callout-note}
+## A target, partly in place
+This chapter describes the protocol we are putting in place, not only what runs today. The [status table](#sec-status) below says, for each part, what is in place, what is partly in place and what is still a target.
+:::
+
+## Where we stand {#sec-status}
+
+| Component | Status | Today |
+|:---|:---|:---|
+| Rule engine with audit journals, applied before each training | [In place]{.status .status-done} | Runs in the preprocessing workflow ([Data](data.qmd#sec-rules)) |
+| Reproducible training, datasets logged with each run | [In place]{.status .status-done} | Configuration files, locked environments, datasets logged in MLflow ([Model](model.qmd)) |
+| Metrics logged with each run | [Partly]{.status .status-partial} | Accuracy at each level, ECE, Brier score, confidence histogram and accuracy–automation curve. Reliability diagram, AURC, macro-F1 and metrics by quarter are a target ([Evaluation](evaluation.qmd)) |
+| Sample weights | [Partly]{.status .status-partial} | Used to weigh the rows created by business rules. Weights by source and by age are a target |
+| Golden set | [Partly]{.status .status-partial} | Expert annotation campaigns have been run (NAF rev. 2, NAF 2025), but not yet a continuous random sample of the flow, nor the fixed split into $\bar{G}^{\text{val}}$ and $\bar{G}^{\text{test}}$ |
+| Curation of the automatic set by disagreement with independent engines | [Partly]{.status .status-partial} | Prototyped with [GRAAL](data.qmd#sec-graal) on test samples; not yet applied to the automatically coded flow |
+| Label-free monitoring | [Partly]{.status .status-partial} | A dashboard exists; collecting production logs and drift tests are a target ([Monitoring](monitoring.qmd)) |
+| Quarterly cycle | [Target]{.status .status-target} | Models are retrained on demand |
+| Checks on known cases before training, rule mining from manual corrections | [Target]{.status .status-target} | Rules are written by hand from expert feedback |
+| Quality gates blocking a release (known cases, non-inferiority, coverage at $p^*$) | [Target]{.status .status-target} | Paired tests and bootstrap intervals exist in GRAAL's evaluation module, not yet for the production model |
+| Threshold and calibration inside the model artifact, champion and challenger in the registry | [Target]{.status .status-target} | Models are pinned by version number in the deployment manifests |
+| Automated qualification (latency, parity), shadow deployment | [Target]{.status .status-target} | See [Organisational and infrastructural challenges](organisation.qmd#sec-qualification-platform) |
+| Multi-level heads, label attention | [Target]{.status .status-target} | Available in [torchTextClassifiers](model.qmd#sec-ttc), not used by the production model |
+
+: Status of the protocol. {#tbl-status}
+
+<!-- Status established from the code of the repositories (October 2026). Qualification is run with the production teams, outside these repositories: to be confirmed by the authors of the organisation chapter. -->
 
 ## What the production flow gives us {#sec-golden}
 
@@ -54,18 +83,18 @@ The golden set is split **once and for all** into two halves, using a hash of ea
 - $\bar{G}^{\text{val}}$ is used for every **choice**: the threshold, calibration, architecture and hyper-parameters, and the selection of auxiliary engines and candidate rules;
 - $\bar{G}^{\text{test}}$ is used only for the **final verdict**.
 
-## Building the next training set
+## Building the next training set {#sec-next-training-set}
 
 ### The accuracy of automatic coding can be estimated
 
 We do not know which automatic codes are wrong, but we can estimate **how many** are. The golden set is a random sample of the flow, so its above-threshold part $G_n^A = \{x \in G_n : \text{CI}_n(x) \ge \tau_n\}$ is a random sample of $A_n$. The accuracy of $f_n$ on $G_n^A$, with a confidence interval (Wilson or bootstrap), estimates the accuracy of automatic coding. Accumulating over quarters gives enough data for this estimate.
 
-### Curating the automatic set: focus on disagreements
+### Curating the automatic set: focus on disagreements {#sec-curation}
 
 Feeding $A_n$ back into training with the labels of $f_n$ is **self-training**: the model learns nothing new, and its confident errors get reinforced. To break this loop, we compare $f_n$ with **independent engines** $E$. None of them is an oracle:
 
 - the **rule engine** of [codif-ape-preprocess](data.qmd#sec-rules) applies deterministic rules, which often abstain, plus a cautious extension to similar descriptions;
-- the **LLM agents** of [GRAAL](companion-projects.qmd#sec-graal) navigate the classification and read the explanatory notes. They are slow, but latency does not matter in an offline batch.
+- the **LLM agents** of [GRAAL](data.qmd#sec-graal) navigate the classification and read the explanatory notes. They are slow, but latency does not matter in an offline batch.
 
 The global accuracy of an engine on the golden set is not the right question. What matters is **who is right when $E$ and $f_n$ disagree** on the automatic set:
 
@@ -136,7 +165,7 @@ Two further rules apply:
 
 A random validation split of the training set is used only for early stopping.
 
-## Quality gates: $f_{n+1}$ against $f_n$
+## Quality gates: $f_{n+1}$ against $f_n$ {#sec-gates}
 
 | Gate | Data | Purpose | Criterion |
 |---|---|---|---|
@@ -179,7 +208,7 @@ The registry tracks the *champion* and the *challenger*.
 
 Even with an unchanged architecture, qualification is not a formality:
 
-- **Iso-production qualification**: p95 latency and memory, on CPU, on the pre-production platform.
+- **Iso-production qualification**: p95 latency and memory, on CPU, on the [qualification platform](organisation.qmd#sec-qualification-platform).
 - **Online/offline parity**: the served model must reproduce the offline predictions on $\bar{G}^{\text{test}}$ exactly. This is a cheap test that catches preprocessing or library-version mismatches.
 - **The threshold and the calibration ship inside the model** artifact, not in a separate configuration.
 - **Shadow deployment** for a few weeks: $f_{n+1}$ scores the real flow next to $f_n$. We monitor the effective automation rate, the agreement with $f_n$ and the score distribution. Disagreements feed annotation.

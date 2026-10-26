@@ -1,0 +1,70 @@
+---
+title: "Glossary and notation"
+description: "The notation of the retraining protocol and the evaluation, and the terms used throughout the note."
+author:
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
+    affiliations:
+      - SSP Lab, Insee
+lang: en
+number-sections: false
+---
+
+## Notation {#sec-notation}
+
+The [retraining protocol](retraining.qmd) follows a quarterly cycle. Quarter $n$ is the one in progress: its model is in production, and the cycle prepares the next one.
+
+| Symbol | Meaning | Defined in |
+|:---|:---|:---|
+| $n$ | Index of the quarter (production cycle) | [Retraining](retraining.qmd) |
+| $f_n$ | Model in production during quarter $n$; $f_{n+1}$ is the candidate that may replace it | [Retraining](retraining.qmd) |
+| $p_{(1)}, p_{(2)}$ | The two highest probabilities predicted by the model for a description | [Model](model.qmd#sec-calibration) |
+| $\text{CI}$ | Confidence index, $\text{CI} = p_{(1)} - p_{(2)}$ | [Model](model.qmd#sec-calibration) |
+| $\tau$, $\tau_n$ | Threshold on the confidence index: at or above it, the description is coded automatically; below it, it goes to a human coder | [Model](model.qmd#sec-calibration) |
+| $\tau'$ | Upper bound of a band of moderate confidence $\tau_n \le \text{CI} < \tau'$, to which costly engines can be restricted | [Retraining](retraining.qmd#sec-curation) |
+| $p^*$ | Target accuracy of automatic coding, set by the business | [Evaluation](evaluation.qmd#sec-metrics) |
+| $F_n$ | Flow of declarations received during quarter $n$ | [Retraining](retraining.qmd#sec-golden) |
+| $G_n$ | Golden set: random sample of $F_n$, annotated blind by experts. Used for evaluation only | [Retraining](retraining.qmd#sec-golden) |
+| $G_n^A$ | Part of $G_n$ above the threshold, a random sample of $A_n$ | [Retraining](retraining.qmd#sec-next-training-set) |
+| $M_n$ | Manual set: descriptions below the threshold, coded by humans | [Retraining](retraining.qmd#sec-golden) |
+| $A_n$ | Automatic set: descriptions above the threshold, coded by $f_n$ | [Retraining](retraining.qmd#sec-golden) |
+| $\tilde{A}_n$ | $A_n$ after curation (agreements kept, disagreements arbitrated or excluded) | [Retraining](retraining.qmd#sec-curation) |
+| $K_n$ | Known cases: business rules validated by experts, encoded by the deterministic part of the rule engine | [Retraining](retraining.qmd#sec-known-cases), [Data](data.qmd#sec-rules) |
+| $K'_n$ | Reworded variants of the known cases, not seen in training | [Retraining](retraining.qmd#sec-gates) |
+| $\bar{X}_n$ | Set $X$ accumulated over quarters up to $n$, possibly within a sliding window | [Retraining](retraining.qmd#sec-golden) |
+| $\bar{G}^{\text{val}}$, $\bar{G}^{\text{test}}$ | The two fixed halves of the accumulated golden set: one for every choice, one for the final verdict | [Retraining](retraining.qmd#sec-golden) |
+| $E$ | An auxiliary coding engine (rule engine, GRAAL agents), compared with $f_n$ | [Retraining](retraining.qmd#sec-curation) |
+| $\mathcal{D}_n$ | Training set used for $f_n$ | [Retraining](retraining.qmd#sec-assembly) |
+
+: Notation. {#tbl-notation}
+
+## Terms {#sec-terms}
+
+| Term | Meaning |
+|:---|:---|
+| **APE code** | *Activité principale exercée*: the principal activity of a business, coded in the NAF |
+| **NAF**, **NACE** | French activity classification (NAF) and its European counterpart (NACE). NAF rev. 2 dates from 2008; NAF 2025 follows NACE Rev. 2.1 |
+| **Sub-class** | Finest level of the NAF, the one the model predicts (level 5) |
+| **Sirene** | The French business register managed by INSEE |
+| **Explanatory notes** | The notes of the classification: what each code includes, excludes, and examples |
+| **Univocal / multivocal** | A correspondence from an old code to a single new code, or to several |
+| **Automation rate**, **coverage** | Share of descriptions coded automatically, without a human |
+| **Risk** | Error rate among the descriptions coded automatically |
+| **Risk–coverage curve**, **AURC** | Risk as a function of coverage when the threshold varies; the area under that curve |
+| **Calibration** | Agreement between the confidence a model announces and the accuracy it achieves |
+| **ECE**, **Brier score** | Expected calibration error; mean squared error of the predicted probabilities |
+| **Golden set** | Random sample of the production flow, annotated by experts who do not see the model's prediction |
+| **Manual coding** | Coding by a human of the descriptions below the threshold, with the model's suggestions in view |
+| **Known case** | A description whose code has been fixed by a business rule, and which the model must reproduce |
+| **Rule engine** | The component of codif-ape-preprocess that applies business rules to the training data. Its deterministic part encodes known cases; its probabilistic part (fuzzy and semantic matching) extends them to similar descriptions |
+| **Quality gate** | A test a candidate model must pass before release |
+| **Non-inferiority** | Criterion under which a new model is accepted if it is not significantly worse than the previous one |
+| **Champion / challenger** | The model in production, and the candidate compared with it |
+| **Online/offline parity** | The served model reproduces exactly the predictions computed offline |
+| **Qualification platform**, **iso-production** | An environment that reproduces production, where a model is tested before release |
+| **Shadow deployment** | The candidate model scores the real flow next to the production model, without its decisions being used |
+| **TTC** | [torchTextClassifiers](model.qmd#sec-ttc), the PyTorch library the model is built with |
+| **GRAAL** | [Graph-based Reasoning Agents for Automatic Labelling](data.qmd#sec-graal), LLM agents that work offline on the classification |
+
+: Terms. {#tbl-terms}

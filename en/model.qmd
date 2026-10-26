@@ -2,17 +2,23 @@
 title: "Model"
 description: "A small, calibrated PyTorch text classifier with categorical variables, trained reproducibly and evaluated at every level of the classification."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - SSP Lab, Insee
 lang: en
+# The former chapter on TTC and GRAAL, now split between Model and Data.
+aliases:
+  - companion-projects.html
+  - companion-projects.html#sec-ttc
 ---
 
 ## Why a small model
 
 Large pre-trained language models such as CamemBERT were tested early in the project. On APE coding, they gave only a small gain over a fastText-style model: about 0.76 against 0.75 accuracy on the same test set [@faria2024estoril]. That gain did not justify their inference cost under the production constraints (unit calls, CPU only, a few hundred milliseconds).
 
-The production model is therefore a **shallow neural network** of about **one million parameters**, in the fastText family [@joulin2016]. It is now implemented in PyTorch with [torchTextClassifiers](companion-projects.qmd#sec-ttc).
+The production model is therefore a **shallow neural network** of about **one million parameters**, in the fastText family [@joulin2016]. It is now implemented in PyTorch with [torchTextClassifiers](#sec-ttc).
 
 ## Architecture
 
@@ -38,6 +44,50 @@ The model has three parts:
 
 The same library also supports self-attention layers, label attention and Hugging Face tokenizers. These options are evaluated on the validation set. A richer architecture is adopted only if it fits within the latency budget.
 
+## torchTextClassifiers {#sec-ttc}
+
+[torchTextClassifiers](https://github.com/InseeFrLab/torchTextClassifiers) ([documentation](https://inseefrlab.github.io/torchTextClassifiers/), [PyPI](https://pypi.org/project/torchtextclassifiers/)) is "a unified, extensible framework for text classification with categorical variables, built on PyTorch and PyTorch Lightning" [@couralet2025pydata]. It was born from the needs of APE coding and is developed as a general-purpose, open-source tool. It sits **on the critical path**: every prediction goes through it.
+
+### Why a dedicated library
+
+When Meta archived the fastText repository in March 2024, the production model was left depending on a compiled C++ library with no maintenance. fastText had other drawbacks:
+
+- auxiliary variables could only be handled by appending them to the text;
+- it offered no explainability;
+- its scores were poorly calibrated;
+- it could not train on GPU.
+
+A first PyTorch reimplementation, *torchFastText*, reproduced the fastText architecture. It then grew into a general framework and was renamed torchTextClassifiers in 2025.
+
+There is a reason why the model is a **package** rather than code inside the training repository. The same model class has to exist in the training repository, in the API, in production and in batch jobs. A versioned package on PyPI, mirrored in INSEE's internal repository manager, is the **single source of truth** shared by all of them.
+
+### Design
+
+The library splits a text classifier into interchangeable components:
+
+| Component | Options |
+|---|---|
+| Tokenizer | fastText-style character n-grams, WordPiece, or any Hugging Face tokenizer |
+| Token embedder | Embedding bag, optionally with self-attention layers ("make your own small BERT") |
+| Sentence embedder | Mean, first or last token, or **label attention** (one representation per class) |
+| Categorical variables | One embedding per variable, combined with the text by sum, average-and-concatenate, or concatenation |
+| Head | Linear classifier, multi-class or multi-label; a multi-level variant exploits the hierarchy |
+
+: torchTextClassifiers building blocks. {#tbl-ttc}
+
+A high-level wrapper takes care of encoding the raw categorical values and the labels, training (with optional sample weights), prediction with top-*k* outputs, and saving and loading. Two forms of explainability are built in:
+
+- token-level attributions with **integrated gradients** (Captum);
+- **label attention**, which shows which words drive each candidate class.
+
+The intended users are teams that need accurate text classification but **cannot deploy large models**: small CPU budgets, unit latency constraints, closed environments. Beyond APE, the library is used for other classifications at INSEE, such as COICOP for product descriptions on receipts. It aims to become a common tool for automatic coding in official statistics.
+
+### In the APE pipeline
+
+- `codif-ape-train` builds and trains the model with TTC, and wraps it in the MLflow `pyfunc`.
+- `codif-ape-api` installs TTC so that it can load that `pyfunc`, but does not call it directly.
+- Compared with fastText, TTC gives the same automation rate, much better calibration, explainability and GPU training, for an inference time that remains within budget (see @tbl-ft-vs-ttc).
+
 ## Training
 
 Training is run by [codif-ape-train](https://github.com/InseeFrLab/codif-ape-train), with these settings:
@@ -57,7 +107,7 @@ Training is run by [codif-ape-train](https://github.com/InseeFrLab/codif-ape-tra
   - the evaluation metrics and diagnostic figures;
   - the packaged model.
 
-## Confidence index and calibration
+## Confidence index and calibration {#sec-calibration}
 
 For each declaration, the model returns its five most likely codes and their probabilities. The decision to code automatically relies on a **confidence index (CI)**: the gap between the two highest probabilities, $\text{CI} = p_{(1)} - p_{(2)}$.
 
@@ -70,16 +120,7 @@ This is why **calibration** matters. A probability of 0.9 should be right about 
 
 ## Evaluation
 
-Every run reports, on validation and test data:
-
-- **accuracy at each level** of the classification, from section (level 1) to sub-class (level 5), since a mistake that stays within the right division costs less than one across sections;
-- **calibration**: ECE, Brier score, histogram of confidence;
-- **the accuracy–automation curve**: accuracy of automatically coded cases as a function of the share of cases coded automatically, as the threshold varies. This is the curve the business uses to choose the operating point.
-
-::: {.callout-important}
-## Evaluating on the right data
-Metrics computed on a test split drawn from the training data are optimistic, since those labels share the biases of the training labels. They are also not representative of the production flow. The decision to deploy relies on a **golden set**: a random sample of the production flow, annotated by experts who do not see the model's prediction. See [Retraining protocol](retraining.qmd#sec-golden).
-:::
+Every training run logs accuracy at each level of the classification, calibration metrics and the accuracy–automation curve. What these metrics mean, which data they are computed on, and how a model is judged are covered in the [Evaluation](evaluation.qmd) chapter.
 
 ## Results {#sec-results}
 

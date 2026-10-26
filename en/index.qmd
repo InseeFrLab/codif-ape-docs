@@ -3,9 +3,11 @@ title: "Automatic coding of economic activity at INSEE"
 subtitle: "An MLOps pipeline for the APE code: architecture, methods and lessons learned"
 description: "Technical note on INSEE's MLOps pipeline for coding business activity descriptions into the NAF / NACE classification."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - SSP Lab, Insee
 lang: en
 number-sections: false
 toc: false
@@ -45,18 +47,20 @@ Since the end of 2022, this coding has been done by a machine learning model, ca
 |---|---|
 | 1. [Context and history](context.qmd) | The APE code, the one-stop-shop reform, from Sicore to fastText to PyTorch |
 | 2. [Architecture](architecture.qmd) | Platform, repositories, end-to-end flow |
-| 3. [Data](data.qmd) | Training data, auditable rule engine, the NAF 2025 revision with LLMs |
-| 4. [Model](model.qmd) | Architecture, training, confidence index, calibration, results |
-| 5. [Serving and deployment](serving.qmd) | MLflow packaging, API, CI/CD and GitOps |
-| 6. [Monitoring and annotation](monitoring.qmd) | Drift, dashboards, Label Studio, LLM audits |
-| 7. [Retraining protocol](retraining.qmd) | Golden set, data curation, business rules, quality gates |
-| 8. [Companion projects](companion-projects.qmd) | torchTextClassifiers and GRAAL |
-| 9. [Lessons learned](lessons.qmd) | What worked, what we would do again, open questions |
+| 3. [Data](data.qmd) | Training data, auditable rule engine, the NAF 2025 revision with LLMs, GRAAL agents |
+| 4. [Model](model.qmd) | Architecture, torchTextClassifiers, training, confidence index, calibration, results |
+| 5. [Evaluation](evaluation.qmd) | Metrics beyond accuracy, golden set, auxiliary engines, inference time |
+| 6. [Serving and deployment](serving.qmd) | MLflow packaging, API, CI/CD and GitOps |
+| 7. [Monitoring and annotation](monitoring.qmd) | Drift, dashboards, Label Studio, LLM audits |
+| 8. [Retraining protocol](retraining.qmd) | Golden set, data curation, business rules, quality gates |
+| 9. [Organisational and infrastructural challenges](organisation.qmd) | The business data scientist, the qualification platform |
+| 10. [Lessons learned](lessons.qmd) | What worked, what we would do again, open questions |
+| [Glossary and notation](glossary.qmd) | Symbols of the retraining protocol and the evaluation, terms |
 | [References](references.qmd) | Presentations, papers, code |
 
 : Structure of the note. {#tbl-structure}
 
-Readers interested mainly in **methodology** can go straight to the [Retraining protocol](retraining.qmd). Readers interested in **infrastructure** should start with [Architecture](architecture.qmd) and [Serving](serving.qmd).
+Readers interested mainly in **methodology** can go straight to [Evaluation](evaluation.qmd) and the [Retraining protocol](retraining.qmd). Readers interested in **infrastructure** should start with [Architecture](architecture.qmd) and [Serving](serving.qmd).
 
 ::: {.callout-note}
 ## About this note

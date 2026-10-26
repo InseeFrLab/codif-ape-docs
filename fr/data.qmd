@@ -2,10 +2,15 @@
 title: "Données"
 description: "Données d'entraînement, nettoyage des labels par un moteur de règles auditable, et passage à la NAF 2025."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - SSP Lab, Insee
 lang: fr
+# GRAAL used to be in the chapter on companion projects.
+aliases:
+  - companion-projects.html#sec-graal
 ---
 
 ## Données d'entraînement
@@ -50,6 +55,11 @@ Les règles sont des fonctions Python enregistrées à l'aide d'un décorateur. 
 
 Les correspondances approximative et sémantique étendent une règle aux libellés proches de ceux listés par les experts. Chaque règle définit les méthodes qu'elle autorise. Par exemple, une règle portant sur un sigle court est limitée à la correspondance exacte.
 
+Le moteur de règles a donc deux parties, qui ne se jugent pas de la même façon :
+
+- la **partie déterministe** (motifs exacts validés par les experts) encode les *cas connus*, notés $K_n$ dans le [protocole de réentraînement](retraining.qmd#sec-golden). Elle se vérifie comme un test unitaire : le modèle doit la reproduire ;
+- la **partie probabiliste** (extensions approximative et sémantique) fait une hypothèse sur des libellés qu'aucun expert n'a vus. C'est un moteur de codification automatique à part entière, dont la précision doit être [mesurée](evaluation.qmd#sec-eval-engines) avant que ses codes soient retenus.
+
 **Chaque modification est journalisée.** Pour chaque ligne modifiée, créée ou supprimée, un journal enregistre le code avant et après, la règle appliquée et le contexte de la déclaration. Ces journaux sont stockés à côté du jeu de données nettoyé. Tout label du jeu d'entraînement peut ainsi être retracé jusqu'à son origine.
 
 Les règles rendent **pérennes** les retours des experts. Une erreur corrigée uniquement par réentraînement peut réapparaître avec le modèle suivant. Une règle, elle, corrige définitivement tout le jeu d'entraînement, et la correction est auditable. La création, la vérification et la propagation des règles sont décrites dans le [protocole de réentraînement](retraining.qmd#sec-known-cases).
@@ -93,4 +103,68 @@ Au total, environ 2,3 millions des 2,7 millions d'observations ont été recon
 Les annotations d'experts sont coûteuses : mieux vaut les utiliser comme **référence**. Elles orientent le choix des prompts et des modèles et mesurent le résultat, tandis que les LLM apportent le volume. La confiance déclarée par un LLM lui-même s'est révélée un filtre peu fiable. L'accord entre plusieurs modèles est un meilleur signal.
 :::
 
-Le modèle réentraîné sur ces données est présenté dans le [chapitre suivant](model.qmd#sec-results).
+Le modèle réentraîné sur ces données est présenté dans le chapitre [Modèle](model.qmd#sec-results).
+
+## GRAAL {#sec-graal}
+
+[GRAAL](https://github.com/InseeFrLab/GRAAL) ([documentation](https://inseefrlab.github.io/GRAAL/)), *Graph-based Reasoning Agents for Automatic Labelling*, est un cadre d'agents LLM qui codent du texte libre dans une nomenclature hiérarchique. Comme [torchTextClassifiers](model.qmd#sec-ttc), il est né des besoins de la codification APE et est développé comme un outil généraliste et open source. Contrairement à elle, GRAAL se trouve **hors du chemin critique** : il travaille hors ligne, sur des données et non sur des requêtes en direct. Il a sa place dans ce chapitre parce que ce qu'il produit, ce sont des codes.
+
+```{mermaid}
+%%| label: fig-graal
+%%| fig-cap: "Place de GRAAL dans la chaîne."
+flowchart LR
+  subgraph OFF["Hors ligne (par lots)"]
+    GR["GRAAL<br/>agents LLM"]
+    PRE["Curation des données<br/>codif-ape-preprocess"]
+  end
+  subgraph CRIT["Chemin critique"]
+    TRN["Entraînement<br/>codif-ape-train"] --> MOD["Modèle<br/>(TTC)"] --> API["API<br/>codif-ape-api"]
+  end
+  GR -->|"recodification, audits,<br/>arbitrage, données synthétiques"| PRE
+  PRE --> TRN
+  API -->|"codes candidats,<br/>référence supervisée"| GR
+  API -->|"prédictions"| MON["Suivi"]
+  MON -->|"cas à auditer"| GR
+```
+
+### Principe
+
+L'ensemble de la nomenclature est stocké sous forme de **graphe** dans Neo4j :
+
+- les codes et leurs libellés ;
+- les **notes explicatives** : inclusions, exclusions, exemples ;
+- les relations parent–enfant, ainsi qu'un index vectoriel sur les notes.
+
+Les agents explorent ce graphe au moyen d'outils, comme un expert humain parcourt la nomenclature. Toutes les entrées et sorties sont des contrats Pydantic typés. Les agents fonctionnent avec tout point d'accès compatible avec l'API d'OpenAI, servi sur la plateforme avec des modèles à poids ouverts.
+
+Comme toute la connaissance de la nomenclature réside dans le graphe, le cadre est **indépendant de la nomenclature**. Des graphes existent pour la NAF 2025 (en français), la NACE Rev. 2.1 (en anglais) et la COICOP 2018.
+
+### Composants
+
+| Famille | Agent | Rôle |
+|---|---|---|
+| *Texte → code* | **Navigator** | Parcourt la hiérarchie de la racine jusqu'à une feuille, en lisant les notes à chaque étape |
+| | **Agentic RAG** | Part d'une recherche vectorielle, puis vérifie et corrige avec le Navigator |
+| | **Summary agent** | Un agent unique, avec l'ensemble de la nomenclature résumé dans son contexte |
+| *Arbitrage* | **CodeChooser** | Arbitre entre quelques codes candidats |
+| | **MatchVerifier** | Audite un couple (libellé, code) : est-il cohérent avec les notes ? Sinon, quel code convient mieux ? |
+| *Code → texte* | **Code2Text** | Génère des libellés synthétiques réalistes pour un code donné |
+
+: Agents de GRAAL. {#tbl-graal}
+
+GRAAL comprend aussi un module d'évaluation et des applications de revue dans lesquelles les experts métier jugent les verdicts des agents. Le module d'évaluation propose des métriques à chaque niveau, des échantillons stratifiés pondérés, des intervalles de confiance par bootstrap et des tests appariés.
+
+### Rôle dans la chaîne
+
+GRAAL **ne remplace pas** le modèle de production. Les agents mettent de quelques secondes à quelques minutes par libellé et nécessitent des GPU pour servir le LLM, alors que la production exige environ 200 ms sur CPU. Dans les premiers bancs d'essai, les agents n'étaient pas non plus meilleurs que le modèle supervisé sur l'ensemble du flux. L'intérêt de GRAAL est ailleurs, dans quatre tâches hors ligne :
+
+1. **Recoder un stock après un changement de nomenclature.** L'essentiel des données d'entraînement NAF 2025 a été produit par une chaîne dédiée, [codif-ape-nace-revision](https://github.com/InseeFrLab/codif-ape-nace-revision), dans laquelle des LLM codent avec les notes explicatives dans leur contexte ([voir plus haut](#sec-naf2025)). GRAAL généralise cette approche avec des agents qui naviguent dans la nomenclature, pour les révisions futures et pour d'autres nomenclatures.
+2. **Auditer et fiabiliser les codes.** Le MatchVerifier signale les codes douteux dans les données d'entraînement, ou parmi les cas codés automatiquement, et propose des alternatives. Dans le [protocole de réentraînement](retraining.qmd#sec-curation), GRAAL est l'un des moteurs indépendants dont les désaccords avec le modèle de production sont arbitrés.
+3. **Prioriser la revue humaine.** Les cas suspects sont soumis en priorité aux experts métier. Leurs avis sont recueillis dans une application de revue et deviennent de nouvelles annotations.
+4. **Générer des données synthétiques.** Code2Text produit des libellés pour les codes rares, ainsi que des variantes reformulées de cas connus, pour vérifier qu'une correction [se généralise](retraining.qmd#sec-gates).
+
+En retour, GRAAL s'appuie sur l'API de production. Il l'utilise comme référence supervisée et comme source de codes candidats pour les agents et les annotateurs.
+
+### Des codes qui doivent faire leurs preuves
+
+GRAAL et la partie probabiliste du [moteur de règles](#sec-rules) jouent le même rôle : ils proposent des codes qu'aucun humain n'a vérifiés. Avant que l'un ou l'autre n'alimente l'entraînement, il est évalué là où cela compte, **sur les cas où il est en désaccord avec le modèle de production**, par rapport au *golden set*. Le critère et ses précautions sont exposés dans le [protocole de réentraînement](retraining.qmd#sec-curation) et dans le chapitre [Évaluation](evaluation.qmd#sec-eval-engines).

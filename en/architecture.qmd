@@ -2,9 +2,11 @@
 title: "Architecture"
 description: "The platform, the repositories and how data and models flow between them."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - SSP Lab, Insee
 lang: en
 ---
 
@@ -37,7 +39,7 @@ All development, training and pre-production work runs on **SSP Cloud**, the dat
 | Serving | FastAPI on Kubernetes | REST API exposing the model |
 | Continuous delivery | GitHub Actions, Argo CD | Building Docker images; GitOps synchronisation of the cluster |
 | Annotation | Label Studio | Expert annotation campaigns |
-| LLM inference | vLLM (OpenAI-compatible API) | Offline relabelling ([NAF 2025](data.qmd#sec-naf2025)), auditing and synthetic data ([GRAAL](companion-projects.qmd#sec-graal)) |
+| LLM inference | vLLM (OpenAI-compatible API) | Offline relabelling ([NAF 2025](data.qmd#sec-naf2025)), auditing and synthetic data ([GRAAL](data.qmd#sec-graal)) |
 
 : Technical stack. {#tbl-stack}
 
@@ -108,12 +110,15 @@ flowchart LR
 Each block is described in its own chapter:
 
 - [Data](data.qmd): sources, label cleaning and the NAF 2025 revision.
-- [Model](model.qmd): architecture, training and evaluation.
+- [Data](data.qmd) also covers GRAAL, the LLM agents that audit and propose labels offline.
+- [Model](model.qmd): architecture, torchTextClassifiers and training.
+- [Evaluation](evaluation.qmd): which metrics, on which data.
 - [Serving and deployment](serving.qmd): packaging, the API and GitOps.
 - [Monitoring and annotation](monitoring.qmd): closing the loop.
 - [Retraining protocol](retraining.qmd): how the loop turns into a new model, safely.
+- [Organisational and infrastructural challenges](organisation.qmd): who does what, and the qualification platform.
 
-## Development workflow
+<!-- ## Development workflow
 
 The team works in an umbrella repository, [codif-ape](https://github.com/InseeFrLab/codif-ape), which gathers all the repositories above as Git submodules that track the `main` branch. It is a workspace, not a release unit: each repository keeps its own version tags and its own CI.
 
@@ -122,4 +127,4 @@ All repositories follow the same conventions:
 - `uv` for Python environments;
 - `pre-commit` with `ruff` for code quality;
 - Renovate for dependency updates;
-- GitHub Actions for building images and documentation.
+- GitHub Actions for building images and documentation. -->

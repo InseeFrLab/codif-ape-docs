@@ -3,9 +3,11 @@ title: "La codification automatique de l'activité économique à l'Insee"
 subtitle: "Une chaîne MLOps pour le code APE : architecture, méthodes et retours d'expérience"
 description: "Note technique sur la chaîne MLOps de l'Insee qui code les libellés d'activité des entreprises dans la nomenclature NAF / NACE."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - SSP Lab, Insee
 lang: fr
 number-sections: false
 toc: false
@@ -45,18 +47,20 @@ Depuis fin 2022, cette codification est assurée par un modèle d'apprentissage 
 |---|---|
 | 1. [Contexte et historique](context.qmd) | Le code APE, la réforme du guichet unique, de Sicore à fastText puis à PyTorch |
 | 2. [Architecture](architecture.qmd) | Plateforme, dépôts, flux de bout en bout |
-| 3. [Données](data.qmd) | Données d'entraînement, moteur de règles auditable, passage à la NAF 2025 avec des LLM |
-| 4. [Modèle](model.qmd) | Architecture, entraînement, indice de confiance, calibration, résultats |
-| 5. [Mise à disposition et déploiement](serving.qmd) | Empaquetage MLflow, API, CI/CD et GitOps |
-| 6. [Suivi et annotation](monitoring.qmd) | Dérive, tableaux de bord, Label Studio, audits par LLM |
-| 7. [Protocole de réentraînement](retraining.qmd) | *Golden set*, curation des données, règles métier, critères de validation |
-| 8. [Projets associés](companion-projects.qmd) | torchTextClassifiers et GRAAL |
-| 9. [Enseignements](lessons.qmd) | Ce qui a fonctionné, ce que nous referions, questions ouvertes |
+| 3. [Données](data.qmd) | Données d'entraînement, moteur de règles auditable, passage à la NAF 2025 avec des LLM, agents GRAAL |
+| 4. [Modèle](model.qmd) | Architecture, torchTextClassifiers, entraînement, indice de confiance, calibration, résultats |
+| 5. [Évaluation](evaluation.qmd) | Métriques au-delà de l'exactitude, *golden set*, moteurs auxiliaires, temps d'inférence |
+| 6. [Mise à disposition et déploiement](serving.qmd) | Empaquetage MLflow, API, CI/CD et GitOps |
+| 7. [Suivi et annotation](monitoring.qmd) | Dérive, tableaux de bord, Label Studio, audits par LLM |
+| 8. [Protocole de réentraînement](retraining.qmd) | *Golden set*, curation des données, règles métier, critères de validation |
+| 9. [Défis organisationnels et d'infrastructure](organisation.qmd) | Le data scientist métier, la plateforme de qualification |
+| 10. [Enseignements](lessons.qmd) | Ce qui a fonctionné, ce que nous referions, questions ouvertes |
+| [Glossaire et notations](glossary.qmd) | Symboles du protocole de réentraînement et de l'évaluation, termes |
 | [Références](references.qmd) | Présentations, articles, code |
 
 : Structure de la note. {#tbl-structure}
 
-Les lecteurs intéressés avant tout par la **méthodologie** peuvent aller directement au [Protocole de réentraînement](retraining.qmd). Ceux qui s'intéressent à l'**infrastructure** commenceront par l'[Architecture](architecture.qmd) et la [Mise à disposition](serving.qmd).
+Les lecteurs intéressés avant tout par la **méthodologie** peuvent aller directement à l'[Évaluation](evaluation.qmd) et au [Protocole de réentraînement](retraining.qmd). Ceux qui s'intéressent à l'**infrastructure** commenceront par l'[Architecture](architecture.qmd) et la [Mise à disposition](serving.qmd).
 
 ::: {.callout-note}
 ## À propos de cette note

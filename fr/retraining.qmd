@@ -2,15 +2,44 @@
 title: "Protocole de réentraînement"
 description: "Comment le flux de production de chaque trimestre devient un meilleur modèle, sans se leurrer : golden set, curation des données, règles métier, portes de qualité et qualification."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - SSP Lab, Insee
 lang: fr
 ---
 
-Réentraîner un modèle est facile. Le réentraîner de sorte qu'il soit, **de façon démontrable, au moins aussi bon** que celui en production, avec des annotations produites en partie par ce même modèle, est difficile. Ce chapitre décrit le protocole que nous utilisons à cette fin. C'est le cœur méthodologique de la chaîne.
+Réentraîner un modèle est facile. Le réentraîner de sorte qu'il soit, **de façon démontrable, au moins aussi bon** que celui en production, avec des annotations produites en partie par ce même modèle, est difficile. Ce chapitre décrit le protocole que nous mettons en place à cette fin. C'est le cœur méthodologique de la chaîne.
 
-Le protocole suit un cycle trimestriel. Pendant le trimestre $n$, le modèle $f_n$ est en production avec un seuil $\tau_n$, et le cycle produit $f_{n+1}$ et $\tau_{n+1}$.
+Le protocole suit un cycle trimestriel. Pendant le trimestre $n$, le modèle $f_n$ est en production avec un seuil $\tau_n$, et le cycle produit $f_{n+1}$ et $\tau_{n+1}$. Toutes les notations sont rassemblées dans le [glossaire](glossary.qmd#sec-notation).
+
+::: {.callout-note}
+## Une cible, en partie en place
+Ce chapitre décrit le protocole que nous mettons en place, et pas seulement ce qui fonctionne aujourd'hui. Le [tableau d'état](#sec-status) ci-dessous indique, pour chaque partie, ce qui est en place, ce qui l'est en partie et ce qui reste une cible.
+:::
+
+## Où en sommes-nous ? {#sec-status}
+
+| Composant | État | Aujourd'hui |
+|:---|:---|:---|
+| Moteur de règles avec journaux d'audit, appliqué avant chaque entraînement | [En place]{.status .status-done} | Tourne dans le workflow de prétraitement ([Données](data.qmd#sec-rules)) |
+| Entraînement reproductible, jeux de données enregistrés avec chaque exécution | [En place]{.status .status-done} | Fichiers de configuration, environnements verrouillés, jeux de données enregistrés dans MLflow ([Modèle](model.qmd)) |
+| Métriques enregistrées à chaque exécution | [En partie]{.status .status-partial} | Exactitude à chaque niveau, ECE, score de Brier, histogramme des confiances et courbe exactitude–automatisation. Diagramme de fiabilité, AURC, macro-F1 et métriques par trimestre sont une cible ([Évaluation](evaluation.qmd)) |
+| Pondération des observations | [En partie]{.status .status-partial} | Sert à pondérer les lignes créées par les règles métier. Les poids par source et par ancienneté sont une cible |
+| *Golden set* | [En partie]{.status .status-partial} | Des campagnes d'annotation par les experts ont eu lieu (NAF rév. 2, NAF 2025), mais pas encore un échantillon aléatoire continu du flux, ni le découpage fixe en $\bar{G}^{\text{val}}$ et $\bar{G}^{\text{test}}$ |
+| Curation des codifications automatiques par désaccord avec des moteurs indépendants | [En partie]{.status .status-partial} | Prototypée avec [GRAAL](data.qmd#sec-graal) sur des échantillons de test ; pas encore appliquée au flux codé automatiquement |
+| Suivi sans annotation | [En partie]{.status .status-partial} | Un tableau de bord existe ; la collecte des journaux de production et les tests de dérive sont une cible ([Suivi](monitoring.qmd)) |
+| Cycle trimestriel | [Cible]{.status .status-target} | Les modèles sont réentraînés à la demande |
+| Contrôles des cas connus avant entraînement, extraction de règles à partir des reprises manuelles | [Cible]{.status .status-target} | Les règles sont écrites à la main à partir des retours des experts |
+| Portes de qualité bloquant une mise en production (cas connus, non-infériorité, couverture à $p^*$) | [Cible]{.status .status-target} | Tests appariés et intervalles par bootstrap existent dans le module d'évaluation de GRAAL, pas encore pour le modèle de production |
+| Seuil et calibration dans l'artefact du modèle, champion et challenger dans le registre | [Cible]{.status .status-target} | Les modèles sont désignés par leur numéro de version dans les manifestes de déploiement |
+| Qualification automatisée (latence, parité), déploiement fantôme | [Cible]{.status .status-target} | Voir [Défis organisationnels et d'infrastructure](organisation.qmd#sec-qualification-platform) |
+| Têtes multiniveaux, attention par classe | [Cible]{.status .status-target} | Disponibles dans [torchTextClassifiers](model.qmd#sec-ttc), non utilisées par le modèle de production |
+
+: État du protocole. {#tbl-status}
+
+<!-- État établi à partir du code des dépôts (octobre 2026). La qualification se fait avec les équipes de production, hors de ces dépôts : à confirmer par les auteurs du chapitre organisationnel. -->
 
 ## Ce que fournit le flux de production {#sec-golden}
 
@@ -54,18 +83,18 @@ Le golden set est scindé **une fois pour toutes** en deux moitiés, à l'aide d
 - $\bar{G}^{\text{val}}$ sert à tous les **choix** : seuil, calibration, architecture et hyperparamètres, sélection des moteurs auxiliaires et des règles candidates ;
 - $\bar{G}^{\text{test}}$ ne sert qu'au **verdict final**.
 
-## Construire le prochain jeu d'entraînement
+## Construire le prochain jeu d'entraînement {#sec-next-training-set}
 
 ### L'exactitude de la codification automatique peut être estimée
 
 On ne sait pas quels codes automatiques sont faux, mais on peut estimer **combien** le sont. Le golden set étant un échantillon aléatoire du flux, sa partie au-dessus du seuil, $G_n^A = \{x \in G_n : \text{IC}_n(x) \ge \tau_n\}$, est un échantillon aléatoire de $A_n$. L'exactitude de $f_n$ sur $G_n^A$, assortie d'un intervalle de confiance (Wilson ou bootstrap), estime l'exactitude de la codification automatique. Le cumul sur plusieurs trimestres fournit assez de données pour cette estimation.
 
-### Curation des codifications automatiques : se concentrer sur les désaccords
+### Curation des codifications automatiques : se concentrer sur les désaccords {#sec-curation}
 
 Réinjecter $A_n$ dans l'entraînement avec les codes de $f_n$, c'est faire du *self-training* : le modèle n'apprend rien de nouveau, et ses erreurs à forte confiance sont renforcées. Pour briser cette boucle, on compare $f_n$ à des **moteurs indépendants** $E$. Aucun n'est un oracle :
 
 - le **moteur de règles** de [codif-ape-preprocess](data.qmd#sec-rules) applique des règles déterministes, qui s'abstiennent souvent, complétées par une extension prudente aux libellés similaires ;
-- les **agents LLM** de [GRAAL](companion-projects.qmd#sec-graal) parcourent la nomenclature et lisent les notes explicatives. Ils sont lents, mais la latence importe peu dans un traitement par lots hors ligne.
+- les **agents LLM** de [GRAAL](data.qmd#sec-graal) parcourent la nomenclature et lisent les notes explicatives. Ils sont lents, mais la latence importe peu dans un traitement par lots hors ligne.
 
 L'exactitude globale d'un moteur sur le golden set n'est pas la bonne question. Ce qui compte, c'est de savoir **qui a raison quand $E$ et $f_n$ sont en désaccord** sur les codifications automatiques :
 
@@ -136,7 +165,7 @@ Deux règles s'ajoutent :
 
 Un échantillon de validation aléatoire, tiré du jeu d'entraînement, sert uniquement à l'arrêt précoce.
 
-## Portes de qualité (*gates*) : $f_{n+1}$ face à $f_n$
+## Portes de qualité (*gates*) : $f_{n+1}$ face à $f_n$ {#sec-gates}
 
 | Porte | Données | Objectif | Critère |
 |---|---|---|---|
@@ -179,7 +208,7 @@ Le registre identifie le *champion* et le *challenger*.
 
 Même à architecture inchangée, la qualification n'est pas une formalité :
 
-- **Qualification iso-production** : latence au 95e centile (p95) et mémoire, sur CPU, sur la plateforme de préproduction.
+- **Qualification iso-production** : latence au 95e centile (p95) et mémoire, sur CPU, sur la [plateforme de qualification](organisation.qmd#sec-qualification-platform).
 - **Parité en ligne/hors ligne** : le modèle servi doit reproduire exactement les prédictions hors ligne sur $\bar{G}^{\text{test}}$. Ce test peu coûteux détecte les écarts de prétraitement ou de versions de bibliothèques.
 - **Le seuil et la calibration sont livrés dans l'artefact du modèle**, et non dans une configuration séparée.
 - **Déploiement en mode *shadow*** pendant quelques semaines : $f_{n+1}$ traite le flux réel en parallèle de $f_n$. On suit le taux effectif de codification automatique, l'accord avec $f_n$ et la distribution des scores. Les désaccords alimentent l'annotation.
