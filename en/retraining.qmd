@@ -1,6 +1,10 @@
 ---
 title: "Retraining protocol"
 description: "How each quarter's production flow becomes a better model, without fooling ourselves: golden set, data curation, business rules, quality gates and qualification."
+author:
+  - name: SSP Lab
+    affiliations:
+      - Insee
 lang: en
 ---
 

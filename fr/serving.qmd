@@ -1,6 +1,10 @@
 ---
 title: "Mise à disposition du modèle et déploiement"
 description: "Un modèle autonome, une API légère et un déploiement en GitOps."
+author:
+  - name: SSP Lab
+    affiliations:
+      - Insee
 lang: fr
 ---
 

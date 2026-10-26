@@ -2,6 +2,10 @@
 title: "Automatic coding of economic activity at INSEE"
 subtitle: "An MLOps pipeline for the APE code: architecture, methods and lessons learned"
 description: "Technical note on INSEE's MLOps pipeline for coding business activity descriptions into the NAF / NACE classification."
+author:
+  - name: SSP Lab
+    affiliations:
+      - Insee
 lang: en
 number-sections: false
 toc: false

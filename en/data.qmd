@@ -1,6 +1,10 @@
 ---
 title: "Data"
 description: "Training data, label cleaning with an auditable rule engine, and the move to NAF 2025."
+author:
+  - name: SSP Lab
+    affiliations:
+      - Insee
 lang: en
 ---
 

@@ -1,6 +1,10 @@
 ---
 title: "Architecture"
 description: "La plateforme, les dépôts, et la circulation des données et des modèles entre eux."
+author:
+  - name: SSP Lab
+    affiliations:
+      - Insee
 lang: fr
 ---
 

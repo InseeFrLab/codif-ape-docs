@@ -1,6 +1,10 @@
 ---
 title: "Protocole de réentraînement"
 description: "Comment le flux de production de chaque trimestre devient un meilleur modèle, sans se leurrer : golden set, curation des données, règles métier, portes de qualité et qualification."
+author:
+  - name: SSP Lab
+    affiliations:
+      - Insee
 lang: fr
 ---
 

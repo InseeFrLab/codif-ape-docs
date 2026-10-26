@@ -1,14 +1,42 @@
 /*-- scss:defaults --*/
-$primary: #b83352;
-$font-size-root: 17px;
+// Litera, as is: white navbar, serif body text, sans-serif headings.
 
 /*-- scss:rules --*/
 
-.navbar-title {
+// EN | FR switch, injected in the navbar by lang-switch.html.
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0.5rem;
+  padding: 2px;
+  border: 1px solid $gray-300;
+  border-radius: 999px;
+  font-family: $font-family-sans-serif;
+  font-size: 0.72rem;
   font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1;
+
+  a {
+    padding: 0.3rem 0.55rem;
+    border-radius: 999px;
+    color: $gray-600;
+    text-decoration: none;
+    transition: background-color 0.15s, color 0.15s;
+
+    &:hover {
+      color: $primary;
+    }
+
+    &.active {
+      background-color: $primary;
+      color: $white;
+      pointer-events: none;
+    }
+  }
 }
 
-// Key figures on landing pages.
+// Key figures on the landing pages.
 .key-figures {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
@@ -16,50 +44,39 @@ $font-size-root: 17px;
   margin: 1.5rem 0;
 
   .figure-box {
-    border-left: 4px solid $primary;
-    padding: 0.5rem 0.9rem;
-    background: rgba($primary, 0.05);
+    border-left: 3px solid $primary;
+    padding: 0.4rem 0.9rem;
 
     .value {
+      display: block;
+      font-family: $font-family-sans-serif;
       font-size: 1.6rem;
       font-weight: 700;
       line-height: 1.2;
     }
 
     .label {
+      display: block;
+      font-family: $font-family-sans-serif;
       font-size: 0.85rem;
-      opacity: 0.8;
+      color: $gray-600;
     }
   }
 }
 
-// Language chooser on the root page.
-.lang-choice {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-  gap: 1.5rem;
-  margin-top: 2rem;
+// Lighter sidebar, closer to the single-page look.
+.sidebar nav[role="doc-toc"] ul > li > a,
+#quarto-sidebar .sidebar-item a {
+  font-family: $font-family-sans-serif;
+}
 
-  a {
-    display: block;
-    padding: 1.5rem;
-    border: 1px solid rgba($primary, 0.3);
-    border-radius: 0.5rem;
-    text-decoration: none;
-    color: inherit;
-    transition: border-color 0.2s;
-
-    &:hover {
-      border-color: $primary;
-    }
-
-    strong {
-      display: block;
-      font-size: 1.25rem;
-      color: $primary;
-      margin-bottom: 0.4rem;
-    }
-  }
+#quarto-sidebar .sidebar-title {
+  font-family: $font-family-sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: $gray-600;
 }
 
 table {

@@ -1,6 +1,10 @@
 ---
 title: "Model"
 description: "A small, calibrated PyTorch text classifier with categorical variables, trained reproducibly and evaluated at every level of the classification."
+author:
+  - name: SSP Lab
+    affiliations:
+      - Insee
 lang: en
 ---
 

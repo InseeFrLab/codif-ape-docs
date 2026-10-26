@@ -1,6 +1,10 @@
 ---
 title: "Modèle"
 description: "Un petit classifieur de textes PyTorch, calibré, intégrant des variables catégorielles, entraîné de façon reproductible et évalué à chaque niveau de la nomenclature."
+author:
+  - name: SSP Lab
+    affiliations:
+      - Insee
 lang: fr
 ---
 

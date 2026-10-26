@@ -1,6 +1,10 @@
 ---
 title: "References and resources"
 description: "Presentations, papers, code and related work."
+author:
+  - name: SSP Lab
+    affiliations:
+      - Insee
 lang: en
 number-sections: false
 ---

@@ -1,6 +1,10 @@
 ---
 title: "Données"
 description: "Données d'entraînement, nettoyage des labels par un moteur de règles auditable, et passage à la NAF 2025."
+author:
+  - name: SSP Lab
+    affiliations:
+      - Insee
 lang: fr
 ---
 

@@ -1,6 +1,10 @@
 ---
 title: "Références et ressources"
 description: "Présentations, articles, code et travaux connexes."
+author:
+  - name: SSP Lab
+    affiliations:
+      - Insee
 lang: fr
 number-sections: false
 ---

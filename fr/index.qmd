@@ -2,6 +2,10 @@
 title: "La codification automatique de l'activité économique à l'Insee"
 subtitle: "Une chaîne MLOps pour le code APE : architecture, méthodes et retours d'expérience"
 description: "Note technique sur la chaîne MLOps de l'Insee qui code les libellés d'activité des entreprises dans la nomenclature NAF / NACE."
+author:
+  - name: SSP Lab
+    affiliations:
+      - Insee
 lang: fr
 number-sections: false
 toc: false

@@ -1,6 +1,10 @@
 ---
 title: "Lessons learned"
 description: "What four years of machine learning in production for APE coding taught us, and the questions that remain open."
+author:
+  - name: SSP Lab
+    affiliations:
+      - Insee
 lang: en
 ---
 

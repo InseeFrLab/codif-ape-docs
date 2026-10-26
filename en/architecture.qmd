@@ -1,6 +1,10 @@
 ---
 title: "Architecture"
 description: "The platform, the repositories and how data and models flow between them."
+author:
+  - name: SSP Lab
+    affiliations:
+      - Insee
 lang: en
 ---
 

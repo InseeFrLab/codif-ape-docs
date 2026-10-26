@@ -1,6 +1,10 @@
 ---
 title: "Context and history"
 description: "Why INSEE codes economic activity automatically, and how the system evolved from a rule engine to deep learning."
+author:
+  - name: SSP Lab
+    affiliations:
+      - Insee
 lang: en
 ---
 

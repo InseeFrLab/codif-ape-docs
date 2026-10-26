@@ -17,15 +17,10 @@ website:
   back-to-top-navigation: true
   bread-crumbs: false
 
+  # The EN | FR switch is added to the navbar by style/lang-switch.html.
   navbar:
-    logo: https://upload.wikimedia.org/wikipedia/fr/thumb/1/10/Logo_Insee.svg/1200px-Logo_Insee.svg.png
     title: "APE coding · MLOps"
     collapse-below: lg
-    left:
-      - text: "English"
-        href: en/index.qmd
-      - text: "Français"
-        href: fr/index.qmd
     right:
       - text: "Slides"
         href: https://inseefrlab.github.io/codif-ape-prez/
@@ -73,9 +68,8 @@ bibliography: references.bib
 
 format:
   html:
-    theme:
-      light: [cosmo, style/styles.scss]
-      dark: [darkly, style/styles.scss]
+    theme: [litera, style/styles.scss]
+    include-after-body: style/lang-switch.html
     toc: true
     toc-depth: 3
     number-sections: true

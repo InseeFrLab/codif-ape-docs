@@ -1,6 +1,10 @@
 ---
 title: "Contexte et historique"
 description: "Pourquoi l'Insee code automatiquement l'activité économique, et comment le système est passé d'un moteur de règles à l'apprentissage profond."
+author:
+  - name: SSP Lab
+    affiliations:
+      - Insee
 lang: fr
 ---
 

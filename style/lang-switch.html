@@ -1,0 +1,54 @@
+<!--
+  EN | FR switch in the navbar. en/ and fr/ use the same file names and the
+  same anchors, so the switch links to the same page and section in the other
+  language. The choice is remembered for the root page redirect (index.qmd).
+-->
+<script>
+(function () {
+  var KEY = "codif-ape-lang";
+  var LANGS = ["en", "fr"];
+  var TITLES = {
+    en: { label: "EN", hint: "Read this page in English", brand: "APE coding · MLOps" },
+    fr: { label: "FR", hint: "Lire cette page en français", brand: "Codification APE · MLOps" }
+  };
+
+  var m = window.location.pathname.match(/^(.*\/)(en|fr)(\/.*)?$/);
+  if (!m) return;
+  var base = m[1], current = m[2], rest = m[3] || "/";
+
+  try { localStorage.setItem(KEY, current); } catch (e) {}
+
+  var brand = document.querySelector(".navbar-brand");
+  if (brand) brand.setAttribute("href", base + current + "/index.html");
+  var brandTitle = document.querySelector(".navbar-title");
+  if (brandTitle) brandTitle.textContent = TITLES[current].brand;
+
+  var group = document.createElement("div");
+  group.className = "lang-switch";
+  group.setAttribute("role", "group");
+  group.setAttribute("aria-label", current === "fr" ? "Langue" : "Language");
+
+  LANGS.forEach(function (lang) {
+    var a = document.createElement("a");
+    a.textContent = TITLES[lang].label;
+    a.setAttribute("lang", lang);
+    a.setAttribute("hreflang", lang);
+    a.setAttribute("title", TITLES[lang].hint);
+    if (lang === current) {
+      a.className = "active";
+      a.setAttribute("aria-current", "true");
+    }
+    a.href = base + lang + rest + window.location.hash;
+    a.addEventListener("click", function () {
+      try { localStorage.setItem(KEY, lang); } catch (e) {}
+      // Keep the section the reader is on, even after scrolling.
+      a.href = base + lang + rest + window.location.hash;
+    });
+    group.appendChild(a);
+  });
+
+  var slot = document.querySelector(".quarto-navbar-tools") ||
+             document.querySelector(".navbar-container");
+  if (slot) slot.insertBefore(group, slot.firstChild);
+})();
+</script>

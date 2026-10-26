@@ -1,6 +1,10 @@
 ---
 title: "Enseignements"
 description: "Ce que quatre années d'apprentissage automatique en production pour la codification APE nous ont appris, et les questions qui restent ouvertes."
+author:
+  - name: SSP Lab
+    affiliations:
+      - Insee
 lang: fr
 ---
 

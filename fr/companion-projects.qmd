@@ -1,6 +1,10 @@
 ---
 title: "Projets associés : TTC et GRAAL"
 description: "Deux projets open source nés de la codification APE : une bibliothèque PyTorch de classification de textes et un cadre d'agents LLM pour les nomenclatures."
+author:
+  - name: SSP Lab
+    affiliations:
+      - Insee
 lang: fr
 ---
 

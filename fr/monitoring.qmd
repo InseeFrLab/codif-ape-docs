@@ -1,6 +1,10 @@
 ---
 title: "Suivi et annotation"
 description: "Surveiller le modèle en production et recueillir les annotations humaines qui mesurent, et améliorent, sa qualité."
+author:
+  - name: SSP Lab
+    affiliations:
+      - Insee
 lang: fr
 ---
 

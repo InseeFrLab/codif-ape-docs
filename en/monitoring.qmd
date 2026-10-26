@@ -1,6 +1,10 @@
 ---
 title: "Monitoring and annotation"
 description: "Watching the model in production and collecting the human labels that measure, and improve, its quality."
+author:
+  - name: SSP Lab
+    affiliations:
+      - Insee
 lang: en
 ---
 

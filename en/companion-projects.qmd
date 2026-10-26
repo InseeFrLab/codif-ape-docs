@@ -1,6 +1,10 @@
 ---
 title: "Companion projects: TTC and GRAAL"
 description: "Two open-source projects born from APE coding: a PyTorch text-classification library and a framework of LLM agents for classifications."
+author:
+  - name: SSP Lab
+    affiliations:
+      - Insee
 lang: en
 ---
 

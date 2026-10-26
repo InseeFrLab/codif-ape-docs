@@ -1,6 +1,10 @@
 ---
 title: "Serving and deployment"
 description: "A self-contained model, a thin API, and GitOps deployments."
+author:
+  - name: SSP Lab
+    affiliations:
+      - Insee
 lang: en
 ---
 
