@@ -1,6 +1,9 @@
 /*-- scss:defaults --*/
 // Litera, as is: white navbar, serif body text, sans-serif headings.
 
+// Wider text column (Quarto default: 800px).
+$grid-body-width: 1000px;
+
 /*-- scss:rules --*/
 
 // EN | FR switch, injected in the navbar by lang-switch.html.
@@ -77,6 +80,18 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: $gray-600;
+}
+
+// Chapter numbers in the left sidebar. The landing page (first item) and the
+// references (last item) are not numbered.
+#quarto-sidebar .sidebar-menu-container > ul {
+  counter-reset: chapter;
+
+  > li:not(:first-child):not(:last-child) .menu-text::before {
+    counter-increment: chapter;
+    content: counter(chapter) ". ";
+    color: $gray-600;
+  }
 }
 
 table {

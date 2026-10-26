@@ -1,0 +1,5 @@
+# Quarto's French strings use inclusive writing ("Auteur·rice"); override them.
+language:
+  title-block-author-single: "Auteur"
+  title-block-author-plural: "Auteurs"
+  listing-page-field-author: "Auteur"
