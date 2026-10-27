@@ -159,14 +159,24 @@ Le modèle de production est volontairement simple. Deux pistes cherchent à all
 
 ### Architecture : le stage de Julien Bernardi {#sec-internship}
 
-<!-- TODO : école, année, lien vers le rapport ou les slides, principaux chiffres. -->
+Le stage de Julien Bernardi (SSP Lab, 2026) a benchmarké des architectures légères construites avec torchTextClassifiers. Le rapport est en ligne sur [julber95.github.io/interpretable-text-classification](https://julber95.github.io/interpretable-text-classification/) (en anglais). Il s'agit d'un travail exploratoire.
 
-Le stage de Julien Bernardi au SSP Lab avait deux objectifs.
+**Valider torchTextClassifiers.** Avant la NAF, les architectures ont été entraînées sur deux benchmarks publics dont les résultats de référence sont connus : des avis Amazon (5 classes) et CLINC150 (150 intentions). Sur les avis Amazon, les modèles les plus profonds atteignent environ 62–63 % d'accuracy, proche des 63,3 % de BERT multilingue, contre environ 59 % pour le modèle de type fastText. Ces résultats ont validé l'implémentation de la librairie.
 
-1. **Valider torchTextClassifiers.** La librairie a vocation à devenir un outil commun au-delà de l'APE : son implémentation doit donc être vérifiée pour elle-même, pas seulement à travers les résultats sur l'APE. Le stage a benchmarké TTC dans ce but, et ce benchmark a validé l'implémentation.
-2. **Proposer des innovations d'architecture.** Le stage a ensuite proposé des évolutions de l'architecture des modèles de la librairie.
+**Innovations d'architecture.** Le stage a comparé trois extensions du modèle de production de type fastText :
 
-Comme pour les options déjà présentes dans la librairie ([plus haut](#architecture)), une innovation n'est retenue que si elle tient dans le budget de latence sur CPU et passe les [critères de validation](retraining.qmd#sec-gates) du protocole de réentraînement.
+- **FATE** (*FastText Attentive Transformer Encoder*) : des couches de self-attention sur les embeddings des tokens, avant le pooling. La loss baisse sur les avis Amazon, mais rien ne change sur CLINC150 ;
+- la **label attention** : une requête apprise par classe remplace la moyenne, pour que le modèle regarde les mots qui comptent pour chaque code candidat ;
+- la **classification multiniveau** : une tête par niveau de la nomenclature, entraînées ensemble.
+
+Sur la NAF 2025, les principaux résultats sont les suivants :
+
+- **La label attention a besoin de données.** Avec 160 000 libellés d'entraînement, elle est nettement derrière le modèle de type fastText. Sur tout le jeu d'entraînement (1,2 million de libellés), elle le rattrape, voire le dépasse légèrement, mais son entraînement est 3 à 6 fois plus long.
+- **Ses poids d'attention expliquent bien la prédiction.** Supprimer les mots sur lesquels elle se concentre fait baisser la probabilité prédite plus vite que supprimer ceux choisis par les integrated gradients.
+- **Les têtes multiniveaux aident quand la sous-classe est fausse.** Aux niveaux agrégés, elles font mieux qu'une simple troncature de la sous-classe prédite. Parmi les sous-classes mal prédites, la part fausse à tous les niveaux passe d'environ 47 % à 29–34 %. Au niveau sous-classe, les deux approches font jeu égal.
+- **Pour les codes rares, les données comptent plus que l'architecture.** L'accuracy d'une sous-classe dépend surtout de son nombre d'exemples d'entraînement.
+
+Comme pour les options déjà présentes dans la librairie ([plus haut](#architecture)), une innovation n'est retenue que si elle tient dans le budget de latence sur CPU, que le stage n'a pas mesuré, et passe les [critères de validation](retraining.qmd#sec-gates) du protocole de réentraînement. Les têtes multiniveaux suggèrent un usage encore non testé : quand la sous-classe est incertaine, proposer au gestionnaire une division ou une classe fiable.
 
 ### Prédiction conforme {#sec-conformal}
 

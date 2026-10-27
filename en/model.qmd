@@ -159,14 +159,24 @@ The production model is deliberately simple. Two lines of work look at how to go
 
 ### Architecture: Julien Bernardi's internship {#sec-internship}
 
-<!-- TODO: school, year, link to the report or slides, main figures. -->
+Julien Bernardi's internship (Innovation Lab, 2026) benchmarked lightweight architectures built with torchTextClassifiers. The report is online at [julber95.github.io/interpretable-text-classification](https://julber95.github.io/interpretable-text-classification/). This is exploratory work.
 
-Julien Bernardi's internship at the Innovation Lab served two purposes.
+**Validating torchTextClassifiers.** Before NAF, the architectures were trained on two public benchmarks with known reference results: Amazon reviews (5 classes) and CLINC150 (150 intents). On Amazon reviews, the deeper models reach about 62–63 % accuracy, close to the 63.3 % of multilingual BERT, against about 59 % for the fastText-style model. These results validated the library's implementation.
 
-1. **Validating torchTextClassifiers.** The library is meant to become a common tool beyond APE, so its implementation must be checked on its own, not only through the APE results. The internship benchmarked TTC for this purpose, and the benchmark validated the implementation.
-2. **Proposing architecture innovations.** The internship then proposed changes to the architecture of the library's models.
+**Architecture innovations.** The internship compared three extensions of the production fastText-style model:
 
-As for the options already in the library ([above](#architecture)), an innovation is adopted only if it fits within the CPU latency budget and passes the [quality gates](retraining.qmd#sec-gates) of the retraining protocol.
+- **FATE** (*FastText Attentive Transformer Encoder*): self-attention layers on top of the token embeddings, before pooling. It lowers the loss on Amazon reviews, but brings nothing on CLINC150;
+- **label attention**: one learned query per class replaces mean pooling, so the model looks at the words that matter for each candidate code;
+- **multi-level classification**: one head per level of the classification, trained jointly.
+
+On NAF 2025, the main findings are:
+
+- **Label attention needs data.** With 160,000 training descriptions it is clearly behind the fastText-style model. On the full training set (1.2 million descriptions) it catches up, or slightly overtakes it, but takes 3 to 6 times longer to train.
+- **Its attention weights explain the prediction well.** Deleting the words it attends to lowers the predicted probability faster than deleting the words chosen by integrated gradients.
+- **Multi-level heads help when the sub-class is wrong.** At coarse levels, they beat simply truncating the predicted sub-class. Among wrong sub-class predictions, the share that is wrong at every level falls from about 47 % to 29–34 %. At the sub-class level, both approaches tie.
+- **Data matters more than architecture for rare codes.** The accuracy of a sub-class depends mainly on how many training examples it has.
+
+As for the options already in the library ([above](#architecture)), an innovation is adopted only if it fits within the CPU latency budget, which the internship did not measure, and passes the [quality gates](retraining.qmd#sec-gates) of the retraining protocol. Multi-level heads suggest an untested use: when the sub-class is uncertain, show the manual coder a reliable division or class.
 
 ### Conformal prediction {#sec-conformal}
 
