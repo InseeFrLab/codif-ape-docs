@@ -1,0 +1,132 @@
+---
+title: "Organisational and infrastructural challenges"
+description: "Who does what around a model in production: the business data scientist as point of contact, and a qualification platform that matches production."
+author:
+  - name: Nathan Randriamanana
+    affiliations:
+      - Insee
+  - name: Hugo Simon
+    affiliations:
+      - Insee
+lang: en
+---
+
+::: {.callout-warning}
+## Draft
+This chapter is a draft, to be completed and validated by its authors.
+:::
+
+<!--
+Notes for the authors (not rendered):
+- Nathan: check the exact list of responsibilities in the table, the team this role belongs to, and the share of time it takes.
+- Hugo: describe the qualification platform as it really is (what is identical to production, what is not yet), the tools used for load tests, and the go/no-go criteria.
+- The note is public: no internal URLs, no host names, no internal roadmap.
+-->
+
+Most of the difficulties of keeping a model in production are not technical. Practitioner surveys and case studies of machine learning deployments agree that the hardest problems lie at the **boundaries between teams**: agreeing on requirements, negotiating data quality, and integrating the model into an existing system [@amershi2019se4ml; @nahar2022collaboration; @paleyes2022challenges]. APE coding is no exception. This chapter describes two answers that proved decisive: a **business data scientist** who is the point of contact for the model, and a **qualification platform** that matches production.
+
+## Three teams around one model
+
+Three teams share responsibility for the model, each with its own constraints:
+
+| Team | Owns | Main concern |
+|---|---|---|
+| Business team (Sirene register) | The classification, the coding rules, the manual coding teams | Quality of the APE code and workload of the coders |
+| IT production teams | The register's information system and the production infrastructure | Availability, security, change control |
+| Data science team (Innovation Lab) | The training pipeline, the libraries, the development platform | Methods, tools, model quality |
+
+: Teams involved in APE coding. {#tbl-teams}
+
+Without someone who belongs to the business side **and** understands the model, each question crosses team boundaries. Is a drop in the automation rate a drift or a seasonal effect? Is this reported error a one-off or a pattern? May a new model go to production? Those questions then wait, or get answered by whoever is closest, not by whoever should decide.
+
+## The business data scientist as point of contact {#sec-business-ds}
+
+### Why a dedicated role
+
+The literature on machine learning in organisations describes the role names and responsibilities around a model in production [@kreuzberger2023mlops]. It also documents the benefits of placing data scientists **within** the business teams they serve, close to the domain and its decisions [@stelmaszak2023embedded]. The AIML4OS framework, written for official statistics, makes it a recommendation: every model in production should have a named owner [@aiml4os2025, ch. 3].
+
+For APE coding, this owner is a **data scientist placed in the business team**. They are distinct from the innovation team that built the first models. They speak both languages. They know the classification and the coders' work, and they can read a risk–coverage curve, run a training job and review a pull request.
+
+### Responsibilities
+
+| Area | The business data scientist… |
+|---|---|
+| Requirements | Translates business needs into model requirements: target accuracy $p^*$, acceptable manual workload, codes that must never be wrong |
+| Annotation | Organises the annotation campaigns and the golden set: sampling, guidelines, the expert teams' schedule |
+| Business feedback | Collects reported errors, sorts one-off errors from patterns, and turns patterns into [rules](data.qmd#sec-rules) validated by experts |
+| Retraining | Runs the [retraining protocol](retraining.qmd) and signs off the [quality gates](retraining.qmd#sec-gates) |
+| Monitoring | Gives a first analysis of [monitoring](monitoring.qmd) alerts and decides whether they need action |
+| Release | Is the interlocutor of the IT production teams for every model release, from qualification to rollback |
+| Communication | Reports on quality to management and to users of the APE code |
+
+: Responsibilities of the business data scientist. {#tbl-business-ds}
+
+The data science team stays responsible for the **tools**: libraries, pipelines, development platform. The business data scientist is responsible for the **model as a service to the business**. This separation lets the innovation team move on to other projects without leaving the model without an owner.
+
+### What it takes
+
+The role works only if a few conditions hold:
+
+- **time**: retraining, annotation and monitoring are recurring work, not a side task;
+- **access**: the same development platform and the same repositories as the data science team;
+- **skills**: Python, Git, statistics, and knowledge of the classification;
+- **a mandate**: authority to decide on releases, within rules agreed with the business and IT teams.
+
+## A qualification platform that matches production {#sec-qualification-platform}
+
+### The gap between development and production
+
+The model is developed and trained on SSP Cloud, an open data science platform with GPUs and internet access (see [Architecture](architecture.qmd)). It runs in production on INSEE's internal infrastructure: CPU only, no internet access, strict resource limits and change control. Anything that differs between the two environments can break a release, or change the model's behaviour without anyone noticing:
+
+- a library version that differs, and changes the preprocessing or the numerical results;
+- a resource that the model downloads at start-up, unavailable in a closed network;
+- a latency or memory footprint measured on a development machine, not on the production CPU;
+- a configuration difference in the way the API is exposed to the register.
+
+### What "iso-production" means
+
+The **qualification platform** removes this gap. It reproduces production as closely as possible:
+
+- the same runtime: base image, Python and library versions, CPU-only builds;
+- the same resources: CPU and memory limits, number of replicas;
+- the same network constraints: no internet access, dependencies served from the internal repository manager;
+- the same deployment mechanism and the same configuration as production.
+
+### What is measured there
+
+Each candidate model goes through the same series of checks before release (see [Retraining protocol](retraining.qmd#sec-preprod)):
+
+- **latency** of unit calls (median, p95, p99) and **throughput** in batch mode, under a realistic load;
+- **memory footprint** and **start-up time**;
+- **online/offline parity**: the served model must reproduce the offline predictions on the test golden set exactly;
+- **robustness**: malformed or unexpected inputs must be rejected cleanly, not crash the service.
+
+These are the [non-functional metrics](evaluation.qmd#sec-eval-nonfunctional) of the evaluation. They are only meaningful here.
+
+```{mermaid}
+%%| label: fig-qualification
+%%| fig-cap: "From development to production."
+flowchart LR
+  DEV["Development and training<br/>(SSP Cloud: GPU, internet)"] --> REG[("MLflow<br/>registry")]
+  REG --> QUAL["Qualification platform<br/>(iso-production: CPU, closed network)"]
+  QUAL -->|"latency, memory,<br/>parity, robustness"| GO{"Go / no-go"}
+  GO -->|"no"| DEV
+  GO -->|"yes"| PROD["Production<br/>(internal infrastructure)"]
+```
+
+### Who does what
+
+| Step | Data science team | Business data scientist | IT production / architects |
+|---|---|---|---|
+| Model artifact and test suite | Provides | Reviews | — |
+| Qualification platform | Uses | Uses | Provides and maintains |
+| Go / no-go | Advises | Decides | Checks the operational criteria |
+| Release and rollback | — | Requests | Executes |
+
+: Sharing of responsibilities around qualification. {#tbl-qualification-raci}
+
+## Open challenges
+
+- **Sustaining annotation.** The golden set needs a small but continuous annotation effort from business experts, in competition with their daily coding work.
+- **Skills and continuity.** A single business data scientist is a single point of failure. The role needs backup and documentation.
+- **Keeping the platforms aligned.** Every change to production (base image, resource limits, network rules) has to be carried over to the qualification platform, or qualification stops meaning anything.

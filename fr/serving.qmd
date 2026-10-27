@@ -1,75 +1,77 @@
 ---
-title: "Mise à disposition du modèle et déploiement"
+title: "Mise en production"
 description: "Un modèle autonome, une API légère et un déploiement en GitOps."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - SSP Lab, Insee
 lang: fr
 ---
 
 ## Un modèle autonome
 
-Le modèle est enregistré dans MLflow sous la forme d'un **`pyfunc`**, une enveloppe Python générique qui regroupe tout ce qui est nécessaire à l'inférence :
+Le modèle est enregistré dans MLflow sous forme de **`pyfunc`**, un wrapper Python générique qui embarque tout ce qu'il faut pour l'inférence :
 
-- le réseau entraîné et son tokeniseur ;
+- le réseau entraîné et son tokenizer ;
 - les encodeurs des variables catégorielles et des classes ;
-- le code d'inférence : validation de la liasse en entrée, construction des variables, décodage des *k* meilleurs codes avec leurs libellés et calcul de l'indice de confiance ;
-- les ressources nécessaires hors ligne, comme les listes de mots vides, afin que rien ne soit téléchargé à l'exécution dans un environnement fermé.
+- le code d'inférence : validation de la liasse en entrée, construction des variables, décodage du top *k* avec les intitulés des codes, calcul de l'indice de confiance ;
+- les ressources nécessaires hors ligne, comme les listes de stop words, pour que rien ne soit téléchargé à l'exécution dans un environnement fermé.
 
-Le contrat d'entrée et de sortie est défini par des modèles Pydantic dans le dépôt d'entraînement. Le modèle peut donc être chargé et interrogé de la même façon dans un notebook, dans un traitement par lots ou dans l'API. Le modèle servi est exactement celui qui a été évalué.
+Le contrat d'entrée et de sortie est défini par des modèles Pydantic dans le dépôt d'entraînement. Le modèle se charge et s'appelle donc de la même façon dans un notebook, dans un job batch ou dans l'API, et le modèle servi est exactement celui qui a été évalué.
 
-Chaque modèle enregistré porte un **nom**, qui identifie la nomenclature (NAF rév. 2 ou NAF 2025), et une **version**. Chaque réponse contient l'identifiant du modèle qui l'a produite : toute prédiction est ainsi traçable.
+Chaque modèle enregistré porte un **nom**, qui identifie la nomenclature (NAF rév. 2 ou NAF 2025), et une **version**. Chaque réponse contient l'identifiant du modèle qui l'a produite, ce qui rend toute prédiction traçable.
 
 ## L'API
 
-[codif-ape-api](https://github.com/InseeFrLab/codif-ape-api) est une application FastAPI légère. Elle charge le modèle enregistré au démarrage, à partir de son nom et de sa version, passés en variables d'environnement. Elle expose un unique point d'accès de prédiction :
+[codif-ape-api](https://github.com/InseeFrLab/codif-ape-api) est une application FastAPI légère. Au démarrage, elle charge le modèle à partir de son nom et de sa version, passés en variables d'environnement. Elle expose un seul endpoint de prédiction :
 
-- **Entrée :** un lot de liasses de déclaration. Chacune comporte un libellé d'activité obligatoire et des champs auxiliaires facultatifs : forme juridique, nature de l'activité, type de liasse, surface, permanence de l'activité. Les valeurs sont contrôlées par rapport aux modalités autorisées avant l'inférence.
-- **Sortie :** pour chaque liasse, les *k* meilleurs codes avec leur probabilité et leur libellé, l'**indice de confiance** et l'**identifiant du modèle**.
-- **Paramètres :** le nombre de propositions, une probabilité minimale, ainsi que la taille des lots et le nombre de processus. Un même point d'accès sert donc à la fois les appels unitaires du répertoire (une liasse à la fois, latence minimale) et les recodifications en masse (gros lots traités en parallèle).
+- **Entrée :** un batch de liasses. Chacune contient un libellé d'activité obligatoire et des champs annexes optionnels : forme juridique, nature de l'activité, type de liasse, surface, permanence de l'activité. Les valeurs sont validées par rapport aux modalités autorisées avant l'inférence.
+- **Sortie :** pour chaque liasse, le top *k* des codes avec leur probabilité et leur intitulé, l'**indice de confiance** et l'**identifiant du modèle**.
+- **Paramètres :** le nombre de propositions, une probabilité minimale, la taille des batchs et le nombre de processus. Le même endpoint sert donc à la fois les appels unitaires du répertoire (une liasse à la fois, latence minimale) et les recodages en masse (gros batchs traités en parallèle).
 
-L'API utilise des versions de PyTorch pour CPU uniquement et n'écrit ses journaux que sur la sortie standard, comme l'exige la plateforme de production. C'est le seul composant appelé par le système d'information Sirene. L'application Java qui gère les déclarations envoie la liasse à l'API, puis l'oriente selon l'indice de confiance.
+L'API utilise des builds PyTorch CPU uniquement et n'écrit ses logs que sur la sortie standard, comme l'exige la plateforme de production. C'est le seul composant appelé par le système d'information Sirene : l'application Java qui gère les déclarations envoie la liasse à l'API, puis l'aiguille selon l'indice de confiance.
 
-## Intégration et livraison continues
+## CI/CD
 
 ```{mermaid}
 %%| label: fig-cicd
-%%| fig-cap: "Du commit au service en fonctionnement."
+%%| fig-cap: "Du commit au service déployé."
 flowchart LR
-  DEV["Commit / tag<br/>codif-ape-api"] --> GHA["GitHub Actions<br/>construction + publication de l'image"]
-  GHA --> HUB[("Registre<br/>d'images")]
-  TRN["Entraînement"] --> REG[("Registre<br/>MLflow")]
+  DEV["Commit / tag<br/>codif-ape-api"] --> GHA["GitHub Actions<br/>build + push de l'image"]
+  GHA --> HUB[("Registry<br/>d'images")]
+  TRN["Entraînement"] --> REG[("Model registry<br/>MLflow")]
   MAN["Modification du manifeste<br/>codif-ape-cd<br/>(tag d'image, version du modèle)"] --> ARGO["Argo CD<br/>synchronisation automatique"]
   HUB --> ARGO
   ARGO --> POD["Pod de l'API"]
   REG -->|"chargé au démarrage"| POD
 ```
 
-La chaîne de livraison fonctionne ainsi :
+Le déploiement fonctionne ainsi :
 
-1. **Images.** À chaque push sur `main` et à chaque tag de version, GitHub Actions construit l'image Docker de l'API et la publie dans le registre d'images. Pour chaque pull request, on vérifie que l'image se construit.
+1. **Images.** À chaque push sur `main` et à chaque tag de version, GitHub Actions build l'image Docker de l'API et la pousse sur le registry. Sur chaque pull request, on vérifie que l'image build.
 2. **Manifestes.** [codif-ape-cd](https://github.com/InseeFrLab/codif-ape-cd) contient les manifestes Kubernetes bruts de tous les services :
    - les instances de l'API, pour chaque nomenclature et chaque environnement ;
-   - le tableau de bord de suivi ;
-   - les tâches planifiées d'annotation et de suivi ;
+   - le dashboard de monitoring ;
+   - les cron jobs d'annotation et de monitoring ;
    - les applications de revue de GRAAL.
-3. **Synchronisation.** Chaque répertoire du dépôt a son `Application` Argo CD, avec synchronisation automatique et auto-réparation activées. Le cluster reflète toujours le contenu du dépôt.
+3. **Synchronisation.** Chaque dossier du dépôt a son `Application` Argo CD, avec auto-sync et self-heal activés : le cluster reflète toujours le contenu du dépôt.
 
-**Déployer un nouveau modèle** revient à modifier une ligne d'un manifeste : la version du modèle, ou le tag de l'image si le code de l'API a changé. La modification est relue et fusionnée, puis Argo CD la déploie. **Revenir en arrière**, c'est annuler ce commit. L'historique de ce qui a tourné, où et quand, est le journal Git.
+**Déployer un nouveau modèle** revient à modifier une ligne d'un manifeste : la version du modèle, ou le tag de l'image si le code de l'API a changé. Le changement est relu et mergé, puis Argo CD le déploie. Pour **revenir en arrière**, il suffit de revert ce commit. L'historique de ce qui a tourné, où et quand, c'est le log Git.
 
 ## Environnements
 
-Plusieurs instances de l'API tournent côte à côte sur la plateforme. Chacune est identifiée par sa nomenclature et sa génération de modèle, par exemple un modèle NAF 2008 et un modèle NAF 2025 construit avec PyTorch. Elles servent :
+Plusieurs instances de l'API tournent en parallèle sur la plateforme, chacune identifiée par sa nomenclature et sa génération de modèle, par exemple un modèle NAF 2008 et un modèle NAF 2025 en PyTorch. Elles servent :
 
 - au développement et aux démonstrations ;
-- à la comparaison des générations de modèles sur les mêmes entrées ;
-- aux traitements de recodification en masse.
+- à comparer les générations de modèles sur les mêmes entrées ;
+- aux recodages en masse.
 
-Avant la production, le modèle passe par une **qualification** sur une plateforme de préproduction identique à l'environnement de production :
+Avant la production, le modèle passe par une **qualification** sur une préproduction identique à la production (voir [Défis organisationnels et d'infrastructure](organisation.qmd#sec-qualification-platform)) :
 
-- la **latence** et la mémoire sont mesurées sur CPU ;
-- la **parité en ligne/hors ligne** est vérifiée : le modèle servi doit reproduire exactement les prédictions de l'évaluation hors ligne ;
-- une période en mode *shadow* peut suivre : le nouveau modèle traite le flux réel sans que ses décisions soient utilisées.
+- on mesure la **latence** et la mémoire sur CPU ;
+- on vérifie la **cohérence online/offline** : le modèle servi doit reproduire exactement les prédictions de l'évaluation hors ligne ;
+- une période en *shadow mode* peut suivre : le nouveau modèle traite le flux réel sans que ses décisions soient utilisées.
 
 Ces étapes sont détaillées dans le [protocole de réentraînement](retraining.qmd#sec-preprod).

@@ -5,6 +5,8 @@ project:
     - index.qmd
     - en/*.qmd
     - fr/*.qmd
+  # Writes outline.json, read by style/nav.html.
+  post-render: scripts/outline.py
 
 website:
   title: "APE coding · MLOps"
@@ -17,7 +19,8 @@ website:
   back-to-top-navigation: true
   bread-crumbs: false
 
-  # The EN | FR switch is added to the navbar by style/lang-switch.html.
+  # The EN | FR switch and the single table of contents in the sidebar are
+  # added by style/nav.html.
   navbar:
     title: "APE coding · MLOps"
     collapse-below: lg
@@ -38,11 +41,13 @@ website:
         - en/architecture.qmd
         - en/data.qmd
         - en/model.qmd
+        - en/evaluation.qmd
         - en/serving.qmd
         - en/monitoring.qmd
         - en/retraining.qmd
-        - en/companion-projects.qmd
+        - en/organisation.qmd
         - en/lessons.qmd
+        - en/glossary.qmd
         - en/references.qmd
     - id: fr
       title: "Note technique"
@@ -53,11 +58,13 @@ website:
         - fr/architecture.qmd
         - fr/data.qmd
         - fr/model.qmd
+        - fr/evaluation.qmd
         - fr/serving.qmd
         - fr/monitoring.qmd
         - fr/retraining.qmd
-        - fr/companion-projects.qmd
+        - fr/organisation.qmd
         - fr/lessons.qmd
+        - fr/glossary.qmd
         - fr/references.qmd
 
   page-footer:
@@ -69,7 +76,7 @@ bibliography: references.bib
 format:
   html:
     theme: [litera, style/styles.scss]
-    include-after-body: style/lang-switch.html
+    include-after-body: style/nav.html
     toc: true
     toc-depth: 3
     number-sections: true

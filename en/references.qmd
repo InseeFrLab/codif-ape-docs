@@ -2,9 +2,11 @@
 title: "References and resources"
 description: "Presentations, papers, code and related work."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - Innovation Lab, Insee
 lang: en
 number-sections: false
 ---
@@ -15,8 +17,11 @@ All the team's presentations are collected at **[inseefrlab.github.io/codif-ape-
 
 | Date | Title | Venue |
 |---|---|---|
+| 2026-08 | [Code2Text: generating synthetic descriptions to train automatic coding](https://mateomorin.github.io/Code2Text-presentation/) (M. Morin, in French) | ENSAE internship, Innovation Lab |
+| 2026-07 | [Interpretable text classification: benchmarking lightweight architectures](https://julber95.github.io/interpretable-text-classification/) (J. Bernardi) | Internship, Innovation Lab |
 | 2026-06 | [torchTextClassifiers from an MLOps perspective](https://inseefrlab.github.io/codif-ape-prez/slides/isi-malta/) | ISI World Statistics Congress, Malta |
 | 2026-06 | [When Classifications Change but Deadlines Don't: Scaling Recoding with LLMs](https://inseefrlab.github.io/codif-ape-prez/slides/isi-malta-relabeling/) | ISI World Statistics Congress, Malta |
+| 2026-05 | [From Accuracy to Trust: practical methods for uncertainty-aware automatic coding](https://meilame-tayebjee.github.io/IAOS-Vilnius-conference/presentations/accuracy2trust/) | IAOS Conference, Vilnius |
 | 2026-03 | [Classification of business activities by ML: the case of France](https://inseefrlab.github.io/codif-ape-prez/slides/webinar-subsaharan-africa-2026/) | Webinars with sub-Saharan Africa and the OECD |
 | 2025-12 | [torchTextClassifiers: a unified framework for text classification in PyTorch](https://inseefrlab.github.io/codif-ape-prez/slides/pydata-global/) | PyData Global |
 | 2025-11 | [LLM-generated training data for a classification change](https://inseefrlab.github.io/codif-ape-prez/slides/jms2025-llm-relabeling/) | Journées de méthodologie statistique |

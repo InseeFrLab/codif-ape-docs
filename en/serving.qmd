@@ -2,9 +2,11 @@
 title: "Serving and deployment"
 description: "A self-contained model, a thin API, and GitOps deployments."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - Innovation Lab, Insee
 lang: en
 ---
 
@@ -66,7 +68,7 @@ Several API instances run side by side on the platform. Each one is identified b
 - comparing model generations on the same inputs;
 - bulk recoding jobs.
 
-For production, the model goes through **qualification** on a pre-production platform that matches the production environment:
+For production, the model goes through **qualification** on a pre-production platform that matches the production environment (see [Organisational and infrastructural challenges](organisation.qmd#sec-qualification-platform)):
 
 - **latency** and memory are measured on CPU;
 - **online/offline parity** is checked: the served model must reproduce the offline evaluation predictions exactly;

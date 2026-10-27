@@ -1,11 +1,21 @@
 ---
 title: "Data"
-description: "Training data, label cleaning with an auditable rule engine, and the move to NAF 2025."
+description: "Training data, label cleaning with an auditable rule engine, the move to NAF 2025, and synthetic data."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - Innovation Lab, Insee
+  - name: Nathan Randriamanana
+    url: https://github.com/TheAIWizard
+    email: nathan.randriamanana@insee.fr
+    affiliations:
+      - Department for Business Registers, Infrastructure and Structural Statistics, Insee
 lang: en
+# GRAAL used to be in the chapter on companion projects.
+aliases:
+  - companion-projects.html#sec-graal
 ---
 
 ## Training data
@@ -50,6 +60,11 @@ Rules are Python functions registered with a decorator. Each one carries a name,
 
 Fuzzy and semantic matching widen a rule to descriptions that are close to the ones the experts listed. Each rule decides which methods it allows. For instance, a rule on a short acronym is restricted to exact matching.
 
+The rule engine therefore has two parts, which are not judged the same way:
+
+- the **deterministic part** (exact patterns validated by experts) encodes the *known cases*, written $K_n$ in the [retraining protocol](retraining.qmd#sec-golden). It is checked like a unit test: the model must reproduce it;
+- the **probabilistic part** (fuzzy and semantic extensions) makes a guess on descriptions that no expert has seen. It is an automatic coding engine in its own right, and its precision must be [measured](evaluation.qmd#sec-eval-engines) before its labels are trusted.
+
 **Every change is logged.** For each modified, created or deleted row, a journal records the code before and after, the rule that applied and the context of the declaration. These journals are stored next to the cleaned dataset, so any label in the training set can be traced back to its origin.
 
 Rules are what make expert feedback **permanent**. If an error is fixed only by retraining, it can come back with the next model. A rule, on the other hand, fixes the whole training set for good, and the fix can be audited. How rules are created, checked and propagated is described in the [retraining protocol](retraining.qmd#sec-known-cases).
@@ -93,4 +108,125 @@ In the end, about 2.3 million of the 2.7 million observations were rebuilt in NA
 Expert annotations are expensive, so they are best used as a **benchmark**. They guide the choice of prompts and models and measure the result, while LLMs supply the volume. An LLM's self-reported confidence turned out to be an unreliable filter. Agreement between several models is a better signal.
 :::
 
-The model retrained on these data is described in the [next chapter](model.qmd#sec-results).
+The model retrained on these data is described in the [Model](model.qmd#sec-results) chapter.
+
+## GRAAL {#sec-graal}
+
+[GRAAL](https://github.com/InseeFrLab/GRAAL) ([documentation](https://inseefrlab.github.io/GRAAL/)), *Graph-based Reasoning Agents for Automatic Labelling*, is a framework of LLM agents for coding free text into a hierarchical classification. It rests on two building blocks:
+
+1. **the explanatory notes as a graph**, stored in the [Neo4j](https://neo4j.com/) graph database [@neo4j];
+2. **tools to interact with this graph**, made available to LLMs.
+
+Like [torchTextClassifiers](model.qmd#sec-ttc), it was born from the needs of APE coding and is developed as a general-purpose, open-source tool. Unlike it, GRAAL sits **off the critical path**: it works offline, on data rather than on live requests. It belongs in this chapter because what it produces is labels.
+
+```{mermaid}
+%%| label: fig-graal
+%%| fig-cap: "Where GRAAL fits in the pipeline."
+flowchart LR
+  subgraph OFF["Offline (batch)"]
+    GR["GRAAL<br/>LLM agents"]
+    PRE["Data curation<br/>codif-ape-preprocess"]
+  end
+  subgraph CRIT["Critical path"]
+    TRN["Training<br/>codif-ape-train"] --> MOD["Model<br/>(TTC)"] --> API["API<br/>codif-ape-api"]
+  end
+  GR -->|"relabelling, audits,<br/>arbitration, synthetic data"| PRE
+  PRE --> TRN
+  API -->|"candidate codes,<br/>supervised baseline"| GR
+  API -->|"predictions"| MON["Monitoring"]
+  MON -->|"cases to audit"| GR
+```
+
+### Principle
+
+**The graph.** The full explanatory notes are loaded into Neo4j:
+
+- codes and labels;
+- **explanatory notes**: includes, excludes, examples;
+- parent–child relations, plus a vector index on the notes.
+
+**The tools.** LLMs reach the graph only through tools: move down or up the hierarchy, read a code's notes, find the notes closest to a text. This lets them browse the classification the way a human expert would. The agents described below are different ways of combining these tools. All inputs and outputs are typed Pydantic contracts. The agents run against any OpenAI-compatible endpoint, served on the platform with open-weight models.
+
+Because all classification knowledge lives in the graph, the framework is **independent of the classification**. Graphs exist for NAF 2025 (French), NACE Rev. 2.1 (English) and COICOP 2018.
+
+### Components
+
+| Family | Agent | Role |
+|---|---|---|
+| *Text → code* | **Navigator** | Walks the hierarchy from the root to a leaf, reading notes at each step |
+| | **Agentic RAG** | Starts from a vector search, then checks and corrects with the Navigator |
+| | **Summary agent** | One agent with the whole classification summarised in its context |
+| *Closers* | **CodeChooser** | Arbitrates between a few candidate codes |
+| | **MatchVerifier** | Audits a (description, code) pair: is it consistent with the notes? If not, which code is better? |
+| *Code → text* | **Code2Text** | Generates realistic synthetic descriptions for a given code |
+
+: GRAAL agents. {#tbl-graal}
+
+GRAAL also includes an evaluation module and review applications in which experts judge the agents' verdicts. The evaluation module offers metrics at each level, stratified samples with weights, bootstrap confidence intervals and paired tests.
+
+### Role in the pipeline
+
+GRAAL **does not replace** the production model. The agents take seconds to minutes per description and need GPUs to serve the LLM, while production needs ~200 ms on CPU. In early benchmarks, the agents were also not more accurate than the supervised model on the flow as a whole. GRAAL's value lies elsewhere, in four offline tasks:
+
+1. **Recoding a stock after a classification change.** Most of the NAF 2025 training data was produced by a dedicated pipeline, [codif-ape-nace-revision](https://github.com/InseeFrLab/codif-ape-nace-revision), in which LLMs code with the explanatory notes in context ([above](#sec-naf2025)). GRAAL generalises this approach with agents that navigate the classification, for future revisions and other classifications.
+2. **Auditing and curating labels.** The MatchVerifier flags dubious labels in the training data, or in automatically coded cases, and proposes alternatives. In the [retraining protocol](retraining.qmd#sec-curation), GRAAL is one of the independent engines whose disagreements with the production model are arbitrated.
+3. **Prioritising human review.** Suspicious cases are sent to experts first. Their judgements are collected in a review application and become new labels.
+4. **Generating synthetic data.** Code2Text produces descriptions for rare codes ([see below](#sec-synthetic)), and reworded variants of known cases to test that a fix [generalises](retraining.qmd#sec-gates).
+
+In return, GRAAL relies on the production API. It uses the API as a supervised baseline, and as a source of candidate codes for agents and annotators.
+
+### Labels from engines must be earned
+
+GRAAL and the probabilistic part of the [rule engine](#sec-rules) play the same role: they propose labels that no human has checked. Before either one feeds training, it is evaluated where it matters, **on the cases where it disagrees with the production model**, against the golden set. The criterion and its precautions are set out in the [retraining protocol](retraining.qmd#sec-curation) and the [Evaluation](evaluation.qmd#sec-eval-engines) chapter.
+
+## Synthetic data: Code2Text {#sec-synthetic}
+
+Matéo Morin's internship (ENSAE Paris, Innovation Lab, 2026) studied how to generate synthetic activity descriptions with LLMs for NAF 2025. It builds on GRAAL's Code2Text agent ([GRAAL](#sec-graal)). The report, slides and appendices are online at [mateomorin.github.io/Code2Text-presentation](https://mateomorin.github.io/Code2Text-presentation/) (in French). This is exploratory work.
+
+### Why synthetic data
+
+Two needs drive this work:
+
+- the **long tail**: in a training file of more than a million descriptions, half the codes have fewer than 60 examples. The model learns these codes poorly;
+- **statistical confidentiality**: declarations cannot be released, whether for teaching, hackathons or research. A faithful synthetic dataset could be.
+
+The two uses call for different code distributions. Release must reproduce the real distribution; training benefits from over-representing rare codes. Generation is therefore done **code by code**: once the generated descriptions for a code look like the real descriptions of that code, choosing how many to draw per code serves either use.
+
+### A first generation from the explanatory notes
+
+NaiveCode2Text gives the LLM, for each code, its title, some of its inclusions, all its exclusions and a few real descriptions of the same code (few-shot). Requests run in parallel: 62,100 descriptions covering the whole classification were produced in 42 minutes.
+
+The descriptions are correct in substance but too clean: no typos, formal, often close to the code's title. For forestry, for example, the model writes "Activités forestières : culture de peupliers et de saules" (forestry activities: growing poplars and willows). Asking for a less formal style in the prompt changes nothing.
+
+### Measuring the LLM's fingerprint: LabelGuard
+
+[LabelGuard](https://github.com/mateomorin/LabelGuard) is a discriminator that tells a human description from a generated one. It is a multilayer perceptron on Qwen3-Embedding-8B embeddings, trained on 160,000 descriptions, half real and half synthetic. Artefacts specific to the real data (descriptions truncated at 140 characters, numbers, a suffix added during preprocessing) were removed first, so that it learns style rather than these marks.
+
+On 40,000 validation descriptions, LabelGuard reaches **99.4% accuracy**, with a 0.7% false-positive rate. LLM style is thus almost perfectly recognisable. For the classifier, this is a **distribution shift**: trained on these descriptions, it does not see the same text as in production, where descriptions are abbreviated, choppy and full of typos.
+
+### Rewriting the style: Code2ReText
+
+A first attempt gave LabelGuard to the generating LLM as a tool. The LLM cheated: it concatenated words, wrote unintelligible words and copied the descriptions that passed the test.
+
+The final version, Code2ReText, splits two roles (orchestrated with LangGraph):
+
+- the **Actor** generates descriptions as NaiveCode2Text does, then rewrites them. It may change the form, not the substance;
+- the **Supervisor** receives LabelGuard's scores and real descriptions of the same code. It instructs the Actor to rewrite the descriptions judged artificial (score above 0.70), without passing the real descriptions on.
+
+The loop stops after at most five rounds. LabelGuard's mean score drops with each round. For forestry, the model now writes for example "TRANSPLANTATION ARBRES" (tree transplanting).
+
+### Results
+
+The protocol fixes a classifier whose hyperparameters are tuned on real data. It is trained on sets of 50,000 descriptions, a share $\alpha$ of which is synthetic, then evaluated on 30,000 real descriptions. The sets are **nested**: the synthetic descriptions used for one value of $\alpha$ are included in those of the next, and every code appears at least once. Differences between two values of $\alpha$ therefore do not come from sampling.
+
+- **Overall accuracy.** It holds up to about 50% synthetic data and collapses beyond 90%.
+- **By code frequency.** On frequent codes, nothing changes. On mid-frequency codes, accuracy declines as $\alpha$ grows. On **rare codes**, it improves markedly from the first injections, especially with Code2ReText. The chosen trade-off is **40 to 50%** Code2ReText descriptions, drawn with a code distribution close to the real one.
+- **Style and diversity.** For almost every code, Code2ReText is closer to the real descriptions than NaiveCode2Text (Wasserstein distance between embeddings). In return, its diversity (DC-Score) collapses, while NaiveCode2Text's slightly exceeds that of the real data. The approach cannot achieve both.
+- **Leaks.** About 0.5% of Code2ReText's descriptions are copies of real descriptions, against 0.005% for NaiveCode2Text. The Actor and Supervisor found another way to fool LabelGuard. As it stands, this rules out release.
+
+The study uses 50,000 descriptions, not the million of the full base. It also inherits the noise in the real labels (see [above](#sec-naf2025)). The next step is to **fine-tune a small open-weight model** on the declarants' style, rather than correct it with prompt loops. The same model could generate descriptions for NACE in several languages.
+
+::: {.callout-tip}
+## Lesson
+Synthetic descriptions complement real data on rare codes; they do not replace it. An LLM leaves a measurable style fingerprint, which must be checked before any injection. A generator optimised against a discriminator ends up copying its examples: before any release, check that no real description has leaked.
+:::

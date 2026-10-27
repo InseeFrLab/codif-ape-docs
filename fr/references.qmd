@@ -2,9 +2,11 @@
 title: "Références et ressources"
 description: "Présentations, articles, code et travaux connexes."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - SSP Lab, Insee
 lang: fr
 number-sections: false
 ---
@@ -15,8 +17,11 @@ Toutes les présentations de l'équipe sont rassemblées sur **[inseefrlab.githu
 
 | Date | Titre | Événement |
 |---|---|---|
+| 2026-08 | [Code2Text : générer des libellés par IA pour entraîner la codification automatique](https://mateomorin.github.io/Code2Text-presentation/) (M. Morin) | Stage ENSAE, SSP Lab |
+| 2026-07 | [Interpretable text classification : benchmark d'architectures légères](https://julber95.github.io/interpretable-text-classification/) (J. Bernardi, en anglais) | Stage, SSP Lab |
 | 2026-06 | [torchTextClassifiers from an MLOps perspective](https://inseefrlab.github.io/codif-ape-prez/slides/isi-malta/) | ISI World Statistics Congress, Malte |
 | 2026-06 | [When Classifications Change but Deadlines Don't: Scaling Recoding with LLMs](https://inseefrlab.github.io/codif-ape-prez/slides/isi-malta-relabeling/) | ISI World Statistics Congress, Malte |
+| 2026-05 | [From Accuracy to Trust: practical methods for uncertainty-aware automatic coding](https://meilame-tayebjee.github.io/IAOS-Vilnius-conference/presentations/accuracy2trust/) | Conférence de l'IAOS, Vilnius |
 | 2026-03 | [Classification of business activities by ML: the case of France](https://inseefrlab.github.io/codif-ape-prez/slides/webinar-subsaharan-africa-2026/) | Webinaires avec l'Afrique subsaharienne et l'OCDE |
 | 2025-12 | [torchTextClassifiers: a unified framework for text classification in PyTorch](https://inseefrlab.github.io/codif-ape-prez/slides/pydata-global/) | PyData Global |
 | 2025-11 | [Données d'entraînement générées par LLM pour un changement de nomenclature](https://inseefrlab.github.io/codif-ape-prez/slides/jms2025-llm-relabeling/) | Journées de méthodologie statistique |
@@ -41,11 +46,11 @@ Toutes les présentations de l'équipe sont rassemblées sur **[inseefrlab.githu
 |---|---|
 | [codif-ape](https://github.com/InseeFrLab/codif-ape) | Dépôt chapeau regroupant les sous-modules |
 | [codif-ape-nace-revision](https://github.com/InseeFrLab/codif-ape-nace-revision) | Recodage par LLM des données d'entraînement de la NAF rév. 2 vers la NAF 2025 (stratégies CAG et RAG, vote majoritaire) |
-| [codif-ape-preprocess](https://github.com/InseeFrLab/codif-ape-preprocess) | Nettoyage des données, moteur de règles, découpage des échantillons |
-| [codif-ape-train](https://github.com/InseeFrLab/codif-ape-train) | Entraînement, évaluation, empaquetage MLflow |
-| [codif-ape-api](https://github.com/InseeFrLab/codif-ape-api) | Mise à disposition du modèle avec FastAPI |
+| [codif-ape-preprocess](https://github.com/InseeFrLab/codif-ape-preprocess) | Nettoyage des données, moteur de règles, splits train / validation / test |
+| [codif-ape-train](https://github.com/InseeFrLab/codif-ape-train) | Entraînement, évaluation, packaging MLflow |
+| [codif-ape-api](https://github.com/InseeFrLab/codif-ape-api) | API de prédiction avec FastAPI |
 | [codif-ape-cd](https://github.com/InseeFrLab/codif-ape-cd) | Manifestes Kubernetes, Argo CD |
-| [torchTextClassifiers](https://github.com/InseeFrLab/torchTextClassifiers) | Bibliothèque PyTorch de classification de textes ([documentation](https://inseefrlab.github.io/torchTextClassifiers/)) |
+| [torchTextClassifiers](https://github.com/InseeFrLab/torchTextClassifiers) | Librairie PyTorch de classification de texte ([documentation](https://inseefrlab.github.io/torchTextClassifiers/)) |
 | [GRAAL](https://github.com/InseeFrLab/GRAAL) | Agents LLM pour les nomenclatures ([documentation](https://inseefrlab.github.io/GRAAL/)) |
 | [codif-ape-docs](https://github.com/InseeFrLab/codif-ape-docs) | Ce site |
 

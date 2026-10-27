@@ -1,18 +1,29 @@
 ---
 title: "Modèle"
-description: "Un petit classifieur de textes PyTorch, calibré, intégrant des variables catégorielles, entraîné de façon reproductible et évalué à chaque niveau de la nomenclature."
+description: "Un petit classifieur de texte en PyTorch, calibré, qui prend en compte des variables catégorielles, entraîné de façon reproductible et évalué à chaque niveau de la nomenclature."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - SSP Lab, Insee
+  - name: Cédric Couralet
+    url: https://github.com/micedre
+    email: cedric.couralet@insee.fr
+    affiliations:
+      - SSP Lab, Insee
 lang: fr
+# The former chapter on TTC and GRAAL, now split between Model and Data.
+aliases:
+  - companion-projects.html
+  - companion-projects.html#sec-ttc
 ---
 
 ## Pourquoi un petit modèle
 
-De grands modèles de langage pré-entraînés, comme CamemBERT, ont été testés dès le début du projet. Sur la codification APE, ils n'apportaient qu'un gain modeste par rapport à un modèle de type fastText : une exactitude (*accuracy*) d'environ 0,76 contre 0,75 sur le même jeu de test [@faria2024estoril]. Ce gain ne justifiait pas leur coût d'inférence au regard des contraintes de production (appels unitaires, CPU uniquement, quelques centaines de millisecondes).
+Des modèles de langage pré-entraînés comme CamemBERT ont été testés dès le début du projet. Sur la codification APE, ils ne faisaient guère mieux qu'un modèle de type fastText : environ 0,76 d'accuracy contre 0,75 sur le même jeu de test [@faria2024estoril]. Un gain trop faible pour justifier leur coût d'inférence, vu les contraintes de production (appels unitaires, CPU uniquement, quelques centaines de millisecondes).
 
-Le modèle en production est donc un **réseau de neurones peu profond** d'environ **un million de paramètres**, de la famille fastText [@joulin2016]. Il est désormais implémenté en PyTorch avec [torchTextClassifiers](companion-projects.qmd#sec-ttc).
+Le modèle en production est donc un **réseau de neurones peu profond** d'environ **un million de paramètres**, de la famille fastText [@joulin2016]. Il est désormais implémenté en PyTorch avec [torchTextClassifiers](#sec-ttc).
 
 ## Architecture
 
@@ -21,9 +32,9 @@ Le modèle en production est donc un **réseau de neurones peu profond** d'envir
 %%| fig-cap: "Architecture du modèle."
 flowchart LR
   T["Libellé d'activité<br/>(+ texte complémentaire)"] --> TOK["Tokenizer<br/>(sous-mots / n-grammes)"]
-  TOK --> EMB["Plongements des tokens<br/>(dim. 80)"]
+  TOK --> EMB["Embeddings des tokens<br/>(dim. 80)"]
   EMB --> AGG["Moyenne<br/>(mean pooling)"]
-  C["Variables catégorielles<br/>CJ, NAT, TYP, SRF, CRT"] --> CEMB["Un plongement<br/>par variable (dim. 16)"]
+  C["Variables catégorielles<br/>CJ, NAT, TYP, SRF, CRT"] --> CEMB["Un embedding<br/>par variable (dim. 16)"]
   AGG --> CAT["Concaténation"]
   CEMB --> CAT
   CAT --> HEAD["Couche linéaire<br/>~745 classes"]
@@ -32,54 +43,89 @@ flowchart LR
 
 Le modèle comporte trois parties :
 
-- **Texte.** Le libellé est découpé en tokens de sous-mots. Le tokenizer (vocabulaire WordPiece ou n-grammes de caractères à la manière de fastText) est entraîné sur les données d'entraînement et versionné avec elles. Les sous-mots rendent le modèle robuste aux fautes de frappe, aux flexions et aux mots nouveaux. Les plongements des tokens sont moyennés en un vecteur unique qui représente le texte.
-- **Variables catégorielles.** À l'époque de fastText, les variables annexes étaient ajoutées au texte sous forme de tokens artificiels (`NAT_21 TYP_X …`), ce qui relevait du contournement. Chacune dispose désormais de son **propre plongement**, appris conjointement avec la représentation du texte.
-- **Tête.** Une couche linéaire projette la représentation combinée sur les sous-classes de la nomenclature cible.
+- **Texte.** Le libellé est découpé en tokens de sous-mots. Le tokenizer (vocabulaire WordPiece ou n-grammes de caractères à la fastText) est entraîné sur les données d'entraînement et versionné avec elles. Grâce aux sous-mots, le modèle résiste aux fautes de frappe, aux flexions et aux mots qu'il n'a jamais vus. Les embeddings des tokens sont moyennés en un seul vecteur qui représente le texte.
+- **Variables catégorielles.** Avec fastText, les variables annexes étaient ajoutées au texte sous forme de faux tokens (`NAT_21 TYP_X …`), ce qui tenait du bricolage. Chacune a désormais son **propre embedding**, appris en même temps que la représentation du texte.
+- **Tête de classification.** Une couche linéaire projette la représentation obtenue sur les sous-classes de la nomenclature.
 
-La même bibliothèque prend aussi en charge des couches d'auto-attention, l'attention sur les labels (*label attention*) et les tokenizers Hugging Face. Ces options sont évaluées sur le jeu de validation. Une architecture plus riche n'est retenue que si elle tient dans le budget de latence.
+La librairie gère aussi des couches de self-attention, la *label attention* et les tokenizers Hugging Face. Ces options sont testées sur le jeu de validation, et une architecture plus riche n'est retenue que si elle tient dans le budget de latence.
+
+## torchTextClassifiers {#sec-ttc}
+
+[torchTextClassifiers](https://github.com/InseeFrLab/torchTextClassifiers) ([documentation](https://inseefrlab.github.io/torchTextClassifiers/), [PyPI](https://pypi.org/project/torchtextclassifiers/)) se présente comme « un framework unifié et extensible pour la classification de texte avec variables catégorielles, construit sur PyTorch et PyTorch Lightning » [@couralet2025pydata]. Née des besoins de la codification APE, elle est développée comme un outil généraliste et open source. Elle est **sur le chemin critique** : chaque prédiction passe par elle.
+
+### Pourquoi une librairie dédiée
+
+Quand Meta a archivé le dépôt de fastText en mars 2024, le modèle de production s'est retrouvé dépendant d'une librairie C++ compilée et plus maintenue. fastText avait d'autres défauts :
+
+- les variables annexes ne pouvaient être prises en compte qu'en les collant au texte ;
+- aucune explicabilité ;
+- des scores mal calibrés ;
+- pas d'entraînement sur GPU.
+
+Une première réimplémentation en PyTorch, *torchFastText*, reproduisait l'architecture de fastText. Elle est ensuite devenue un framework plus général, renommé torchTextClassifiers en 2025.
+
+Pourquoi un **package** plutôt que du code dans le dépôt d'entraînement ? Parce que la même classe de modèle doit exister dans le dépôt d'entraînement, dans l'API, en production et dans les jobs batch. Un package versionné sur PyPI, répliqué dans le gestionnaire de dépôts interne de l'Insee, sert de **source de vérité unique** pour tous ces usages.
+
+### Conception
+
+La librairie découpe un classifieur de texte en briques interchangeables :
+
+| Brique | Options |
+|---|---|
+| Tokenizer | n-grammes de caractères à la fastText, WordPiece, ou n'importe quel tokenizer Hugging Face |
+| Embedding des tokens | *Embedding bag*, éventuellement avec des couches de self-attention (« construisez votre propre petit BERT ») |
+| Embedding de la phrase | Moyenne, premier ou dernier token, ou ***label attention*** (une représentation par classe) |
+| Variables catégorielles | Un embedding par variable, combiné au texte par somme, par moyenne puis concaténation, ou par concaténation |
+| Tête de classification | Couche linéaire, multiclasse ou multilabel ; une variante multiniveau exploite la hiérarchie |
+
+: Briques de torchTextClassifiers. {#tbl-ttc}
+
+Une API de haut niveau gère l'encodage des variables catégorielles et des classes, l'entraînement (avec pondération optionnelle des observations), la prédiction du top *k*, la sauvegarde et le chargement. Deux méthodes d'explicabilité sont intégrées :
+
+- des attributions par token avec les **integrated gradients** (Captum) ;
+- la **label attention**, qui montre quels mots pèsent pour chaque classe candidate.
+
+La librairie s'adresse aux équipes qui ont besoin d'une classification de texte performante mais **ne peuvent pas déployer de gros modèles** : peu de CPU, contraintes de latence sur des appels unitaires, environnements fermés. Au-delà de l'APE, elle sert à l'Insee pour d'autres nomenclatures, comme la COICOP pour les libellés de produits des tickets de caisse. Elle a vocation à devenir un outil commun de codification automatique pour la statistique publique.
+
+### Dans le pipeline APE
+
+- `codif-ape-train` construit et entraîne le modèle avec TTC, puis l'encapsule dans le `pyfunc` MLflow.
+- `codif-ape-api` installe TTC pour pouvoir charger ce `pyfunc`, mais ne l'appelle pas directement.
+- Par rapport à fastText, TTC donne le même taux de codification automatique, avec une bien meilleure calibration, de l'explicabilité et l'entraînement sur GPU, pour un temps d'inférence qui reste dans le budget (voir @tbl-ft-vs-ttc).
 
 ## Entraînement
 
-L'entraînement est assuré par [codif-ape-train](https://github.com/InseeFrLab/codif-ape-train), avec les réglages suivants :
+L'entraînement se fait dans [codif-ape-train](https://github.com/InseeFrLab/codif-ape-train) :
 
-- **Configuration** : Hydra, qui gère le choix de la nomenclature (NAF rév. 2 ou NAF 2025), du modèle, du tokenizer et de l'optimisation.
-- **Cadre logiciel** : PyTorch Lightning.
+- **Configuration** : Hydra, pour choisir la nomenclature (NAF rév. 2 ou NAF 2025), le modèle, le tokenizer et les paramètres d'optimisation.
+- **Framework** : PyTorch Lightning.
   - Optimiseur : Adam.
-  - Taux d'apprentissage : réduit lorsque la perte de validation stagne.
-  - Arrêt précoce (*early stopping*) sur la perte de validation.
-  - Le meilleur point de sauvegarde (*checkpoint*) est conservé.
-- **Pondération des observations** : les lignes créées par les règles métier ou tirées de certaines sources peuvent être sur- ou sous-pondérées dans la fonction de perte (voir [Protocole de réentraînement](retraining.qmd#sec-assembly)).
-- **Exécution** : un workflow Argo tourne sur un nœud GPU et entraîne en parallèle les modèles NAF rév. 2 et NAF 2025. Chaque exécution part d'un clone propre du dépôt et d'un environnement verrouillé.
-- **Suivi** : chaque exécution enregistre dans MLflow :
+  - Learning rate réduit quand la loss de validation stagne.
+  - Early stopping sur la loss de validation.
+  - On garde le meilleur checkpoint.
+- **Pondération des observations** : les lignes créées par les règles métier ou issues de certaines sources peuvent être sur- ou sous-pondérées dans la loss (voir [Protocole de réentraînement](retraining.qmd#sec-assembly)).
+- **Exécution** : un workflow Argo tourne sur un nœud GPU et entraîne en parallèle les modèles NAF rév. 2 et NAF 2025. Chaque run part d'un clone propre du dépôt et d'un environnement figé.
+- **Tracking** : chaque run enregistre dans MLflow :
   - la configuration complète ;
   - ses jeux de données d'entrée ;
-  - les courbes d'apprentissage ;
+  - les learning curves ;
   - les métriques d'évaluation et les figures de diagnostic ;
-  - le modèle empaqueté.
+  - le modèle packagé.
 
-## Indice de confiance et calibration
+## Indice de confiance et calibration {#sec-calibration}
 
 Pour chaque déclaration, le modèle renvoie ses cinq codes les plus probables et leurs probabilités. La décision de coder automatiquement repose sur un **indice de confiance (IC)** : l'écart entre les deux plus fortes probabilités, $\text{IC} = p_{(1)} - p_{(2)}$.
 
 - Si l'IC est supérieur ou égal à un seuil $\tau$, le premier code est attribué automatiquement.
 - Sinon, la déclaration part en reprise manuelle : un gestionnaire la code, en voyant les cinq suggestions.
 
-Le seuil règle l'arbitrage entre **taux de codification automatique** et **exactitude de la codification automatique**. Avec fastText, un seuil d'environ 0,75 envoyait environ 20 % des déclarations en reprise manuelle [@randriamanana2025jms]. La distribution des scores change d'un modèle à l'autre : le seuil doit donc être **recalibré pour chaque nouveau modèle**, sur un échantillon représentatif. Reprendre le seuil précédent déplacerait la charge de reprise manuelle de façon non maîtrisée.
+Le seuil fixe le compromis entre **taux de codification automatique** et **accuracy de la codification automatique**. Avec fastText, un seuil d'environ 0,75 envoyait environ 20 % des déclarations en reprise manuelle [@randriamanana2025jms]. La distribution des scores change d'un modèle à l'autre : il faut donc **recalibrer le seuil pour chaque nouveau modèle**, sur un échantillon représentatif. Garder l'ancien seuil ferait varier la charge de reprise manuelle sans contrôle.
 
-D'où l'importance de la **calibration** : une probabilité de 0,9 doit être juste dans environ 90 % des cas. Les scores « un contre tous » de fastText étaient mal calibrés. Le modèle PyTorch, entraîné avec une perte d'entropie croisée sur un softmax, est bien calibré d'emblée, comme l'a montré une mesure sur un échantillon de test de 300 000 libellés [@tayebjee2025jms]. La calibration est mesurée à chaque exécution par l'erreur de calibration attendue (ECE) et le score de Brier.
+D'où l'importance de la **calibration** : une probabilité de 0,9 doit être juste dans environ 90 % des cas. Les scores *one-vs-all* de fastText étaient mal calibrés. Le modèle PyTorch, entraîné avec une cross-entropy sur un softmax, est bien calibré d'emblée, comme l'a montré une mesure sur 300 000 libellés de test [@tayebjee2025jms]. La calibration est mesurée à chaque run par l'ECE (*expected calibration error*) et le score de Brier. Pour aller au-delà d'un simple seuil, la prédiction conforme est explorée dans les [Perspectives](#sec-conformal).
 
 ## Évaluation
 
-Chaque exécution produit, sur les données de validation et de test :
-
-- l'**exactitude à chaque niveau** de la nomenclature, de la section (niveau 1) à la sous-classe (niveau 5), car une erreur qui reste dans la bonne division coûte moins cher qu'une erreur qui change de section ;
-- la **calibration** : ECE, score de Brier, histogramme des confiances ;
-- la **courbe exactitude–automatisation** : l'exactitude des cas codés automatiquement en fonction de la part de cas codés automatiquement, lorsque le seuil varie. C'est sur cette courbe que le métier choisit son point de fonctionnement.
-
-::: {.callout-important}
-## Évaluer sur les bonnes données
-Les métriques calculées sur un jeu de test tiré des données d'entraînement sont optimistes, car ses labels partagent les biais des labels d'entraînement. Elles ne sont pas non plus représentatives du flux de production. La décision de déployer repose donc sur un **« golden set »** : un échantillon de référence tiré aléatoirement dans le flux de production et annoté à l'aveugle par des experts, qui ne voient pas la prédiction du modèle. Voir [Protocole de réentraînement](retraining.qmd#sec-golden).
-:::
+Chaque entraînement enregistre l'accuracy à chaque niveau de la nomenclature, des mesures de calibration et la courbe accuracy–taux d'automatisation. Ce que mesurent ces métriques, sur quelles données elles sont calculées et comment juger un modèle : tout cela est présenté dans le chapitre [Évaluation](evaluation.qmd).
 
 ## Résultats {#sec-results}
 
@@ -90,24 +136,71 @@ Les métriques calculées sur un jeu de test tiré des données d'entraînement 
 | Taux de codification automatique | ~80 % | ~80 % |
 | Temps moyen d'inférence (CPU, appel unitaire) | < 100 ms | < 300 ms |
 | Calibration | Limitée | Excellente |
-| Variables catégorielles | Ajoutées au texte | Plongements dédiés |
-| Explicabilité | Aucune | Gradients intégrés, attention sur les labels |
+| Variables catégorielles | Ajoutées au texte | Embeddings dédiés |
+| Explicabilité | Aucune | Integrated gradients, label attention |
 | Entraînement sur GPU | Non | Oui |
-| Maintenance | Archivé par l'éditeur (2024) | Maintenu en interne, open source |
+| Maintenance | Archivé par Meta (2024) | Maintenu en interne, open source |
 
 : Comparaison des deux générations de modèles [@tayebjee2025jms]. {#tbl-ft-vs-ttc}
 
-Le modèle PyTorch sacrifie un peu de latence au profit de la maintenabilité, de la calibration et de la capacité d'évolution. Sa latence reste dans le budget de production.
+Le modèle PyTorch perd un peu en latence mais gagne en maintenabilité, en calibration et en possibilités d'évolution. Sa latence reste dans le budget de production.
 
 ### NAF 2025
 
-Exactitude sur le jeu de test du réentraînement en NAF 2025, par niveau [@randriamanana2025jms] :
+Accuracy sur le jeu de test après réentraînement en NAF 2025, par niveau [@randriamanana2025jms] :
 
 | Modèle | Section | Division | Groupe | Classe | Sous-classe |
 |---|---|---|---|---|---|
 | fastText | 0,855 | 0,833 | 0,797 | 0,784 | 0,776 |
 | torchTextClassifiers | 0,92 | 0,89 | 0,86 | 0,84 | 0,83 |
 
-: Exactitude sur le jeu de test des modèles réentraînés sur les données NAF 2025, avant correction des données. {#tbl-naf2025}
+: Accuracy sur le jeu de test des modèles réentraînés sur les données NAF 2025, avant correction des données. {#tbl-naf2025}
 
-L'application des règles métier aux données d'entraînement (correction des données, ou *data editing*) a porté l'exactitude au niveau de la sous-classe à environ 0,88–0,90 pour les deux modèles. Le gain est important, mais il doit être interprété avec prudence. Les règles modifient aussi les labels de test : une partie du gain traduit donc un meilleur alignement sur les règles plutôt qu'une meilleure généralisation. Le [protocole de réentraînement](retraining.qmd) est justement conçu pour distinguer ces deux effets.
+Après application des règles métier aux données d'entraînement (*data editing*), l'accuracy au niveau sous-classe monte à environ 0,88–0,90 pour les deux modèles. Le gain est important, mais à prendre avec prudence : les règles modifient aussi les labels de test, donc une partie du gain reflète un meilleur alignement sur les règles plutôt qu'une meilleure généralisation. Le [protocole de réentraînement](retraining.qmd) est justement conçu pour séparer ces deux effets.
+
+## Perspectives {#sec-future}
+
+Le modèle de production est volontairement simple. Deux pistes cherchent à aller plus loin sans sortir des [contraintes de production](context.qmd#contraintes-de-production) : une architecture plus riche, et une meilleure exploitation de l'incertitude du modèle.
+
+### Architecture : le stage de Julien Bernardi {#sec-internship}
+
+Le stage de Julien Bernardi (SSP Lab, 2026) a benchmarké des architectures légères construites avec torchTextClassifiers. Le rapport est en ligne sur [julber95.github.io/interpretable-text-classification](https://julber95.github.io/interpretable-text-classification/) (en anglais). Il s'agit d'un travail exploratoire.
+
+**Valider torchTextClassifiers.** Avant la NAF, les architectures ont été entraînées sur deux benchmarks publics dont les résultats de référence sont connus : des avis Amazon (5 classes) et CLINC150 (150 intentions). Sur les avis Amazon, les modèles les plus profonds atteignent environ 62–63 % d'accuracy, proche des 63,3 % de BERT multilingue, contre environ 59 % pour le modèle de type fastText. Ces résultats ont validé l'implémentation de la librairie.
+
+**Innovations d'architecture.** Le stage a comparé trois extensions du modèle de production de type fastText :
+
+- **FATE** (*FastText Attentive Transformer Encoder*) : des couches de self-attention sur les embeddings des tokens, avant le pooling. La loss baisse sur les avis Amazon, mais rien ne change sur CLINC150 ;
+- la **label attention** : une requête apprise par classe remplace la moyenne, pour que le modèle regarde les mots qui comptent pour chaque code candidat ;
+- la **classification multiniveau** : une tête par niveau de la nomenclature, entraînées ensemble.
+
+Sur la NAF 2025, les principaux résultats sont les suivants :
+
+- **La label attention a besoin de données.** Avec 160 000 libellés d'entraînement, elle est nettement derrière le modèle de type fastText. Sur tout le jeu d'entraînement (1,2 million de libellés), elle le rattrape, voire le dépasse légèrement, mais son entraînement est 3 à 6 fois plus long.
+- **Ses poids d'attention expliquent bien la prédiction.** Supprimer les mots sur lesquels elle se concentre fait baisser la probabilité prédite plus vite que supprimer ceux choisis par les integrated gradients.
+- **Les têtes multiniveaux aident quand la sous-classe est fausse.** Aux niveaux agrégés, elles font mieux qu'une simple troncature de la sous-classe prédite. Parmi les sous-classes mal prédites, la part fausse à tous les niveaux passe d'environ 47 % à 29–34 %. Au niveau sous-classe, les deux approches font jeu égal.
+- **Pour les codes rares, les données comptent plus que l'architecture.** L'accuracy d'une sous-classe dépend surtout de son nombre d'exemples d'entraînement.
+
+Comme pour les options déjà présentes dans la librairie ([plus haut](#architecture)), une innovation n'est retenue que si elle tient dans le budget de latence sur CPU, que le stage n'a pas mesuré, et passe les [critères de validation](retraining.qmd#sec-gates) du protocole de réentraînement. Les têtes multiniveaux suggèrent un usage encore non testé : quand la sous-classe est incertaine, proposer au gestionnaire une division ou une classe fiable.
+
+### Prédiction conforme {#sec-conformal}
+
+L'[indice de confiance](#sec-calibration) répond à une seule question : peut-on coder automatiquement cette déclaration ? Il dit peu de choses sur les cas envoyés en reprise manuelle. Le gestionnaire voit toujours les cinq mêmes suggestions, que le modèle hésite entre deux codes ou qu'il n'en ait aucune idée.
+
+La **prédiction conforme** (*conformal prediction*) [@angelopoulos2023gentle] remplace cette liste fixe par une garantie statistique. Un seuil est calculé sur un jeu de calibration, mis de côté à l'entraînement. Pour un nouveau libellé, le modèle renvoie alors un **ensemble de codes** qui contient le bon code avec une probabilité d'au moins $1 - \alpha$, par exemple 95 %. La garantie vaut quel que soit le modèle, à condition que les données de calibration et de production soient échangeables. La taille de l'ensemble porte l'incertitude : un ou deux codes quand le modèle est sûr, beaucoup plus quand il ne l'est pas.
+
+Un travail exploratoire dans codif-ape-train ([`src/conformal_pred`](https://github.com/InseeFrLab/codif-ape-train/tree/main/src/conformal_pred)) applique la prédiction conforme *split* au modèle entraîné :
+
+- **Calibration sur les seuls cas en reprise.** On ne garde que les déclarations de validation dont l'IC est sous le seuil, celles qui partiraient en reprise manuelle. Cette sélection ne dépend que de la sortie du modèle, donc la garantie tient toujours sur ce sous-ensemble. Elle porte ainsi exactement sur les déclarations que voient les gestionnaires.
+- **Trois scores** sont comparés :
+  - $1 - \hat{p}(y \mid x)$, qui donne en général les ensembles les plus petits ;
+  - la probabilité cumulée des codes classés jusqu'au vrai code (*adaptive prediction sets*, @romano2020classification), qui adapte la taille de l'ensemble à la difficulté de chaque cas ;
+  - le rang du vrai code, ce qui revient à choisir avec une garantie la longueur $k$ d'une liste top $k$.
+- **Évaluation** sur le jeu de test, par la couverture empirique et la taille moyenne des ensembles.
+
+Plusieurs questions restent ouvertes avant tout usage en production :
+
+- **Couverture conditionnelle.** La garantie est marginale : 95 % en moyenne sur l'ensemble des déclarations, peut-être beaucoup moins pour certaines sections. Calibrer séparément par section (prédiction conforme *Mondrian*) corrigerait ce point, au prix de davantage de données de calibration.
+- **Dérive.** La façon dont les déclarants décrivent leur activité évolue ([Monitoring](monitoring.qmd)), ce qui fragilise l'échangeabilité. Comme $\tau$, le seuil conforme doit être recalculé pour chaque nouveau modèle sur des données récentes, et sa couverture monitorée.
+- **Interface.** Un ensemble de taille variable change le contrat de l'API, qui renvoie aujourd'hui un top 5 fixe ([Mise en production](serving.qmd#lapi)), et l'interface de reprise manuelle.
+- **Choix de $\tau$.** Les mêmes outils pourraient fixer le seuil $\tau$ lui-même, avec une garantie sur le taux d'erreur de la codification automatique (*conformal risk control*, @angelopoulos2024crc).

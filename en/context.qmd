@@ -2,9 +2,11 @@
 title: "Context and history"
 description: "Why INSEE codes economic activity automatically, and how the system evolved from a rule engine to deep learning."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - Innovation Lab, Insee
 lang: en
 ---
 
@@ -12,13 +14,12 @@ lang: en
 
 Every business registered in France receives an **APE code** (*activité principale exercée*, principal activity). This code places the unit in the French activity classification, the **NAF** (*nomenclature d'activités française*), which is the national version of the European **NACE**. It is attached to the business's identifiers in the **Sirene** register, which INSEE has managed since 1973 and which is the legal reference for the SIREN and SIRET numbers.
 
-The APE code is not just an administrative label. It is used to:
+The APE code is used to:
 
 - build the sampling frames of business surveys and the structural business statistics;
-- produce national accounts and short-term indicators broken down by industry;
-- apply sector-specific regulation (collective agreements, insurance, some taxes and grants).
+- produce national accounts and short-term indicators broken down by industry.
 
-A coding error therefore spreads into statistics as well as into the administrative life of the business.
+A coding error therefore spreads into the statistics built on it.
 
 The classification is hierarchical, with five levels:
 
@@ -56,7 +57,7 @@ Each year, about **2 million** descriptions must be coded.
 |---|---|---|---|
 | 1990s → 2022 | **Sicore** | Deterministic rules, keyword dictionaries | The automation rate fell to about 30 % on free-text descriptions. The rules were costly to maintain. |
 | End of 2022 → 2025 | **fastText** | Supervised model (bag of words and character n-grams), with auxiliary variables added to the text as tokens | Meta archived the library in March 2024. It offered no calibration, no explainability and no GPU support. |
-| 2025 → | **PyTorch** ([torchTextClassifiers](companion-projects.qmd#sec-ttc)) | Same family of models, rebuilt in PyTorch: a dedicated embedding per categorical variable, calibration, explainability | Inference is somewhat slower than fastText, but still within budget. |
+| 2025 → | **PyTorch** ([torchTextClassifiers](model.qmd#sec-ttc)) | Same family of models, rebuilt in PyTorch: a dedicated embedding per categorical variable, calibration, explainability | Inference is somewhat slower than fastText, but still within budget. |
 
 : Successive APE coding engines. {#tbl-history}
 
@@ -64,7 +65,7 @@ Each year, about **2 million** descriptions must be coded.
 
 The **fastText** model went into production gradually from November 2022, with a deliberately conservative threshold at first. It brought the automation rate back to around **80 %**, which made the one-stop-shop reform workable.
 
-When Meta archived the fastText repository in March 2024, the team started moving to **PyTorch**. The move was also an opportunity to fix the model's structural weak points: how categorical variables were handled, calibration, and explainability. The result is the open-source package torchTextClassifiers, described in [Companion projects](companion-projects.qmd).
+When Meta archived the fastText repository in March 2024, the team started moving to **PyTorch**. The move was also an opportunity to fix the model's structural weak points: how categorical variables were handled, calibration, and explainability. The result is the open-source package torchTextClassifiers, described in the [Model](model.qmd#sec-ttc) chapter.
 
 ## Production constraints
 

@@ -4,17 +4,16 @@ lang: en
 number-sections: false
 toc: false
 page-layout: article
-# Sends readers to their language: the last one they chose with the navbar
-# switch (see style/lang-switch.html), otherwise their browser's language.
+# Sends readers to English, unless they last chose French with the navbar
+# switch (see style/nav.html).
 include-in-header:
   text: |
     <script>
     (function () {
-      var lang = null;
-      try { lang = localStorage.getItem("codif-ape-lang"); } catch (e) {}
-      if (lang !== "en" && lang !== "fr") {
-        lang = /^fr\b/i.test(navigator.language || "") ? "fr" : "en";
-      }
+      var lang = "en";
+      try {
+        if (localStorage.getItem("codif-ape-lang") === "fr") lang = "fr";
+      } catch (e) {}
       window.location.replace(lang + "/index.html" + window.location.hash);
     })();
     </script>

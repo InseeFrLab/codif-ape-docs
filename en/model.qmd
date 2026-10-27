@@ -2,17 +2,28 @@
 title: "Model"
 description: "A small, calibrated PyTorch text classifier with categorical variables, trained reproducibly and evaluated at every level of the classification."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - Innovation Lab, Insee
+  - name: Cédric Couralet
+    url: https://github.com/micedre
+    email: cedric.couralet@insee.fr
+    affiliations:
+      - Innovation Lab, Insee
 lang: en
+# The former chapter on TTC and GRAAL, now split between Model and Data.
+aliases:
+  - companion-projects.html
+  - companion-projects.html#sec-ttc
 ---
 
 ## Why a small model
 
 Large pre-trained language models such as CamemBERT were tested early in the project. On APE coding, they gave only a small gain over a fastText-style model: about 0.76 against 0.75 accuracy on the same test set [@faria2024estoril]. That gain did not justify their inference cost under the production constraints (unit calls, CPU only, a few hundred milliseconds).
 
-The production model is therefore a **shallow neural network** of about **one million parameters**, in the fastText family [@joulin2016]. It is now implemented in PyTorch with [torchTextClassifiers](companion-projects.qmd#sec-ttc).
+The production model is therefore a **shallow neural network** of about **one million parameters**, in the fastText family [@joulin2016]. It is now implemented in PyTorch with [torchTextClassifiers](#sec-ttc).
 
 ## Architecture
 
@@ -38,6 +49,50 @@ The model has three parts:
 
 The same library also supports self-attention layers, label attention and Hugging Face tokenizers. These options are evaluated on the validation set. A richer architecture is adopted only if it fits within the latency budget.
 
+## torchTextClassifiers {#sec-ttc}
+
+[torchTextClassifiers](https://github.com/InseeFrLab/torchTextClassifiers) ([documentation](https://inseefrlab.github.io/torchTextClassifiers/), [PyPI](https://pypi.org/project/torchtextclassifiers/)) is "a unified, extensible framework for text classification with categorical variables, built on PyTorch and PyTorch Lightning" [@couralet2025pydata]. It was born from the needs of APE coding and is developed as a general-purpose, open-source tool. It sits **on the critical path**: every prediction goes through it.
+
+### Why a dedicated library
+
+When Meta archived the fastText repository in March 2024, the production model was left depending on a compiled C++ library with no maintenance. fastText had other drawbacks:
+
+- auxiliary variables could only be handled by appending them to the text;
+- it offered no explainability;
+- its scores were poorly calibrated;
+- it could not train on GPU.
+
+A first PyTorch reimplementation, *torchFastText*, reproduced the fastText architecture. It then grew into a general framework and was renamed torchTextClassifiers in 2025.
+
+There is a reason why the model is a **package** rather than code inside the training repository. The same model class has to exist in the training repository, in the API, in production and in batch jobs. A versioned package on PyPI, mirrored in INSEE's internal repository manager, is the **single source of truth** shared by all of them.
+
+### Design
+
+The library splits a text classifier into interchangeable components:
+
+| Component | Options |
+|---|---|
+| Tokenizer | fastText-style character n-grams, WordPiece, or any Hugging Face tokenizer |
+| Token embedder | Embedding bag, optionally with self-attention layers ("make your own small BERT") |
+| Sentence embedder | Mean, first or last token, or **label attention** (one representation per class) |
+| Categorical variables | One embedding per variable, combined with the text by sum, average-and-concatenate, or concatenation |
+| Head | Linear classifier, multi-class or multi-label; a multi-level variant exploits the hierarchy |
+
+: torchTextClassifiers building blocks. {#tbl-ttc}
+
+A high-level wrapper takes care of encoding the raw categorical values and the labels, training (with optional sample weights), prediction with top-*k* outputs, and saving and loading. Two forms of explainability are built in:
+
+- token-level attributions with **integrated gradients** (Captum);
+- **label attention**, which shows which words drive each candidate class.
+
+The intended users are teams that need accurate text classification but **cannot deploy large models**: small CPU budgets, unit latency constraints, closed environments. Beyond APE, the library is used for other classifications at INSEE, such as COICOP for product descriptions on receipts. It aims to become a common tool for automatic coding in official statistics.
+
+### In the APE pipeline
+
+- `codif-ape-train` builds and trains the model with TTC, and wraps it in the MLflow `pyfunc`.
+- `codif-ape-api` installs TTC so that it can load that `pyfunc`, but does not call it directly.
+- Compared with fastText, TTC gives the same automation rate, much better calibration, explainability and GPU training, for an inference time that remains within budget (see @tbl-ft-vs-ttc).
+
 ## Training
 
 Training is run by [codif-ape-train](https://github.com/InseeFrLab/codif-ape-train), with these settings:
@@ -57,7 +112,7 @@ Training is run by [codif-ape-train](https://github.com/InseeFrLab/codif-ape-tra
   - the evaluation metrics and diagnostic figures;
   - the packaged model.
 
-## Confidence index and calibration
+## Confidence index and calibration {#sec-calibration}
 
 For each declaration, the model returns its five most likely codes and their probabilities. The decision to code automatically relies on a **confidence index (CI)**: the gap between the two highest probabilities, $\text{CI} = p_{(1)} - p_{(2)}$.
 
@@ -66,20 +121,11 @@ For each declaration, the model returns its five most likely codes and their pro
 
 The threshold sets the trade-off between **automation rate** and **accuracy of automatic coding**. With fastText, a threshold of about 0.75 sent roughly 20 % of declarations to manual coding [@randriamanana2025jms]. Since the score distribution changes from one model to the next, the threshold must be **recalibrated for every new model** on a representative sample. Reusing the previous threshold would shift the manual coding workload in an uncontrolled way.
 
-This is why **calibration** matters. A probability of 0.9 should be right about 90 % of the time. fastText's one-versus-all scores were poorly calibrated. The PyTorch model, trained with a softmax cross-entropy loss, is well calibrated out of the box, as measured on a test sample of 300,000 descriptions [@tayebjee2025jms]. Calibration is measured at every run with the expected calibration error (ECE) and the Brier score.
+This is why **calibration** matters. A probability of 0.9 should be right about 90 % of the time. fastText's one-versus-all scores were poorly calibrated. The PyTorch model, trained with a softmax cross-entropy loss, is well calibrated out of the box, as measured on a test sample of 300,000 descriptions [@tayebjee2025jms]. Calibration is measured at every run with the expected calibration error (ECE) and the Brier score. Going beyond a single threshold, conformal prediction is explored under [Future work](#sec-conformal).
 
 ## Evaluation
 
-Every run reports, on validation and test data:
-
-- **accuracy at each level** of the classification, from section (level 1) to sub-class (level 5), since a mistake that stays within the right division costs less than one across sections;
-- **calibration**: ECE, Brier score, histogram of confidence;
-- **the accuracy–automation curve**: accuracy of automatically coded cases as a function of the share of cases coded automatically, as the threshold varies. This is the curve the business uses to choose the operating point.
-
-::: {.callout-important}
-## Evaluating on the right data
-Metrics computed on a test split drawn from the training data are optimistic, since those labels share the biases of the training labels. They are also not representative of the production flow. The decision to deploy relies on a **golden set**: a random sample of the production flow, annotated by experts who do not see the model's prediction. See [Retraining protocol](retraining.qmd#sec-golden).
-:::
+Every training run logs accuracy at each level of the classification, calibration metrics and the accuracy–automation curve. What these metrics mean, which data they are computed on, and how a model is judged are covered in the [Evaluation](evaluation.qmd) chapter.
 
 ## Results {#sec-results}
 
@@ -111,3 +157,50 @@ Accuracy on the test set of the NAF 2025 retraining, by level [@randriamanana202
 : Test accuracy of the models retrained on NAF 2025 data, before data editing. {#tbl-naf2025}
 
 Applying business rules to the training data (data editing) raised sub-class accuracy to about 0.88–0.90 for both models. The gain is large but must be read with care: rules also change the test labels, so part of the gain reflects closer agreement with the rules rather than better generalisation. The [retraining protocol](retraining.qmd) is designed precisely to separate the two effects.
+
+## Future work {#sec-future}
+
+The production model is deliberately simple. Two lines of work look at how to go further without breaking the [production constraints](context.qmd#production-constraints): a richer architecture, and a better use of the model's uncertainty.
+
+### Architecture: Julien Bernardi's internship {#sec-internship}
+
+Julien Bernardi's internship (Innovation Lab, 2026) benchmarked lightweight architectures built with torchTextClassifiers. The report is online at [julber95.github.io/interpretable-text-classification](https://julber95.github.io/interpretable-text-classification/). This is exploratory work.
+
+**Validating torchTextClassifiers.** Before NAF, the architectures were trained on two public benchmarks with known reference results: Amazon reviews (5 classes) and CLINC150 (150 intents). On Amazon reviews, the deeper models reach about 62–63 % accuracy, close to the 63.3 % of multilingual BERT, against about 59 % for the fastText-style model. These results validated the library's implementation.
+
+**Architecture innovations.** The internship compared three extensions of the production fastText-style model:
+
+- **FATE** (*FastText Attentive Transformer Encoder*): self-attention layers on top of the token embeddings, before pooling. It lowers the loss on Amazon reviews, but brings nothing on CLINC150;
+- **label attention**: one learned query per class replaces mean pooling, so the model looks at the words that matter for each candidate code;
+- **multi-level classification**: one head per level of the classification, trained jointly.
+
+On NAF 2025, the main findings are:
+
+- **Label attention needs data.** With 160,000 training descriptions it is clearly behind the fastText-style model. On the full training set (1.2 million descriptions) it catches up, or slightly overtakes it, but takes 3 to 6 times longer to train.
+- **Its attention weights explain the prediction well.** Deleting the words it attends to lowers the predicted probability faster than deleting the words chosen by integrated gradients.
+- **Multi-level heads help when the sub-class is wrong.** At coarse levels, they beat simply truncating the predicted sub-class. Among wrong sub-class predictions, the share that is wrong at every level falls from about 47 % to 29–34 %. At the sub-class level, both approaches tie.
+- **Data matters more than architecture for rare codes.** The accuracy of a sub-class depends mainly on how many training examples it has.
+
+As for the options already in the library ([above](#architecture)), an innovation is adopted only if it fits within the CPU latency budget, which the internship did not measure, and passes the [quality gates](retraining.qmd#sec-gates) of the retraining protocol. Multi-level heads suggest an untested use: when the sub-class is uncertain, show the manual coder a reliable division or class.
+
+### Conformal prediction {#sec-conformal}
+
+The [confidence index](#sec-calibration) answers one question: can this declaration be coded automatically? It says little about the cases sent to manual coding. The coder always sees the same five suggestions, whether the model hesitates between two codes or has no idea.
+
+**Conformal prediction** [@angelopoulos2023gentle] replaces this fixed list with a statistical guarantee. A threshold is computed on a calibration set held out from training. For a new description, the model then returns a **set of codes** that contains the right one with probability at least $1 - \alpha$, for example 95 %. The guarantee holds for any model, provided the calibration data and the production data are exchangeable. The size of the set carries the uncertainty: one or two codes when the model is sure, many more when it is not.
+
+Exploratory work in codif-ape-train ([`src/conformal_pred`](https://github.com/InseeFrLab/codif-ape-train/tree/main/src/conformal_pred)) applies split conformal prediction to the trained model:
+
+- **Calibration on manual cases only.** Only validation declarations whose CI is below the threshold, those that would go to manual coding, are used. This selection depends only on the model's output, so the guarantee still holds within the subset. It therefore applies exactly to the declarations that human coders see.
+- **Three scores** are compared:
+  - $1 - \hat{p}(y \mid x)$, which tends to give the smallest sets;
+  - the cumulative probability of the codes ranked up to the true one (*adaptive prediction sets*, @romano2020classification), which adapts the size of the set to the difficulty of each case;
+  - the rank of the true code, which amounts to choosing the length $k$ of a top-$k$ list with a guarantee.
+- **Evaluation** on the test set, by empirical coverage and mean set size.
+
+Several questions remain open before any production use:
+
+- **Conditional coverage.** The guarantee is marginal: 95 % on average over all declarations, possibly much less for some sections. Calibrating separately by section (Mondrian conformal prediction) would fix this, at the cost of more calibration data.
+- **Drift.** The way declarants describe their activity changes over time ([Monitoring](monitoring.qmd)), which weakens exchangeability. Like $\tau$, the conformal threshold must be recomputed for every new model on recent data, and its coverage must be monitored.
+- **Interface.** A set of variable size changes the API contract, which currently returns a fixed top 5 ([Serving](serving.qmd#the-api)), and the manual coding interface.
+- **Choosing $\tau$.** The same tools could set the threshold $\tau$ itself, with a guarantee on the error rate of automatic coding (conformal risk control, @angelopoulos2024crc).

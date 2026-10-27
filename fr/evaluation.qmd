@@ -1,0 +1,119 @@
+---
+title: "Évaluation"
+description: "Quelles métriques disent si on peut faire confiance à un modèle de codification, sur quelles données les calculer, et comment juger les moteurs auxiliaires et le temps d'inférence."
+author:
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
+    affiliations:
+      - SSP Lab, Insee
+lang: fr
+---
+
+## Au-delà de l'accuracy
+
+Un modèle à 95 % d'accuracy sur son jeu de test n'est pas forcément prêt pour la production. Sur 2 millions de libellés par an, 5 % d'erreurs, ce sont 100 000 codes faux. Ce qui compte, c'est de savoir **lesquels** arrivent dans le répertoire sans que personne ne les regarde. Une erreur faite avec une faible confiance est arrêtée par le seuil et part en reprise manuelle. Une erreur faite avec une forte confiance est codée automatiquement et entre directement dans les statistiques. L'accuracy dit à quelle fréquence le modèle a raison, pas **quand on peut lui faire confiance** [@tayebjee2026iaos].
+
+L'évaluation du modèle APE répond donc à quatre questions, dans cet ordre. Les notations sont celles du [protocole de réentraînement](retraining.qmd), rassemblées dans le [glossaire](glossary.qmd#sec-notation).
+
+| Question | Outil |
+|---|---|
+| Le modèle a-t-il raison, et ses erreurs tombent-elles près du bon code ? | Accuracy à chaque niveau de la nomenclature, macro-F1 |
+| Ses probabilités sont-elles fiables ? | Reliability diagram, ECE (*expected calibration error*), score de Brier |
+| Quelle part peut être codée automatiquement, avec quel taux d'erreur ? | Courbe risque–couverture, couverture à accuracy cible $p^*$ |
+| Respecte-t-il les contraintes de production ? | Latence, débit et mémoire, mesurés sur la plateforme de qualification |
+
+: Ce à quoi l'évaluation doit répondre. {#tbl-eval-questions}
+
+::: {.callout-note}
+Ce chapitre décrit comment juger le modèle. Certaines de ces métriques et de ces tests sont déjà calculés à chaque run, d'autres restent à mettre en place : voir l'[état des lieux](retraining.qmd#sec-status).
+:::
+
+## Métriques {#sec-metrics}
+
+### L'accuracy à chaque niveau
+
+Le modèle prédit une sous-classe, dont découlent tous les niveaux supérieurs. L'accuracy est donc calculée de la section (niveau 1) à la sous-classe (niveau 5). Une erreur qui reste dans la bonne division coûte moins cher qu'une erreur qui change de section : à accuracy égale sur la sous-classe, on préfère un modèle dont les erreurs restent proches du bon code.
+
+L'accuracy globale est tirée par les codes les plus fréquents. Le **macro-F1** et l'accuracy sur les classes rares montrent si le modèle néglige la longue traîne de la nomenclature.
+
+### La calibration
+
+Une probabilité de 0,8 doit être juste dans environ 80 % des cas. Calibration et accuracy sont deux choses différentes : les réseaux de neurones modernes ont tendance à être performants mais trop sûrs d'eux (*overconfident*) [@guo2017calibration]. La calibration se vérifie avec :
+
+- le **reliability diagram**, qui compare, par tranche de confiance, l'accuracy observée à la confiance annoncée ;
+- l'**ECE** (*expected calibration error*), l'écart moyen pondéré entre les deux ;
+- le **score de Brier**, qui combine calibration et pouvoir discriminant.
+
+Un modèle mal calibré se corrige sans réentraînement, avec des méthodes post-hoc comme le *temperature scaling* ou la régression isotonique. Le modèle PyTorch actuel est bien calibré d'emblée (voir [Modèle](model.qmd#sec-calibration)).
+
+### Risque–couverture : choisir le seuil
+
+Le seuil $\tau$ sur l'indice de confiance coupe le flux en deux. La **couverture** est la part des libellés codés automatiquement, le **risque** le taux d'erreur parmi eux. Relever $\tau$ fait baisser les deux. La **courbe risque–couverture** montre ce compromis pour tous les seuils [@geifman2017selective] :
+
+- un meilleur modèle a une courbe plus basse, quelle que soit la couverture ;
+- l'aire sous la courbe (**AURC**) la résume en un seul chiffre ;
+- l'indicateur métier est la **couverture à accuracy cible $p^*$** : la part qu'on peut automatiser en gardant une accuracy d'au moins $p^*$ sur la codification automatique.
+
+Cette courbe remplace la question « le modèle est-il bon ? » par « combien de reprise manuelle fait-il économiser, pour un risque qu'on accepte ? ». Le choix de $p^*$ est une décision métier ; la courbe n'en donne que le prix.
+
+### La stabilité dans le temps
+
+Toutes ces métriques sont aussi calculées **par trimestre** du *golden set*. Un modèle dont la couverture à $p^*$ baisse lentement est en train de dériver, même si son accuracy moyenne a l'air stable. Entre deux vagues d'annotation, les signaux qui ne demandent pas de label (distribution de l'indice de confiance, taux de codification automatique) prennent le relais (voir [Monitoring](monitoring.qmd)).
+
+## Évaluer sur les bonnes données {#sec-eval-data}
+
+Une métrique ne vaut que par l'échantillon sur lequel elle est calculée.
+
+- **Un jeu de test tiré des données d'entraînement** est optimiste : ses labels ont les mêmes biais que ceux d'entraînement, et sa composition n'est pas celle du flux de production. Il ne sert qu'au développement.
+- **Le *golden set*** est un échantillon aléatoire du flux de production, annoté par des experts qui ne voient pas la prédiction du modèle. C'est le seul échantillon sur lequel les métriques ci-dessus reflètent ce qui se passe en production. Il est coupé une fois pour toutes en $\bar{G}^{\text{val}}$, qui sert à tous les choix, et $\bar{G}^{\text{test}}$, réservé au verdict final (voir [Protocole de réentraînement](retraining.qmd#sec-golden)).
+- **Les libellés jamais vus.** Le flux est répétitif : beaucoup de libellés du *golden set* sont aussi dans les données d'entraînement. Les métriques sont donc aussi calculées sur les libellés absents de l'entraînement, pour mesurer la généralisation plutôt que la mémorisation.
+- **Les cas connus** $K_n$, et leurs variantes reformulées, ne sont pas un échantillon : ce sont des tests unitaires que le modèle doit passer (voir [Quality gates](retraining.qmd#sec-gates)).
+- **Les reprises manuelles** ne sont jamais un jeu d'évaluation : elles sont sélectionnées sur les échecs du modèle.
+
+L'accord inter-annotateurs mesuré pendant la campagne NAF 2025 donne le plafond : trois experts ne tombent d'accord sur la sous-classe que dans environ 62 % des cas (voir [Données](data.qmd#sec-naf2025)). Il faut l'avoir en tête en lisant n'importe quelle métrique.
+
+## Incertitude et comparaisons
+
+Le *golden set* est petit par rapport à 750 classes. Chaque métrique est donc donnée avec un **intervalle de confiance** (Wilson ou bootstrap), et deux modèles sont comparés par un **test apparié** (McNemar ou bootstrap apparié) sur les mêmes libellés. Un nouveau modèle est accepté sur un critère de **non-infériorité**, pas parce que son estimation ponctuelle se trouve être un peu plus haute (voir [Quality gates](retraining.qmd#sec-gates)).
+
+Des scores obtenus sur des *golden sets* différents ne se comparent pas. Pour suivre les progrès dans le temps, on réévalue tous les anciens modèles sur le dernier $\bar{G}^{\text{test}}$.
+
+## Évaluer les moteurs auxiliaires {#sec-eval-engines}
+
+Deux briques proposent des codes sans intervention humaine : les agents LLM de [GRAAL](data.qmd#sec-graal) et le volet probabiliste (fuzzy matching et similarité sémantique) du [moteur de règles](data.qmd#sec-rules) de codif-ape-preprocess. Comme toutes deux alimentent le prochain jeu d'entraînement, il faut les évaluer avant d'utiliser leurs codes. Le volet déterministe du moteur de règles, lui, relève d'une autre logique : il encode les cas connus $K_n$ validés par les experts et se vérifie comme un test unitaire.
+
+Pour ces moteurs, l'accuracy globale n'est **pas** la bonne question. Un moteur moins bon que le modèle de production sur l'ensemble du flux peut être très utile s'il a raison là où le modèle se trompe. Le critère est **conditionnel et comparatif** (voir [Protocole de réentraînement](retraining.qmd#sec-curation)) :
+
+- sur $\bar{G}^{\text{val}}$, restreint aux cas codés automatiquement sur lesquels le moteur est en **désaccord** avec le modèle de production, qui a raison le plus souvent ?
+- comparer les moteurs à **couverture égale**, car un moteur qui s'abstient souvent gagne mécaniquement sur la zone de désaccord ;
+- pour chaque extension de règle, mesurer combien de lignes elle touche et sa précision sur $\bar{G}^{\text{val}}$, et écarter celles qui ratissent trop large ou se trompent trop.
+
+GRAAL a son propre module d'évaluation (métriques à chaque niveau, échantillons stratifiés pondérés, intervalles par bootstrap, tests appariés) : le même protocole s'applique donc à ses versions successives.
+
+## Des choix d'architecture pour la confiance
+
+Certaines fonctionnalités du modèle servent surtout à améliorer les métriques ci-dessus, ou à rendre les erreurs plus faciles à traiter [@tayebjee2026iaos]. Les deux suivantes sont disponibles dans [torchTextClassifiers](model.qmd#sec-ttc) :
+
+- **Des têtes multiniveaux.** Avec une tête de classification par niveau de la nomenclature, un modèle qui hésite peut se rabattre sur le niveau le plus fin dont il est sûr (une classe ou un groupe plutôt qu'une sous-classe fausse). On limite ainsi les erreurs qui sortent de la bonne section.
+- **La label attention.** Chaque code a sa propre lecture du libellé, ce qui montre les mots qui pèsent pour chaque candidat. Un gestionnaire voit pourquoi le modèle hésite.
+
+Le [stage de Julien Bernardi](model.qmd#sec-internship) a donné une première évaluation de ces deux options sur la NAF 2025. Parmi les sous-classes mal prédites, les têtes multiniveaux font passer la part fausse à tous les niveaux d'environ 47 % à 29–34 %. La label attention donne des explications plus fidèles que les integrated gradients, mais il lui faut tout le jeu d'entraînement pour égaler le modèle de type fastText, et son entraînement est 3 à 6 fois plus long. Le repli sur un niveau plus agrégé quand le modèle hésite n'a pas encore été testé.
+
+C'est avec les métriques de ce chapitre, sur $\bar{G}^{\text{val}}$ et dans le budget de latence, qu'on décide si ces options valent le coup pour la codification APE.
+
+## Temps d'inférence et autres métriques de production {#sec-eval-nonfunctional}
+
+Un modèle performant mais trop lent ne peut pas être déployé. Avec les contraintes de production (appels unitaires, CPU uniquement, environnement fermé), les mesures suivantes font partie de l'évaluation :
+
+| Métrique | Pourquoi elle compte |
+|---|---|
+| Latence d'un appel unitaire (médiane, p95, p99) | Chaque déclaration attend le modèle dans la chaîne de traitement du répertoire |
+| Débit en batch | Recodages en masse, par exemple après un changement de nomenclature |
+| Empreinte mémoire | Fixe le nombre de réplicas qu'un nœud peut accueillir |
+| Temps de démarrage | Le chargement du modèle et de son tokenizer retarde chaque redémarrage et chaque déploiement |
+| Cohérence online / offline | Le modèle servi doit reproduire exactement les prédictions hors ligne |
+
+: Métriques non fonctionnelles. {#tbl-eval-nonfunctional}
+
+Ces chiffres n'ont de sens que sur le même matériel et la même pile logicielle qu'en production. Mesurés dans un notebook ou sur un nœud GPU, ils disent peu de chose du CPU de production, de ses limites de ressources et de ses contraintes réseau. On les mesure donc sur la **plateforme de qualification**, qui reproduit la production (voir [Défis organisationnels et d'infrastructure](organisation.qmd#sec-qualification-platform)). Pour mémoire, le modèle PyTorch actuel reste sous 300 ms par appel unitaire sur CPU, contre moins de 100 ms pour fastText (voir [Modèle](model.qmd#tbl-ft-vs-ttc)).

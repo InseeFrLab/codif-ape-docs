@@ -1,16 +1,21 @@
 ---
 title: "Données"
-description: "Données d'entraînement, nettoyage des labels par un moteur de règles auditable, et passage à la NAF 2025."
+description: "Données d'entraînement, nettoyage des labels par un moteur de règles auditable, passage à la NAF 2025 et données synthétiques."
 author:
-  - name: SSP Lab
+  - name: Meilame Tayebjee
+    url: https://github.com/meilame-tayebjee
+    email: meilame.tayebjee@insee.fr
     affiliations:
-      - Insee
+      - SSP Lab, Insee
 lang: fr
+# GRAAL used to be in the chapter on companion projects.
+aliases:
+  - companion-projects.html#sec-graal
 ---
 
 ## Données d'entraînement
 
-Le modèle apprend à partir des déclarations passées, conservées dans le répertoire Sirene. Chaque observation comprend :
+Le modèle apprend sur les déclarations passées, conservées dans le répertoire Sirene. Chaque observation contient :
 
 - le **libellé d'activité** : texte libre saisi par le déclarant, parfois complété de précisions sur une activité secondaire ou agricole ;
 - des **variables annexes** issues du formulaire de déclaration :
@@ -21,76 +26,202 @@ Le modèle apprend à partir des déclarations passées, conservées dans le ré
   - le caractère permanent ou saisonnier de l'activité (`CRT`) ;
 - le **code APE** attribué, automatiquement ou par un gestionnaire.
 
-Les premiers modèles ont été entraînés sur environ 10 millions de déclarations issues de l'ancien répertoire (2014–2022). Depuis le passage au nouveau répertoire et à la NAF 2025, la base d'entraînement est constituée d'environ **2,7 millions** de déclarations récentes [@randriamanana2025jms].
+Les premiers modèles ont été entraînés sur environ 10 millions de déclarations issues de l'ancien répertoire (2014–2022). Depuis le passage au nouveau répertoire et à la NAF 2025, la base d'entraînement compte environ **2,7 millions** de déclarations récentes [@randriamanana2025jms].
 
 ::: {.callout-warning}
 ## Les labels ne sont pas une vérité terrain
-Les labels historiques proviennent de Sicore, des versions précédentes du modèle et de gestionnaires travaillant sous contrainte de temps. Certains sont faux, d'autres se contredisent : un même libellé peut porter des codes différents. La qualité des labels compte autant que l'architecture du modèle. Deux composants s'en chargent : le moteur de règles (ci-dessous) et les campagnes d'annotation ([Suivi](monitoring.qmd)).
+Les labels historiques viennent de Sicore, des versions précédentes du modèle et de gestionnaires qui travaillent dans l'urgence. Certains sont faux, d'autres se contredisent : un même libellé peut avoir des codes différents. La qualité des labels compte autant que l'architecture du modèle. Deux outils s'en occupent : le moteur de règles (ci-dessous) et les campagnes d'annotation ([Monitoring](monitoring.qmd)).
 :::
 
 ## Nettoyage des labels : un moteur de règles auditable {#sec-rules}
 
-[codif-ape-preprocess](https://github.com/InseeFrLab/codif-ape-preprocess) applique des **règles métier** aux données d'entraînement avant chaque entraînement. Une règle traduit en code une connaissance des experts métier. Par exemple, les activités de location meublée désignées par le sigle « LMNP », les sociétés holding, les chauffeurs VTC et les taxis sont chacun orientés vers un code précis.
+[codif-ape-preprocess](https://github.com/InseeFrLab/codif-ape-preprocess) applique des **règles métier** aux données avant chaque entraînement. Une règle, c'est un savoir des experts métier traduit en code. Par exemple, les locations meublées désignées par le sigle « LMNP », les holdings, les chauffeurs VTC et les taxis sont chacun envoyés vers un code précis.
 
-Une règle peut agir de trois façons :
+Une règle peut faire trois choses :
 
 | Type | Effet | Exemple |
 |---|---|---|
-| **Modifier** | Réétiqueter les lignes qui correspondent à un motif | Libellés mentionnant une activité de holding passive → le code dédié aux holdings |
-| **Augmenter** | Ajouter des lignes synthétiques, pondérées, pour que le modèle apprenne un cas qu'il voit rarement | Une ligne « LMNP » par catégorie juridique, pour que toutes soient couvertes |
+| **Modifier** | Changer le label des lignes qui correspondent à un pattern | Libellés mentionnant une activité de holding passive → le code dédié aux holdings |
+| **Augmenter** | Ajouter des lignes synthétiques pondérées, pour que le modèle apprenne un cas qu'il voit rarement | Une ligne « LMNP » par catégorie juridique, pour que toutes soient couvertes |
 | **Supprimer** | Retirer les lignes inexploitables | Codes absents de la nomenclature cible |
 
 : Types de règles. {#tbl-rule-types}
 
-Les règles sont des fonctions Python enregistrées à l'aide d'un décorateur. Chacune porte un nom, des tags et une description. Une règle repère les libellés concernés par une ou plusieurs de ces trois méthodes :
+Les règles sont des fonctions Python enregistrées via un décorateur, chacune avec un nom, des tags et une description. Pour repérer les libellés concernés, une règle utilise une ou plusieurs de ces trois méthodes :
 
-- des **expressions régulières** sur le texte normalisé ;
-- une **correspondance approximative** (*fuzzy matching*), pour absorber les fautes de frappe ;
-- une **similarité sémantique**, à partir d'un modèle de plongements de phrases calculé sur GPU.
+- des **regex** sur le texte normalisé ;
+- du **fuzzy matching**, pour absorber les fautes de frappe ;
+- de la **similarité sémantique**, avec un modèle d'embeddings de phrases qui tourne sur GPU.
 
-Les correspondances approximative et sémantique étendent une règle aux libellés proches de ceux listés par les experts. Chaque règle définit les méthodes qu'elle autorise. Par exemple, une règle portant sur un sigle court est limitée à la correspondance exacte.
+Le fuzzy matching et la similarité sémantique étendent une règle aux libellés proches de ceux listés par les experts. Chaque règle choisit les méthodes qu'elle autorise : une règle sur un sigle court, par exemple, se limite au match exact.
 
-**Chaque modification est journalisée.** Pour chaque ligne modifiée, créée ou supprimée, un journal enregistre le code avant et après, la règle appliquée et le contexte de la déclaration. Ces journaux sont stockés à côté du jeu de données nettoyé. Tout label du jeu d'entraînement peut ainsi être retracé jusqu'à son origine.
+Le moteur de règles a donc deux volets, qui ne s'évaluent pas de la même façon :
 
-Les règles rendent **pérennes** les retours des experts. Une erreur corrigée uniquement par réentraînement peut réapparaître avec le modèle suivant. Une règle, elle, corrige définitivement tout le jeu d'entraînement, et la correction est auditable. La création, la vérification et la propagation des règles sont décrites dans le [protocole de réentraînement](retraining.qmd#sec-known-cases).
+- le **volet déterministe** (patterns exacts validés par les experts) encode les *cas connus*, notés $K_n$ dans le [protocole de réentraînement](retraining.qmd#sec-golden). Il se vérifie comme un test unitaire : le modèle doit le reproduire ;
+- le **volet probabiliste** (extensions par fuzzy matching et similarité sémantique) fait un pari sur des libellés qu'aucun expert n'a vus. C'est un moteur de codification automatique à part entière, dont la qualité doit être [mesurée](evaluation.qmd#sec-eval-engines) avant d'en garder les codes.
 
-## Découpage et versionnage
+**Chaque modification est loggée.** Pour chaque ligne modifiée, créée ou supprimée, on garde le code avant et après, la règle appliquée et le contexte de la déclaration. Ces logs sont stockés à côté du jeu de données nettoyé, si bien qu'on peut remonter à l'origine de n'importe quel label du jeu d'entraînement.
 
-Après nettoyage, la chaîne :
+Les règles rendent **durables** les retours des experts. Une erreur corrigée seulement par réentraînement peut revenir avec le modèle suivant. Une règle, elle, corrige une fois pour toutes l'ensemble du jeu d'entraînement, et la correction est traçable. La création, la vérification et la propagation des règles sont décrites dans le [protocole de réentraînement](retraining.qmd#sec-known-cases).
+
+## Splits et versionnage
+
+Après nettoyage, le pipeline :
 
 1. construit les variables finales : le libellé concaténé avec ses champs texte complémentaires, et les variables catégorielles ;
 2. découpe les données en jeux d'entraînement, de validation et de test ;
 3. écrit ces jeux sur S3, dans un dossier nommé d'après la date d'extraction ;
-4. inscrit ce dossier, avec la liste des variables, dans un fichier de configuration partagé, lu par le code d'entraînement.
+4. référence ce dossier, avec la liste des variables, dans un fichier de configuration partagé que lit le code d'entraînement.
 
-Chaque entraînement enregistre ses jeux de données d'entrée dans MLflow. Il est donc rattaché à un instantané exact des données.
+Chaque entraînement logge ses jeux de données d'entrée dans MLflow : on sait donc exactement sur quel snapshot des données il a tourné.
 
 ## Le passage à la NAF 2025 {#sec-naf2025}
 
-La révision européenne de la nomenclature d'activités (NACE Rév. 2.1, appelée NAF 2025 en France) s'applique à toutes les unités de Sirene au 1er janvier 2027. Le modèle doit donc être entraîné dans une nomenclature **dans laquelle aucune donnée historique n'a été codée**.
+La révision européenne de la nomenclature d'activités (NACE Rév. 2.1, NAF 2025 en France) s'applique à toutes les unités de Sirene au 1er janvier 2027. Il faut donc entraîner le modèle dans une nomenclature **dans laquelle aucune donnée historique n'a été codée**.
 
-### Le problème de la correspondance
+### Le problème de la table de passage
 
-La table de correspondance officielle entre la NAF rév. 2 et la NAF 2025 relie 732 anciennes sous-classes à 746 nouvelles [@randriamanana2025jms] :
+La table de passage officielle entre la NAF rév. 2 et la NAF 2025 relie 732 anciennes sous-classes à 746 nouvelles [@randriamanana2025jms] :
 
-- **551 correspondances univoques** : l'ancien code correspond à un seul nouveau code, et la traduction est mécanique ;
+- **551 correspondances univoques** : l'ancien code donne un seul nouveau code, le passage est mécanique ;
 - **181 correspondances multivoques** : l'ancien code éclate en plusieurs nouveaux codes (jusqu'à 38), et il faut lire le libellé pour choisir.
 
-Les codes multivoques ne représentent que 25 % des codes, mais ils couvrent **52 % des observations d'entraînement**, soit environ 1,4 million de lignes. Les experts métier ont d'abord requalifié certains « faux multivoques », où une cible domine nettement. Cette étape en a réglé environ un tiers. Il restait néanmoins environ 500 000 observations à recoder une à une.
+Les codes multivoques ne font que 25 % des codes, mais **52 % des observations d'entraînement**, soit environ 1,4 million de lignes. Les experts métier ont d'abord requalifié des « faux multivoques », où une cible domine nettement, ce qui en a réglé environ un tiers. Restaient tout de même environ 500 000 observations à recoder une par une.
 
 ### Les experts comme référence, les LLM pour le volume
 
-Le recodage a combiné expertise humaine et grands modèles de langage :
+Le recodage a combiné expertise humaine et LLM :
 
-1. **Annotation par les experts.** Environ 25 experts métier ont annoté quelque **30 000** libellés multivoques en NAF 2025, dans Label Studio, pendant environ cinq mois. La campagne a aussi fourni des mesures d'accord inter-annotateurs, qui fixent un plafond réaliste : trois experts indépendants ne s'accordent sur la sous-classe que dans 62 % des cas environ, alors qu'au moins deux d'entre eux s'accordent dans 96 % des cas.
-2. **Les LLM comme annotateurs virtuels.** Des LLM à poids ouverts, servis sur la plateforme avec vLLM, ont recodé les observations multivoques ([codif-ape-nace-revision](https://github.com/InseeFrLab/codif-ape-nace-revision)). Chaque prompt contenait le libellé, les codes NAF 2025 candidats et leurs **notes explicatives** (génération augmentée par le contexte). La sortie était contrainte par un schéma JSON. Plusieurs modèles ont été comparés aux annotations des experts. Le meilleur modèle isolé atteignait une exactitude d'environ 72 % au niveau de la sous-classe. Combiner les modèles, par vote ou en cascade, apportait quelques points de plus.
+1. **Annotation par les experts.** Environ 25 experts métier ont annoté quelque **30 000** libellés multivoques en NAF 2025, dans Label Studio, pendant environ cinq mois. La campagne a aussi permis de mesurer l'accord inter-annotateurs, ce qui donne un plafond réaliste : trois experts indépendants ne tombent d'accord sur la sous-classe que dans environ 62 % des cas, alors qu'au moins deux d'entre eux sont d'accord dans 96 % des cas.
+2. **Les LLM comme annotateurs virtuels.** Des LLM open-weight, servis sur la plateforme avec vLLM, ont recodé les observations multivoques ([codif-ape-nace-revision](https://github.com/InseeFrLab/codif-ape-nace-revision)). Chaque prompt contenait le libellé, les codes NAF 2025 candidats et leurs **notes explicatives**, directement dans le contexte, avec une sortie contrainte par un schéma JSON. Plusieurs modèles ont été comparés aux annotations des experts : le meilleur atteignait environ 72 % d'accuracy au niveau sous-classe, et combiner plusieurs modèles, par vote ou en cascade, faisait gagner quelques points.
 3. **Des règles métier** ont ensuite été appliquées par-dessus, via le [moteur de règles](#sec-rules), pour corriger les erreurs systématiques.
 
-Au total, environ 2,3 millions des 2,7 millions d'observations ont été reconstituées en NAF 2025. Des itérations ultérieures, avec des modèles à poids ouverts plus récents et un vote majoritaire, ont porté l'exactitude des LLM à environ 78 % [@pramil2026isi].
+Au total, environ 2,3 millions des 2,7 millions d'observations ont pu être recodées en NAF 2025. Par la suite, des modèles open-weight plus récents et un vote majoritaire ont fait monter l'accuracy des LLM à environ 78 % [@pramil2026isi].
 
 ::: {.callout-tip}
 ## Enseignement
-Les annotations d'experts sont coûteuses : mieux vaut les utiliser comme **référence**. Elles orientent le choix des prompts et des modèles et mesurent le résultat, tandis que les LLM apportent le volume. La confiance déclarée par un LLM lui-même s'est révélée un filtre peu fiable. L'accord entre plusieurs modèles est un meilleur signal.
+Les annotations d'experts coûtent cher : mieux vaut s'en servir comme **référence**, pour choisir les prompts et les modèles et pour mesurer le résultat, et laisser le volume aux LLM. La confiance qu'un LLM déclare lui-même s'est révélée un mauvais filtre ; l'accord entre plusieurs modèles est un bien meilleur signal.
 :::
 
-Le modèle réentraîné sur ces données est présenté dans le [chapitre suivant](model.qmd#sec-results).
+Le modèle réentraîné sur ces données est présenté dans le chapitre [Modèle](model.qmd#sec-results).
+
+## GRAAL {#sec-graal}
+
+[GRAAL](https://github.com/InseeFrLab/GRAAL) ([documentation](https://inseefrlab.github.io/GRAAL/)), *Graph-based Reasoning Agents for Automatic Labelling*, est un framework d'agents LLM qui codent du texte libre dans une nomenclature hiérarchique. Il repose sur deux briques :
+
+1. **la notice sous forme de graphe**, stockée dans la base de données orientée graphe [Neo4j](https://neo4j.com/) [@neo4j] ;
+2. **des tools** que les LLM appellent pour interroger ce graphe.
+
+Comme [torchTextClassifiers](model.qmd#sec-ttc), il est né des besoins de la codification APE et est développé comme un outil généraliste et open source. Mais contrairement à elle, GRAAL est **hors du chemin critique** : il travaille hors ligne, sur des données, pas sur des requêtes en temps réel. Il a sa place dans ce chapitre parce qu'il produit des codes.
+
+```{mermaid}
+%%| label: fig-graal
+%%| fig-cap: "Place de GRAAL dans le pipeline."
+flowchart LR
+  subgraph OFF["Hors ligne (batch)"]
+    GR["GRAAL<br/>agents LLM"]
+    PRE["Curation des données<br/>codif-ape-preprocess"]
+  end
+  subgraph CRIT["Chemin critique"]
+    TRN["Entraînement<br/>codif-ape-train"] --> MOD["Modèle<br/>(TTC)"] --> API["API<br/>codif-ape-api"]
+  end
+  GR -->|"recodage, audits,<br/>arbitrage, données synthétiques"| PRE
+  PRE --> TRN
+  API -->|"codes candidats,<br/>référence supervisée"| GR
+  API -->|"prédictions"| MON["Monitoring"]
+  MON -->|"cas à auditer"| GR
+```
+
+### Principe
+
+**Le graphe.** La notice complète est chargée dans Neo4j :
+
+- les codes et leurs libellés ;
+- les **notes explicatives** : inclusions, exclusions, exemples ;
+- les relations parent–enfant, ainsi qu'un index vectoriel sur les notes.
+
+**Les tools.** Les LLM n'accèdent au graphe que via des tools : descendre ou remonter la hiérarchie, lire les notes d'un code, chercher les notes les plus proches d'un texte. Ils parcourent ainsi la nomenclature comme le ferait un expert humain. Les agents décrits plus bas ne sont que des façons différentes de combiner ces tools. Toutes les entrées et sorties sont des modèles Pydantic typés. Les agents marchent avec n'importe quel endpoint compatible avec l'API OpenAI ; sur la plateforme, ce sont des modèles open-weight.
+
+Comme tout ce qu'il faut savoir de la nomenclature est dans le graphe, le framework est **indépendant de la nomenclature**. Des graphes existent pour la NAF 2025 (en français), la NACE Rev. 2.1 (en anglais) et la COICOP 2018.
+
+### Les agents
+
+| Famille | Agent | Rôle |
+|---|---|---|
+| *Texte → code* | **Navigator** | Parcourt la hiérarchie de la racine jusqu'à une feuille, en lisant les notes à chaque étape |
+| | **Agentic RAG** | Part d'une recherche vectorielle, puis vérifie et corrige avec le Navigator |
+| | **Summary agent** | Un seul agent, avec un résumé de toute la nomenclature dans son contexte |
+| *Arbitrage* | **CodeChooser** | Arbitre entre quelques codes candidats |
+| | **MatchVerifier** | Audite un couple (libellé, code) : est-il cohérent avec les notes ? Sinon, quel code convient mieux ? |
+| *Code → texte* | **Code2Text** | Génère des libellés synthétiques réalistes pour un code donné |
+
+: Agents de GRAAL. {#tbl-graal}
+
+GRAAL comprend aussi un module d'évaluation et des applications de revue où les experts métier jugent les verdicts des agents. Le module d'évaluation fournit des métriques à chaque niveau, des échantillons stratifiés pondérés, des intervalles de confiance par bootstrap et des tests appariés.
+
+### Rôle dans le pipeline
+
+GRAAL **ne remplace pas** le modèle de production. Les agents mettent de quelques secondes à quelques minutes par libellé et ont besoin de GPU pour le LLM, alors que la production demande environ 200 ms sur CPU. Sur les premiers benchmarks, ils ne faisaient d'ailleurs pas mieux que le modèle supervisé sur l'ensemble du flux. L'intérêt de GRAAL est ailleurs, dans quatre tâches hors ligne :
+
+1. **Recoder un stock après un changement de nomenclature.** L'essentiel des données d'entraînement NAF 2025 a été produit par un pipeline dédié, [codif-ape-nace-revision](https://github.com/InseeFrLab/codif-ape-nace-revision), dans laquelle des LLM codent avec les notes explicatives dans leur contexte ([voir plus haut](#sec-naf2025)). GRAAL généralise cette approche avec des agents qui naviguent dans la nomenclature, pour les révisions futures et pour d'autres nomenclatures.
+2. **Auditer et fiabiliser les codes.** Le MatchVerifier repère les codes douteux dans les données d'entraînement ou parmi les cas codés automatiquement, et propose des alternatives. Dans le [protocole de réentraînement](retraining.qmd#sec-curation), GRAAL est l'un des moteurs indépendants dont les désaccords avec le modèle de production sont arbitrés.
+3. **Prioriser la revue humaine.** Les cas suspects passent en priorité devant les experts métier, dont les avis, recueillis dans une application de revue, deviennent de nouvelles annotations.
+4. **Générer des données synthétiques.** Code2Text produit des libellés pour les codes rares ([voir plus bas](#sec-synthetic)), ainsi que des variantes reformulées de cas connus, pour vérifier qu'une correction [se généralise](retraining.qmd#sec-gates).
+
+En retour, GRAAL s'appuie sur l'API de production, comme baseline supervisée et comme source de codes candidats pour les agents et les annotateurs.
+
+### Des codes qui doivent faire leurs preuves
+
+GRAAL et la partie probabiliste du [moteur de règles](#sec-rules) jouent le même rôle : ils proposent des codes qu'aucun humain n'a vérifiés. Avant que l'un ou l'autre n'alimente l'entraînement, on l'évalue là où ça compte : **sur les cas où il n'est pas d'accord avec le modèle de production**, par rapport au *golden set*. Le critère et ses précautions sont détaillés dans le [protocole de réentraînement](retraining.qmd#sec-curation) et dans le chapitre [Évaluation](evaluation.qmd#sec-eval-engines).
+
+## Données synthétiques : Code2Text {#sec-synthetic}
+
+Pendant son stage au SSP Lab (ENSAE Paris, 2026), Matéo Morin a travaillé sur la génération de libellés synthétiques par LLM pour la NAF 2025, dans le prolongement de l'agent Code2Text de [GRAAL](#sec-graal). Rapport, slides et annexes : [mateomorin.github.io/Code2Text-presentation](https://mateomorin.github.io/Code2Text-presentation/). Ces travaux restent exploratoires.
+
+### Pourquoi générer des libellés
+
+Deux motivations :
+
+- **les codes rares** : sur plus d'un million de libellés d'entraînement, la moitié des codes ont moins de 60 exemples, et le modèle les apprend mal ;
+- **le secret statistique** : impossible de diffuser les déclarations, que ce soit pour des cours, des hackathons ou de la recherche. Un jeu synthétique assez réaliste, lui, pourrait l'être.
+
+Les deux usages n'appellent pas la même distribution des codes : pour diffuser, il faut coller à la distribution réelle ; pour entraîner, on a intérêt à surreprésenter les codes rares. On génère donc **code par code**. Si, pour un code donné, les libellés générés ressemblent aux vrais, il ne reste qu'à choisir combien en tirer par code selon l'usage visé.
+
+### Une première version : NaiveCode2Text
+
+Pour chaque code, on donne au LLM son intitulé, une partie des inclusions, toutes les exclusions et quelques vrais libellés du même code en exemple (*few-shot*). Les appels sont parallélisés : 62 100 libellés couvrant toute la nomenclature en 42 minutes.
+
+Sur le fond, les libellés tiennent la route. Mais ils sont trop propres : pas de fautes, un ton très formel, souvent proche de l'intitulé du code. Pour la sylviculture, on obtient par exemple « Activités forestières : culture de peupliers et de saules ». Demander dans le prompt un style plus relâché n'y change rien.
+
+### Un texte de LLM, ça se repère : LabelGuard
+
+[LabelGuard](https://github.com/mateomorin/LabelGuard) est un classifieur qui distingue un libellé écrit par un déclarant d'un libellé généré. C'est un MLP sur les embeddings de Qwen3-Embedding-8B, entraîné sur 160 000 libellés, moitié vrais, moitié synthétiques. On a d'abord retiré des vrais libellés ce qui les trahit trop facilement (troncature à 140 caractères, numéros, suffixe ajouté au prétraitement), pour qu'il apprenne le style et pas ces artefacts.
+
+Résultat : **99,4 % d'accuracy** sur 40 000 libellés de validation, pour 0,7 % de faux positifs. Le style d'un LLM se repère donc presque à coup sûr. Pour le classifieur, c'est du *covariate shift* : entraîné sur ces libellés, il ne voit pas le même texte qu'en production, où les libellés sont abrégés, télégraphiques et pleins de fautes.
+
+### Casser le style : Code2ReText
+
+Premier essai : donner directement LabelGuard en tool au LLM générateur. Il a vite triché : mots collés, mots inventés, et copie pure et simple des libellés qui passaient le test.
+
+La version retenue, Code2ReText, répartit le travail entre deux LLM, orchestrés avec LangGraph :
+
+- l'**Acteur** génère des libellés comme NaiveCode2Text, puis les reformule. Il peut changer la forme, pas le fond ;
+- le **Superviseur** voit les scores de LabelGuard et de vrais libellés du même code. Il dit à l'Acteur comment réécrire ceux qui se font repérer (score supérieur à 0,70), sans lui montrer les vrais libellés.
+
+Cinq tours au maximum. Le score moyen de LabelGuard baisse à chaque tour. Pour la sylviculture, on obtient désormais par exemple « TRANSPLANTATION ARBRES ».
+
+### Résultats
+
+Un classifieur aux hyperparamètres fixés (choisis sur données réelles) est entraîné sur des jeux de 50 000 libellés comprenant une part $\alpha$ de synthétique, puis évalué sur 30 000 vrais libellés. Les jeux sont **emboîtés** : les libellés synthétiques utilisés pour un $\alpha$ donné se retrouvent dans tous les jeux à $\alpha$ plus élevé, et chaque code apparaît au moins une fois. Les écarts d'un $\alpha$ à l'autre ne viennent donc pas de l'échantillonnage.
+
+- **Accuracy globale.** Elle tient jusqu'à environ 50 % de synthétique et s'effondre au-delà de 90 %.
+- **Selon la fréquence du code.** Rien ne bouge sur les codes fréquents. Sur les codes de fréquence intermédiaire, l'accuracy baisse quand $\alpha$ augmente. Sur les **codes rares**, elle progresse nettement dès les premiers ajouts, surtout avec Code2ReText. Le bon compromis se situe autour de **40 à 50 %** de libellés Code2ReText, tirés selon une distribution des codes proche de la réalité.
+- **Style contre diversité.** Pour presque tous les codes, Code2ReText est plus proche des vrais libellés que NaiveCode2Text (distance de Wasserstein entre embeddings). Mais sa diversité (DC-Score) s'effondre, alors que celle de NaiveCode2Text dépasse même un peu celle des vrais libellés. On n'a pas les deux à la fois.
+- **Recopie.** Environ 0,5 % des libellés de Code2ReText sont des copies de vrais libellés, contre 0,005 % pour NaiveCode2Text : l'Acteur et le Superviseur ont trouvé là un autre moyen de tromper LabelGuard. En l'état, c'est rédhibitoire pour une diffusion.
+
+Ces résultats portent sur 50 000 libellés, pas sur le million de la base complète, et héritent du bruit des vrais labels (voir [plus haut](#sec-naf2025)). Piste suivante : plutôt que de corriger le style à coups de boucles de prompts, faire un **fine-tuning** d'un petit modèle open-weight sur la façon d'écrire des déclarants. Le même modèle pourrait générer des libellés NACE dans plusieurs langues.
+
+::: {.callout-tip}
+## Enseignement
+Le synthétique complète les vraies données sur les codes rares, il ne les remplace pas. Un LLM a un style qui se repère : mieux vaut le mesurer avant d'injecter quoi que ce soit. Et un générateur optimisé pour tromper un discriminateur finit par recopier ses exemples : avant toute diffusion, il faut vérifier qu'aucun vrai libellé n'a fuité.
+:::
