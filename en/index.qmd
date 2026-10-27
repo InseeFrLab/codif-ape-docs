@@ -13,7 +13,7 @@ number-sections: false
 toc: false
 ---
 
-Every business that registers in France describes its activity in a few words, and INSEE must turn that description into one of about 750 codes of the national activity classification (NAF, the French version of NACE). This **APE code** shapes business statistics, national accounts and part of the regulation applied to the business.
+Every business that registers in France describes its activity in a few words, and INSEE must turn that description into one of about 750 codes of the national activity classification (NAF, the French version of NACE). This **APE code** shapes business statistics and national accounts.
 
 Since the end of 2022, this coding has been done by a machine learning model, called in real time by the Sirene business register. This note reviews the **MLOps pipeline** behind it:
 

@@ -6,7 +6,7 @@ author:
     url: https://github.com/meilame-tayebjee
     email: meilame.tayebjee@insee.fr
     affiliations:
-      - SSP Lab, Insee
+      - Innovation Lab, Insee
 lang: en
 ---
 
@@ -14,13 +14,12 @@ lang: en
 
 Every business registered in France receives an **APE code** (*activité principale exercée*, principal activity). This code places the unit in the French activity classification, the **NAF** (*nomenclature d'activités française*), which is the national version of the European **NACE**. It is attached to the business's identifiers in the **Sirene** register, which INSEE has managed since 1973 and which is the legal reference for the SIREN and SIRET numbers.
 
-The APE code is not just an administrative label. It is used to:
+The APE code is used to:
 
 - build the sampling frames of business surveys and the structural business statistics;
-- produce national accounts and short-term indicators broken down by industry;
-- apply sector-specific regulation (collective agreements, insurance, some taxes and grants).
+- produce national accounts and short-term indicators broken down by industry.
 
-A coding error therefore spreads into statistics as well as into the administrative life of the business.
+A coding error therefore spreads into the statistics built on it.
 
 The classification is hierarchical, with five levels:
 
