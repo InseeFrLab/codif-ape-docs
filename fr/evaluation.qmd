@@ -98,6 +98,8 @@ Certaines fonctionnalités du modèle servent surtout à améliorer les métriqu
 - **Des têtes multiniveaux.** Avec une tête de classification par niveau de la nomenclature, un modèle qui hésite peut se rabattre sur le niveau le plus fin dont il est sûr (une classe ou un groupe plutôt qu'une sous-classe fausse). On limite ainsi les erreurs qui sortent de la bonne section.
 - **La label attention.** Chaque code a sa propre lecture du libellé, ce qui montre les mots qui pèsent pour chaque candidat. Un gestionnaire voit pourquoi le modèle hésite.
 
+Le [stage de Julien Bernardi](model.qmd#sec-internship) a donné une première évaluation de ces deux options sur la NAF 2025. Parmi les sous-classes mal prédites, les têtes multiniveaux font passer la part fausse à tous les niveaux d'environ 47 % à 29–34 %. La label attention donne des explications plus fidèles que les integrated gradients, mais il lui faut tout le jeu d'entraînement pour égaler le modèle de type fastText, et son entraînement est 3 à 6 fois plus long. Le repli sur un niveau plus agrégé quand le modèle hésite n'a pas encore été testé.
+
 C'est avec les métriques de ce chapitre, sur $\bar{G}^{\text{val}}$ et dans le budget de latence, qu'on décide si ces options valent le coup pour la codification APE.
 
 ## Temps d'inférence et autres métriques de production {#sec-eval-nonfunctional}

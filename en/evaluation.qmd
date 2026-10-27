@@ -98,6 +98,8 @@ Some model features exist mainly to make the metrics above better, or the errors
 - **Multi-level heads.** With one prediction head per level of the classification, an uncertain model can fall back to the finest level it can trust (a class or a group rather than a wrong sub-class). This reduces the errors that contradict even the section.
 - **Label attention.** Each code gets its own view of the description, which shows the words that drive each candidate. A reviewer can see why the model hesitates.
 
+[Julien Bernardi's internship](model.qmd#sec-internship) gave a first assessment of both options on NAF 2025. Among wrong sub-class predictions, multi-level heads cut the share that is wrong at every level from about 47 % to 29–34 %. Label attention gives more faithful explanations than integrated gradients, but it needs the full training set to match the fastText-style model and trains 3 to 6 times slower. Falling back to a coarser level when the model is unsure has not been tested yet.
+
 Whether these options pay off for APE coding is decided with the metrics of this chapter, on $\bar{G}^{\text{val}}$, and within the latency budget.
 
 ## Inference time and other production metrics {#sec-eval-nonfunctional}
