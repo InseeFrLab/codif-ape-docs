@@ -1,6 +1,6 @@
 ---
-title: "Enseignements"
-description: "Ce que quatre années d'apprentissage automatique en production pour la codification APE nous ont appris, et les questions qui restent ouvertes."
+title: "Retours d'expérience"
+description: "Ce que quatre ans de machine learning en production pour la codification APE nous ont appris, et les questions qui restent ouvertes."
 author:
   - name: Meilame Tayebjee
     url: https://github.com/meilame-tayebjee
@@ -10,58 +10,58 @@ author:
 lang: fr
 ---
 
-## Enseignements techniques
+## Côté technique
 
-**Un petit modèle bien intégré vaut mieux qu'un grand modèle impossible à déployer.** Les transformers pré-entraînés n'apportaient qu'un gain marginal par rapport à un modèle de type fastText, et ils ne tenaient pas dans le budget de latence et de CPU. L'effort a porté là où il était rentable : qualité des données, calibration et chaîne de déploiement.
+**Mieux vaut un petit modèle bien intégré qu'un gros modèle impossible à déployer.** Les transformers pré-entraînés ne faisaient guère mieux qu'un modèle de type fastText, et ils ne tenaient pas dans le budget de latence et de CPU. On a mis l'effort là où il payait : qualité des données, calibration et pipeline de déploiement.
 
-**Les dépendances sont un risque à gérer.** Le dépôt de fastText a été archivé par ses auteurs à peine plus d'un an après la mise en production. Le passage à PyTorch a demandé du temps et du soin, « mais le jeu en vaut la chandelle » : le modèle est désormais maintenu en interne, il est calibré et explicable, et il peut évoluer. En contrepartie, PyTorch impose une politique de versions stricte entre l'entraînement, la mise à disposition et la production.
+**Les dépendances sont un risque à gérer.** Le dépôt de fastText a été archivé par ses auteurs à peine plus d'un an après la mise en production. Le passage à PyTorch a demandé du temps et du soin, « mais le jeu en vaut la chandelle » : le modèle est désormais maintenu en interne, calibré, explicable, et il peut évoluer. En contrepartie, PyTorch impose une gestion stricte des versions entre l'entraînement, le serving et la production.
 
-**Livrer le prétraitement avec le modèle.** Au début, l'équipe informatique métier avait recodé en Java le prétraitement du texte. Cette duplication était source d'erreurs. Empaqueter le modèle avec son prétraitement et son contrat (`pyfunc` MLflow, modèles Pydantic), et le servir au moyen d'une API Python, l'a fait disparaître.
+**Livrer le prétraitement avec le modèle.** Au début, l'équipe informatique métier avait recodé en Java le prétraitement du texte, et cette duplication causait des erreurs. Packager le modèle avec son prétraitement et son contrat (`pyfunc` MLflow, modèles Pydantic), et le servir via une API Python, a réglé le problème.
 
-**Le *GitOps* rend le déploiement banal, et c'est le but.** Quand déployer un modèle se résume à un commit d'une ligne, relu, et qu'un retour arrière n'est qu'une annulation de ce commit, les déploiements cessent d'être des événements.
+**Le GitOps rend le déploiement banal, et c'est le but.** Quand déployer un modèle se résume à un commit d'une ligne, relu, et qu'un rollback se résume à un revert, un déploiement n'est plus un événement.
 
-**La calibration est une fonctionnalité métier.** Le seuil sur l'indice de confiance détermine la charge de reprise manuelle. C'est une décision méthodologique, pas un réglage d'exploitation. Il ne peut être fixé que sur un modèle calibré et un échantillon représentatif, et doit être revu pour chaque nouveau modèle.
+**La calibration est un sujet métier.** Le seuil sur l'indice de confiance fixe la charge de reprise manuelle : c'est une décision méthodologique, pas un réglage d'exploitation. On ne peut le fixer que sur un modèle calibré et un échantillon représentatif, et il faut le revoir à chaque nouveau modèle.
 
-## Enseignements sur les données
+## Côté données
 
-**La qualité des annotations est le principal levier.** Les codes historiques mêlent des sorties d'un moteur de règles, de modèles antérieurs et d'une codification humaine faite dans l'urgence. Un moteur de règles auditable, où chaque recodification est journalisée, a fait davantage pour l'exactitude que la plupart des changements d'architecture. Les règles ont toutefois des effets de bord sur les codes voisins : elles doivent rester ciblées.
+**La qualité des labels est le principal levier.** Les codes historiques mélangent les sorties d'un moteur de règles, de modèles précédents et d'une codification humaine faite dans l'urgence. Un moteur de règles auditable, où chaque recodage est loggé, a fait plus pour l'accuracy que la plupart des changements d'architecture. Mais les règles ont des effets de bord sur les codes voisins : elles doivent rester ciblées.
 
-**L'évaluation exige un golden set aléatoire et annoté à l'aveugle.** Les corrections manuelles sont sélectionnées sur les échecs du modèle, et les annotateurs qui voient la prédiction s'y ancrent. Sans échantillon aléatoire, alimenté en continu et annoté à l'aveugle, on ne peut ni mesurer l'exactitude de la codification automatique, ni fixer le seuil, ni comparer deux modèles. Le suivi doit être un processus courant, et non une suite de campagnes ponctuelles.
+**Pas d'évaluation sans golden set aléatoire annoté à l'aveugle.** Les corrections manuelles sont sélectionnées sur les échecs du modèle, et les annotateurs qui voient la prédiction se laissent influencer. Sans échantillon aléatoire, alimenté en continu et annoté à l'aveugle, on ne peut ni mesurer l'accuracy de la codification automatique, ni fixer le seuil, ni comparer deux modèles. Le monitoring doit être un processus continu, pas une suite de campagnes ponctuelles.
 
-**Les experts métier comme référence, les LLM pour le passage à l'échelle.** Pour la révision NAF 2025, quelques dizaines de milliers d'annotations d'experts ont suffi pour choisir et valider la recodification par LLM de millions d'observations. La confiance déclarée par les LLM eux-mêmes n'était pas un filtre utilisable, contrairement à l'accord entre modèles.
+**Les experts comme référence, les LLM pour le volume.** Pour la révision NAF 2025, quelques dizaines de milliers d'annotations d'experts ont suffi pour choisir et valider le recodage par LLM de millions d'observations. La confiance déclarée par les LLM eux-mêmes n'était pas un filtre exploitable ; l'accord entre modèles, si.
 
-**Connaître le plafond.** Même des annotateurs expérimentés sont souvent en désaccord au niveau le plus fin de la nomenclature. L'accord inter-annotateurs donne une borne supérieure réaliste de ce qu'un modèle peut atteindre, et doit servir à cadrer les attentes.
+**Connaître le plafond.** Même des annotateurs expérimentés sont souvent en désaccord au niveau le plus fin de la nomenclature. L'accord inter-annotateurs donne une borne supérieure réaliste de ce qu'un modèle peut atteindre, et permet de cadrer les attentes.
 
-## Enseignements organisationnels
+## Côté organisation
 
-**Le *MLOps* est une organisation autant qu'une pile technique.** Le projet associe :
+**Le MLOps, c'est une organisation autant qu'une stack technique.** Le projet associe :
 
 - l'équipe métier, responsable du répertoire et de la nomenclature ;
 - les équipes informatiques qui exploitent la production ;
 - l'équipe de data science (SSP Lab).
 
-L'étape décisive a été de désigner, au sein de l'équipe métier, un **responsable du modèle**, chargé du réentraînement, de la qualification et de l'exploitation, distinct de l'équipe d'innovation. Cela rejoint la recommandation d'AIML4OS selon laquelle tout modèle en production doit avoir un responsable nommément désigné [@aiml4os2025, ch. 3]. Ce rôle est décrit dans [Défis organisationnels et d'infrastructure](organisation.qmd#sec-business-ds).
+Le tournant a été de nommer, dans l'équipe métier, un **responsable du modèle**, chargé du réentraînement, de la qualification et de l'exploitation, distinct de l'équipe d'innovation. Cela rejoint la recommandation d'AIML4OS : tout modèle en production doit avoir un responsable clairement identifié [@aiml4os2025, ch. 3]. Ce rôle est décrit dans [Défis organisationnels et d'infrastructure](organisation.qmd#sec-business-ds).
 
-**La confiance se construit avec des outils.** Les experts métier font confiance au modèle lorsqu'ils peuvent voir pourquoi il a décidé (explicabilité), vérifier ce qui a changé entre deux versions (rapports de comparaison, journaux des modifications) et transformer leurs retours en corrections durables (règles).
+**La confiance se construit avec des outils.** Les experts métier font confiance au modèle quand ils peuvent voir pourquoi il a décidé (explicabilité), vérifier ce qui a changé entre deux versions (rapports de comparaison, changelogs) et transformer leurs retours en corrections durables (règles).
 
-**L'ouverture du code est payante.** Tout le code est public. Cela a permis des échanges avec d'autres instituts statistiques : Statistique Canada, le Statec, Statistics Austria, Destatis, les instituts nationaux de statistique d'Afrique subsaharienne et l'OCDE. Les outils ont aussi pu être réutilisés pour d'autres nomenclatures.
+**L'open source, ça paie.** Tout le code est public, ce qui a permis des échanges avec d'autres instituts statistiques : Statistique Canada, le Statec, Statistics Austria, Destatis, les instituts nationaux de statistique d'Afrique subsaharienne et l'OCDE. Les outils ont aussi été réutilisés pour d'autres nomenclatures.
 
 ## Une perspective européenne
 
-La chaîne a servi d'implémentation de référence, aux côtés de Statistics Austria et de Destatis, pour le tutoriel *MLOps* rédigé dans le cadre du projet européen **AIML4OS** (Work Package 10, cluster 4 « From text to code ») [@aiml4os2025]. Le tutoriel organise le cycle de vie en quatre étapes, chacune assortie d'une liste de contrôle :
+Le pipeline a servi d'implémentation de référence, avec ceux de Statistics Austria et de Destatis, pour le tutoriel MLOps rédigé dans le cadre du projet européen **AIML4OS** (Work Package 10, cluster 4 « From text to code ») [@aiml4os2025]. Le tutoriel découpe le cycle de vie en quatre étapes, chacune avec sa checklist :
 
 1. [Données](https://aiml4os.github.io/WP10_Cluster4_MLOps/chapters/chapter1.html) : stockage, validation, versionnage ;
-2. [Modèle](https://aiml4os.github.io/WP10_Cluster4_MLOps/chapters/chapter2.html) : entraînement reproductible, validation au-delà de l'exactitude, empaquetage, registre ;
-3. [Mise à disposition](https://aiml4os.github.io/WP10_Cluster4_MLOps/chapters/chapter3.html) : API, conteneurs, *GitOps*, passerelle entre développement et production ;
-4. [Suivi](https://aiml4os.github.io/WP10_Cluster4_MLOps/chapters/chapter4.html) : typologie des dérives, niveaux de suivi, réentraînement et promotion.
+2. [Modèle](https://aiml4os.github.io/WP10_Cluster4_MLOps/chapters/chapter2.html) : entraînement reproductible, validation au-delà de l'accuracy, packaging, model registry ;
+3. [Serving](https://aiml4os.github.io/WP10_Cluster4_MLOps/chapters/chapter3.html) : API, conteneurs, GitOps, passage du développement à la production ;
+4. [Monitoring](https://aiml4os.github.io/WP10_Cluster4_MLOps/chapters/chapter4.html) : types de drift, niveaux de monitoring, réentraînement et mise en production.
 
 Cette note peut se lire comme une étude de cas détaillée de ce cadre.
 
 ## Questions ouvertes
 
-Certaines questions méthodologiques restent ouvertes. Elles sont probablement communes à toutes les chaînes de codification :
+Certaines questions méthodologiques restent ouvertes, et se posent sans doute pour tous les pipelines de codification :
 
-- **Ancrage.** Si les gestionnaires voient la proposition du modèle, leurs codes ne sont plus indépendants du modèle. Comment en tenir compte lorsque ces codes servent à l'entraînement ?
-- **Taille du golden set.** Avec environ 750 classes, les métriques par classe sur un seul trimestre sont hors de portée. Sur quelle fenêtre faut-il cumuler le golden set ?
-- **Exactitude cible.** Qui fixe $p^*$ ? C'est un arbitrage métier entre exactitude et charge de reprise manuelle.
-- **Historique.** À quel rythme les anciens codes doivent-ils perdre du poids ? Comment traiter les observations historiques dont le code NAF 2025 est ambigu : nouvelle annotation, exclusion, ou codes issus des moteurs avec un faible poids ?
+- **Biais d'ancrage.** Si les gestionnaires voient la proposition du modèle, leurs codes ne sont plus indépendants du modèle. Comment en tenir compte quand ces codes servent à l'entraînement ?
+- **Taille du golden set.** Avec environ 750 classes, impossible d'avoir des métriques par classe sur un seul trimestre. Sur quelle fenêtre cumuler le golden set ?
+- **Accuracy cible.** Qui fixe $p^*$ ? C'est un arbitrage métier entre accuracy et charge de reprise manuelle.
+- **Historique.** À quel rythme faire perdre du poids aux anciens codes ? Que faire des observations historiques dont le code NAF 2025 est ambigu : les réannoter, les exclure, ou garder les codes des moteurs avec un faible poids ?

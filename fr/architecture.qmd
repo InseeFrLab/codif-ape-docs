@@ -12,64 +12,64 @@ lang: fr
 
 ## Principes de conception
 
-La chaîne repose sur quelques principes, partagés avec le cadre MLOps européen élaboré dans le projet AIML4OS [@aiml4os2025] :
+Le pipeline repose sur quelques principes, partagés avec le cadre MLOps européen développé dans le projet AIML4OS [@aiml4os2025] :
 
 - **Séparer données, code et calcul.**
   - Les données sont stockées au format Parquet, dans un stockage objet S3.
   - Le code est versionné dans Git.
-  - Le calcul est assuré par des conteneurs lancés à la demande.
+  - Les calculs tournent dans des conteneurs lancés à la demande.
 - **Tout rendre reproductible.**
   - Chaque entraînement est piloté par un fichier de configuration.
-  - Chaque environnement est figé (fichiers de verrouillage uv, images Docker).
+  - Chaque environnement est figé (lockfiles uv, images Docker).
   - Chaque jeu de données, chaque modèle et chaque image est versionné.
-- **Empaqueter le modèle avec son prétraitement**, pour que ce qui a été évalué soit exactement ce qui est servi (pas d'écart entre entraînement et service, le *training/serving skew*).
-- **Décrire les déploiements de façon déclarative.** L'état de chaque environnement est un ensemble de manifestes stockés dans Git. Un contrôleur GitOps aligne le cluster sur ces manifestes.
-- **Garder l'humain dans la boucle.** Les prédictions peu sûres partent en reprise manuelle, et c'est l'annotation humaine qui mesure la qualité.
+- **Packager le modèle avec son prétraitement**, pour que ce qui est servi soit exactement ce qui a été évalué (pas de *training/serving skew*).
+- **Des déploiements déclaratifs.** L'état de chaque environnement est décrit par des manifestes stockés dans Git, et un contrôleur GitOps aligne le cluster dessus.
+- **Garder l'humain dans la boucle.** Les prédictions peu sûres partent en reprise manuelle, et la qualité se mesure grâce à l'annotation humaine.
 
 ## La plateforme
 
-Le développement, l'entraînement et la préproduction se font entièrement sur le **SSP Cloud**, la plateforme de data science du service statistique public français. Le SSP Cloud repose sur le projet open source [Onyxia](https://www.onyxia.sh/) [@avouac2025springer]. Ce choix est possible parce que les libellés d'activité de Sirene ne sont pas des données sensibles.
+Le développement, l'entraînement et la préproduction se font entièrement sur le **SSP Cloud**, la plateforme de data science du service statistique public français. Le SSP Cloud repose sur le projet open source [Onyxia](https://www.onyxia.sh/) [@avouac2025springer]. C'est possible parce que les libellés d'activité de Sirene ne sont pas des données sensibles.
 
-| Composant | Outil | Rôle dans la chaîne |
+| Composant | Outil | Rôle dans le pipeline |
 |---|---|---|
-| Stockage objet | MinIO (API S3) | Extractions brutes, jeux de données nettoyés, découpages, tokenizers, artefacts de modèles, exports d'annotation |
+| Stockage objet | MinIO (API S3) | Extractions brutes, jeux de données nettoyés, splits, tokenizers, artefacts de modèles, exports d'annotation |
 | Environnements interactifs | Onyxia (VS Code, Jupyter) | Exploration et développement |
-| Orchestration | Argo Workflows | Traitements par lots pour la préparation des données et l'entraînement sur nœuds GPU (A2, H100) |
-| Suivi des expériences et registre | MLflow | Paramètres, métriques, figures et jeux de données de chaque exécution ; modèles versionnés |
-| Mise à disposition | FastAPI sur Kubernetes | API REST exposant le modèle |
-| Livraison continue | GitHub Actions, Argo CD | Construction des images Docker ; synchronisation GitOps du cluster |
+| Orchestration | Argo Workflows | Jobs batch de préparation des données et d'entraînement sur nœuds GPU (A2, H100) |
+| Tracking des expériences et model registry | MLflow | Paramètres, métriques, figures et jeux de données de chaque run ; modèles versionnés |
+| Serving | FastAPI sur Kubernetes | API REST qui expose le modèle |
+| CI/CD | GitHub Actions, Argo CD | Build des images Docker ; synchronisation GitOps du cluster |
 | Annotation | Label Studio | Campagnes d'annotation par les experts |
-| Inférence LLM | vLLM (API compatible OpenAI) | Réétiquetage hors ligne ([NAF 2025](data.qmd#sec-naf2025)), audit et données synthétiques ([GRAAL](data.qmd#sec-graal)) |
+| Inférence LLM | vLLM (API compatible OpenAI) | Recodage hors ligne ([NAF 2025](data.qmd#sec-naf2025)), audit et données synthétiques ([GRAAL](data.qmd#sec-graal)) |
 
 : Pile technique. {#tbl-stack}
 
-La production tourne sur l'infrastructure Kubernetes interne de l'Insee. Le modèle n'y est promu qu'après avoir été qualifié sur une plateforme de préproduction identique à la production.
+La production tourne sur l'infrastructure Kubernetes interne de l'Insee. Un modèle n'y passe qu'après avoir été qualifié sur une préproduction identique à la production.
 
 ## Dépôts
 
-Le code est organisé en dépôts à vocation unique, regroupés dans l'organisation GitHub [InseeFrLab](https://github.com/InseeFrLab) :
+Le code est découpé en dépôts qui font chacun une seule chose, regroupés dans l'organisation GitHub [InseeFrLab](https://github.com/InseeFrLab) :
 
 | Dépôt | Produit | Consomme |
 |---|---|---|
 | [codif-ape-nace-revision](https://github.com/InseeFrLab/codif-ape-nace-revision) | Labels NAF 2025 des données d'entraînement, recodés par LLM | Extractions Sirene, table de passage, notes explicatives, annotations des experts |
-| [codif-ape-preprocess](https://github.com/InseeFrLab/codif-ape-preprocess) | Données d'entraînement nettoyées et augmentées ; découpages entraînement / validation / test ; journal d'audit de chaque modification de label | Extractions brutes de Sirene, données réétiquetées en NAF 2025, tables de référence |
-| [codif-ape-train](https://github.com/InseeFrLab/codif-ape-train) | Un modèle entraîné, empaqueté sous forme de `pyfunc` MLflow, avec ses métriques et ses figures de diagnostic | Découpages produits par `preprocess` ; [torchTextClassifiers](https://github.com/InseeFrLab/torchTextClassifiers) |
+| [codif-ape-preprocess](https://github.com/InseeFrLab/codif-ape-preprocess) | Données d'entraînement nettoyées et augmentées ; splits train / validation / test ; logs d'audit de chaque modification de label | Extractions brutes de Sirene, données recodées en NAF 2025, tables de référence |
+| [codif-ape-train](https://github.com/InseeFrLab/codif-ape-train) | Un modèle entraîné, packagé en `pyfunc` MLflow, avec ses métriques et ses figures de diagnostic | Splits produits par `preprocess` ; [torchTextClassifiers](https://github.com/InseeFrLab/torchTextClassifiers) |
 | [codif-ape-api](https://github.com/InseeFrLab/codif-ape-api) | Une image Docker de l'API REST | Un modèle enregistré dans MLflow, chargé au démarrage |
-| [codif-ape-cd](https://github.com/InseeFrLab/codif-ape-cd) | Les manifestes Kubernetes de tous les services (API, tableau de bord, ETL d'annotation, applications de revue) | Images Docker ; noms et versions des modèles |
-| [torchTextClassifiers](https://github.com/InseeFrLab/torchTextClassifiers) | Une bibliothèque PyTorch générique de classification de textes (publiée sur PyPI) | — |
+| [codif-ape-cd](https://github.com/InseeFrLab/codif-ape-cd) | Les manifestes Kubernetes de tous les services (API, dashboard, ETL d'annotation, applications de revue) | Images Docker ; noms et versions des modèles |
+| [torchTextClassifiers](https://github.com/InseeFrLab/torchTextClassifiers) | Une librairie PyTorch générique de classification de texte (publiée sur PyPI) | — |
 | [GRAAL](https://github.com/InseeFrLab/GRAAL) | Des agents LLM pour coder, auditer et générer des labels ; des applications de revue | Le graphe de la nomenclature (Neo4j), les notes explicatives, l'API de production |
 | [codif-ape-prez](https://github.com/InseeFrLab/codif-ape-prez) | [Présentations et articles](https://inseefrlab.github.io/codif-ape-prez/) | — |
 
 : Les dépôts et leurs contrats. {#tbl-repos}
 
-Les dépôts ne s'importent pas les uns les autres. Ils communiquent par des **artefacts** :
+Les dépôts ne s'importent pas entre eux. Ils communiquent via des **artefacts** :
 
 - `preprocess` publie l'emplacement du dernier jeu de données, avec les listes de variables, dans un fichier de configuration partagé sur S3 ; `train` lit ce fichier.
 - `train` enregistre dans MLflow un modèle autonome, qui embarque son propre code d'inférence.
 - `api` télécharge ce modèle au démarrage, à partir d'un nom et d'une version de modèle passés en variables d'environnement.
-- `cd` détermine l'image, et la version du modèle, que fait tourner chaque environnement.
+- `cd` fixe l'image et la version du modèle déployées dans chaque environnement.
 
-Déployer un nouveau modèle dans un environnement revient donc à modifier une ligne d'un manifeste. Cette modification se relit comme n'importe quelle autre modification de code.
+Déployer un nouveau modèle revient donc à modifier une ligne d'un manifeste, qui se relit en code review comme n'importe quel autre changement.
 
 ## Flux de bout en bout
 
@@ -80,18 +80,18 @@ flowchart LR
   subgraph SRC["Sources"]
     SIR["Extractions Sirene"]
     ANN["Annotations d'experts<br/>(Label Studio)"]
-    LLM["Réétiquetage par LLM<br/>(codif-ape-nace-revision, vLLM)"]
+    LLM["Recodage par LLM<br/>(codif-ape-nace-revision, vLLM)"]
   end
   subgraph PRE["codif-ape-preprocess"]
-    RUL["Moteur de règles<br/>+ journal d'audit"]
-    SPL["Découpages<br/>entraînement / validation / test"]
+    RUL["Moteur de règles<br/>+ logs d'audit"]
+    SPL["Splits<br/>train / validation / test"]
   end
   subgraph TRN["codif-ape-train"]
     TTC["torchTextClassifiers<br/>(Lightning, GPU)"]
     EVAL["Évaluation<br/>calibration, niveaux 1–5"]
   end
-  REG[("Registre<br/>MLflow")]
-  subgraph SRV["Mise à disposition"]
+  REG[("Model registry<br/>MLflow")]
+  subgraph SRV["Mise en production"]
     IMG["codif-ape-api<br/>image Docker"]
     GIT["codif-ape-cd<br/>manifestes"]
     K8S["Kubernetes<br/>(Argo CD)"]
@@ -103,7 +103,7 @@ flowchart LR
   REG -->|"nom + version du modèle"| K8S
   IMG --> K8S
   GIT --> K8S
-  K8S -->|"prédictions, journaux"| MON["Tableau de bord<br/>de suivi"]
+  K8S -->|"prédictions, logs"| MON["Dashboard<br/>de monitoring"]
   MON -->|"échantillons à annoter"| ANN
 ```
 
@@ -113,9 +113,9 @@ Chaque bloc est détaillé dans un chapitre dédié :
 - [Données](data.qmd) présente aussi GRAAL, les agents LLM qui auditent et proposent des codes hors ligne.
 - [Modèle](model.qmd) : architecture, torchTextClassifiers et entraînement.
 - [Évaluation](evaluation.qmd) : quelles métriques, sur quelles données.
-- [Mise à disposition et déploiement](serving.qmd) : empaquetage, API et GitOps.
-- [Suivi et annotation](monitoring.qmd) : boucler la boucle.
-- [Protocole de réentraînement](retraining.qmd) : comment la boucle aboutit, sans risque, à un nouveau modèle.
+- [Mise en production](serving.qmd) : packaging, API et GitOps.
+- [Monitoring et annotation](monitoring.qmd) : boucler la boucle.
+- [Protocole de réentraînement](retraining.qmd) : comment la boucle débouche, sans risque, sur un nouveau modèle.
 - [Défis organisationnels et d'infrastructure](organisation.qmd) : qui fait quoi, et la plateforme de qualification.
 
 <!-- ## Organisation du développement

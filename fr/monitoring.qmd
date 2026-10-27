@@ -1,6 +1,6 @@
 ---
-title: "Suivi et annotation"
-description: "Surveiller le modèle en production et recueillir les annotations humaines qui mesurent, et améliorent, sa qualité."
+title: "Monitoring et annotation"
+description: "Monitorer le modèle en production et recueillir les annotations humaines qui mesurent, et améliorent, sa qualité."
 author:
   - name: Meilame Tayebjee
     url: https://github.com/meilame-tayebjee
@@ -12,60 +12,60 @@ lang: fr
 
 ## Les risques de dégradation
 
-Un modèle de codification en production peut se dégrader de plusieurs façons, que le cadre *MLOps* européen range dans une typologie [@aiml4os2025, ch. 4] :
+Un modèle de codification en production peut se dégrader de plusieurs façons, que le cadre MLOps européen classe ainsi [@aiml4os2025, ch. 4] :
 
-| Dérive | Exemple pour la codification APE |
+| Type de drift | Exemple pour la codification APE |
 |---|---|
-| **Dérive des covariables** (*covariate shift*) : les entrées changent | De nouveaux métiers et de nouvelles formulations apparaissent, et la réforme du guichet unique a allongé les libellés |
-| **Dérive a priori** (*prior shift*) : la répartition des classes change | Vagues d'immatriculations dans certains secteurs, comme les VTC ou la location meublée |
-| **Dérive conceptuelle** (*concept drift*) : la relation entre entrée et code change | Révision de la nomenclature (NAF rév. 2 → NAF 2025) ; une marque qui devient une nouvelle activité (par exemple « Uber » → « Uber Eats ») |
-| **Défaillance en amont** | Un champ qui n'est plus renseigné, ou un changement de format de la liasse |
+| **Covariate shift** : les entrées changent | De nouveaux métiers et de nouvelles formulations apparaissent, et la réforme du guichet unique a allongé les libellés |
+| **Prior shift** : la répartition des classes change | Vagues d'immatriculations dans certains secteurs, comme les VTC ou la location meublée |
+| **Concept drift** : le lien entre entrée et code change | Révision de la nomenclature (NAF rév. 2 → NAF 2025) ; une marque qui devient une nouvelle activité (par exemple « Uber » → « Uber Eats ») |
+| **Problème en amont** | Un champ qui n'est plus renseigné, ou un changement de format de la liasse |
 
 : Sources de dégradation. {#tbl-drift}
 
-## Un suivi sans annotation
+## Monitorer sans annotation
 
-La plupart des prédictions ne sont jamais vérifiées par un humain. Le premier niveau de suivi repose donc sur des signaux qui ne nécessitent aucune annotation. Avec le premier modèle, les journaux de l'API étaient convertis chaque jour en fichiers Parquet partitionnés, interrogés avec DuckDB et présentés dans un **tableau de bord** reconstruit chaque nuit [@faria2024estoril]. La collecte des journaux de production est actuellement suspendue, et son rétablissement fait partie du [protocole cible](retraining.qmd#sec-status). On trouve dans le tableau de bord :
+La plupart des prédictions ne sont jamais vérifiées par un humain. Le premier niveau de monitoring repose donc sur des signaux qui ne demandent aucune annotation. Avec le premier modèle, les logs de l'API étaient convertis chaque jour en fichiers Parquet partitionnés, requêtés avec DuckDB et affichés dans un **dashboard** reconstruit chaque nuit [@faria2024estoril]. La collecte des logs de production est pour l'instant suspendue ; la remettre en place fait partie du [protocole cible](retraining.qmd#sec-status). Le dashboard montre :
 
 - les volumes de requêtes et le **taux de codification automatique** dans le temps, pour différents seuils ;
-- la **distribution de l'indice de confiance** et son évolution d'une fenêtre temporelle à l'autre (des tests automatiques, de Kolmogorov–Smirnov ou du χ², sont une cible) ;
+- la **distribution de l'indice de confiance** et son évolution d'une période à l'autre (des tests automatiques, de Kolmogorov–Smirnov ou du χ², restent à mettre en place) ;
 - la distribution des codes prédits ;
 - des statistiques sur le texte en entrée (longueur, vocabulaire nouveau).
 
-Ces indicateurs servent d'alertes. Par exemple, une chute brutale du taux de codification automatique, ou un déplacement de la distribution de l'indice de confiance, déclenche une analyse. Ils ne disent pas, en revanche, si le modèle *a raison*.
+Ces indicateurs servent d'alertes : une chute brutale du taux de codification automatique, ou un décalage de la distribution de l'indice de confiance, déclenche une analyse. En revanche, ils ne disent pas si le modèle *a raison*.
 
 ## Annotation humaine
 
 ### Campagnes Label Studio
 
-La qualité ne peut se mesurer que par rapport à des annotations produites par des experts métier. Les campagnes d'annotation s'appuient sur **Label Studio**, déployé sur la plateforme, avec un projet par équipe d'experts. Des tâches planifiées gèrent la circulation des données :
+La qualité ne se mesure qu'avec des annotations d'experts métier. Les campagnes d'annotation passent par **Label Studio**, déployé sur la plateforme, avec un projet par équipe d'experts. Des cron jobs font circuler les données :
 
 - l'**échantillonnage** des libellés à annoter et leur envoi dans les files d'annotation ;
-- la **synchronisation** des annotations terminées vers le stockage objet ;
+- la **synchronisation** des annotations terminées vers S3 ;
 - leur **conversion** en jeux d'évaluation et d'entraînement.
 
 Annoter un libellé prend environ une minute. Deux campagnes ont été menées à ce jour :
 
 - un **référentiel NAF rév. 2** d'environ 10 000 libellés, codés à l'aveugle par l'équipe qualité de Sirene ;
-- une campagne **NAF 2025** d'environ 30 000 libellés, utilisée à la fois pour évaluer la recodification par LLM et comme données d'entraînement (voir [Données](data.qmd#sec-naf2025)).
+- une campagne **NAF 2025** d'environ 30 000 libellés, utilisée à la fois pour évaluer le recodage par LLM et comme données d'entraînement (voir [Données](data.qmd#sec-naf2025)).
 
 ### Pourquoi l'annotation doit être aléatoire et à l'aveugle
 
-Les cas à faible confiance font chaque jour l'objet d'une reprise manuelle. Il est donc tentant d'utiliser ces codes comme jeu d'évaluation. Ce serait une erreur : ils sont **sélectionnés sur les échecs du modèle** et ne disent rien des cas que le modèle code automatiquement. Pour estimer l'exactitude de la codification automatique, une partie du flux doit être annotée **au hasard**, par des experts qui **ne voient pas** la proposition du modèle. Sinon, leurs annotations sont ancrées sur la prédiction qu'elles sont censées juger.
+Les cas à faible confiance passent chaque jour en reprise manuelle, et il est tentant de s'en servir comme jeu d'évaluation. Ce serait une erreur : ils sont **sélectionnés sur les échecs du modèle** et ne disent rien des cas codés automatiquement. Pour estimer l'accuracy de la codification automatique, il faut annoter une partie du flux **tirée au hasard**, par des experts qui **ne voient pas** la proposition du modèle. Sinon, leurs annotations sont influencées par la prédiction qu'elles sont censées juger.
 
-Cet échantillon aléatoire du flux, annoté à l'aveugle, est appelé « golden set ». Il est le fondement du [protocole de réentraînement](retraining.qmd#sec-golden). Ce sont les seules données qui permettent :
+Cet échantillon aléatoire du flux, annoté à l'aveugle, c'est le « golden set ». Tout le [protocole de réentraînement](retraining.qmd#sec-golden) repose dessus. Ce sont les seules données qui permettent :
 
-- d'estimer l'exactitude de la codification automatique ;
+- d'estimer l'accuracy de la codification automatique ;
 - de fixer le seuil ;
 - de comparer équitablement deux modèles ;
-- de mesurer la dérive à partir d'annotations.
+- de mesurer le drift à partir d'annotations.
 
 ## Audit par LLM
 
-Le projet utilise aussi des agents LLM pour contrôler les prédictions hors ligne. Le *MatchVerifier* de [GRAAL](data.qmd#sec-graal) vérifie si un couple (libellé, code) est cohérent avec les notes explicatives (notices) de la nomenclature, et propose une alternative dans le cas contraire. Trop lent et trop coûteux pour être appliqué à chaque prédiction, il peut en revanche être exécuté par lots pour :
+Le projet utilise aussi des agents LLM pour contrôler les prédictions hors ligne. Le *MatchVerifier* de [GRAAL](data.qmd#sec-graal) vérifie si un couple (libellé, code) est cohérent avec les notes explicatives de la nomenclature, et propose une alternative sinon. Trop lent et trop cher pour tourner sur chaque prédiction, il peut en revanche tourner en batch pour :
 
-- **prioriser** les cas que les relecteurs humains doivent examiner en premier ;
-- signaler les codes douteux dans les données d'entraînement ;
+- **prioriser** les cas que les relecteurs doivent regarder en premier ;
+- repérer les codes douteux dans les données d'entraînement ;
 - arbitrer les désaccords entre le modèle de production et d'autres moteurs.
 
-Sur une autre nomenclature (COICOP), le MatchVerifier a détecté environ la moitié des erreurs, avec peu de faux rejets. C'est donc un bon outil pour prioriser la revue humaine, mais il n'est pas assez fiable pour orienter seul les cas.
+Sur une autre nomenclature (COICOP), le MatchVerifier a détecté environ la moitié des erreurs, avec peu de faux positifs. C'est donc un bon outil pour prioriser la revue humaine, mais pas assez fiable pour décider seul.

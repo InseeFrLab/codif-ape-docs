@@ -23,7 +23,7 @@ Notes pour les auteurs (non affichées) :
 - La note est publique : pas d'URL interne, pas de noms de machines, pas de feuille de route interne.
 -->
 
-L'essentiel des difficultés pour maintenir un modèle en production n'est pas technique. Les enquêtes auprès des praticiens et les études de cas de déploiements d'apprentissage automatique concordent : les problèmes les plus difficiles se situent **aux frontières entre équipes**, qu'il s'agisse de s'accorder sur les besoins, de négocier la qualité des données ou d'intégrer le modèle dans un système existant [@amershi2019se4ml; @nahar2022collaboration; @paleyes2022challenges]. La codification APE ne fait pas exception. Ce chapitre décrit deux réponses qui se sont révélées décisives : un **data scientist métier**, point de contact pour le modèle, et une **plateforme de qualification** identique à la production.
+Maintenir un modèle en production, la difficulté est surtout ailleurs que dans la technique. Les enquêtes auprès des praticiens et les retours d'expérience de déploiements de machine learning vont dans le même sens : les problèmes les plus durs se situent **à la frontière entre équipes**, qu'il s'agisse de s'entendre sur les besoins, de négocier la qualité des données ou d'intégrer le modèle dans un système existant [@amershi2019se4ml; @nahar2022collaboration; @paleyes2022challenges]. La codification APE ne fait pas exception. Ce chapitre décrit deux réponses qui ont fait la différence : un **data scientist métier**, point de contact pour le modèle, et une **plateforme de qualification** identique à la production.
 
 ## Trois équipes autour d'un modèle
 
@@ -33,83 +33,83 @@ Trois équipes se partagent la responsabilité du modèle, chacune avec ses prop
 |---|---|---|
 | Équipe métier (répertoire Sirene) | La nomenclature, les règles de codification, les équipes de reprise manuelle | Qualité du code APE et charge des gestionnaires |
 | Équipes informatiques de production | Le système d'information du répertoire et l'infrastructure de production | Disponibilité, sécurité, maîtrise des changements |
-| Équipe de data science (SSP Lab) | La chaîne d'entraînement, les bibliothèques, la plateforme de développement | Méthodes, outils, qualité du modèle |
+| Équipe de data science (SSP Lab) | Le pipeline d'entraînement, les librairies, la plateforme de développement | Méthodes, outils, qualité du modèle |
 
 : Équipes impliquées dans la codification APE. {#tbl-teams}
 
-Sans une personne qui appartienne au métier **et** comprenne le modèle, chaque question traverse les frontières entre équipes. Une baisse du taux de codification automatique est-elle une dérive ou un effet saisonnier ? Cette erreur signalée est-elle isolée ou récurrente ? Un nouveau modèle peut-il partir en production ? Ces questions attendent alors, ou sont tranchées par la personne la plus proche, et non par celle qui devrait décider.
+Sans quelqu'un qui soit côté métier **et** comprenne le modèle, chaque question doit passer d'une équipe à l'autre. Une baisse du taux de codification automatique, c'est du drift ou un effet saisonnier ? Cette erreur signalée est-elle isolée ou récurrente ? Un nouveau modèle peut-il partir en production ? Ces questions restent en suspens, ou sont tranchées par la personne la plus proche plutôt que par celle qui devrait décider.
 
 ## Le data scientist métier comme point de contact {#sec-business-ds}
 
 ### Pourquoi un rôle dédié
 
-La littérature sur l'apprentissage automatique dans les organisations décrit les rôles et les responsabilités qui entourent un modèle en production [@kreuzberger2023mlops]. Elle documente aussi l'intérêt de placer les data scientists **au sein** des équipes métier qu'ils servent, au plus près du domaine et des décisions [@stelmaszak2023embedded]. Le cadre AIML4OS, écrit pour la statistique publique, en fait une recommandation : tout modèle en production doit avoir un responsable nommément désigné [@aiml4os2025, ch. 3].
+La littérature sur le machine learning dans les organisations décrit les rôles et responsabilités autour d'un modèle en production [@kreuzberger2023mlops]. Elle montre aussi l'intérêt de placer les data scientists **dans** les équipes métier qu'ils servent, au plus près du domaine et des décisions [@stelmaszak2023embedded]. Le cadre AIML4OS, écrit pour la statistique publique, en fait une recommandation : tout modèle en production doit avoir un responsable clairement identifié [@aiml4os2025, ch. 3].
 
-Pour la codification APE, ce responsable est un **data scientist placé dans l'équipe métier**. Il est distinct de l'équipe d'innovation qui a construit les premiers modèles. Il parle les deux langues : il connaît la nomenclature et le travail des gestionnaires, et il sait lire une courbe risque–couverture, lancer un entraînement et relire une *pull request*.
+Pour la codification APE, ce responsable est un **data scientist placé dans l'équipe métier**. Il est distinct de l'équipe d'innovation qui a construit les premiers modèles. Il est à l'aise des deux côtés : il connaît la nomenclature et le travail des gestionnaires, et il sait lire une courbe risque–couverture, lancer un entraînement et relire une *pull request*.
 
 ### Responsabilités
 
 | Domaine | Le data scientist métier… |
 |---|---|
-| Besoins | Traduit les besoins métier en exigences pour le modèle : exactitude cible $p^*$, charge de reprise acceptable, codes qui ne doivent jamais être faux |
+| Besoins | Traduit les besoins métier en exigences pour le modèle : accuracy cible $p^*$, charge de reprise acceptable, codes qui ne doivent jamais être faux |
 | Annotation | Organise les campagnes d'annotation et le *golden set* : échantillonnage, consignes, calendrier des équipes d'experts |
 | Retours métier | Recueille les erreurs signalées, distingue les erreurs isolées des erreurs récurrentes, et transforme ces dernières en [règles](data.qmd#sec-rules) validées par les experts |
-| Réentraînement | Conduit le [protocole de réentraînement](retraining.qmd) et valide les [portes de qualité](retraining.qmd#sec-gates) |
-| Suivi | Fait une première analyse des alertes du [suivi](monitoring.qmd) et décide si elles appellent une action |
-| Mise en production | Est l'interlocuteur des équipes informatiques de production pour chaque version du modèle, de la qualification au retour arrière |
+| Réentraînement | Pilote le [protocole de réentraînement](retraining.qmd) et valide les [quality gates](retraining.qmd#sec-gates) |
+| Monitoring | Fait une première analyse des alertes du [monitoring](monitoring.qmd) et décide s'il faut agir |
+| Mise en production | Est l'interlocuteur des équipes informatiques de production pour chaque version du modèle, de la qualification au rollback |
 | Communication | Rend compte de la qualité à la hiérarchie et aux utilisateurs du code APE |
 
 : Responsabilités du data scientist métier. {#tbl-business-ds}
 
-L'équipe de data science reste responsable des **outils** : bibliothèques, chaînes de traitement, plateforme de développement. Le data scientist métier est responsable du **modèle en tant que service rendu au métier**. Cette séparation permet à l'équipe d'innovation de passer à d'autres projets sans laisser le modèle sans responsable.
+L'équipe de data science reste responsable des **outils** : librairies, pipelines, plateforme de développement. Le data scientist métier est responsable du **modèle en tant que service rendu au métier**. Ce partage permet à l'équipe d'innovation de passer à d'autres projets sans laisser le modèle orphelin.
 
 ### Les conditions du rôle
 
-Le rôle ne fonctionne que si quelques conditions sont réunies :
+Le rôle ne marche que si quelques conditions sont réunies :
 
-- **du temps** : réentraînement, annotation et suivi sont des tâches récurrentes, pas une activité annexe ;
+- **du temps** : réentraînement, annotation et monitoring sont des tâches récurrentes, pas une activité annexe ;
 - **des accès** : la même plateforme de développement et les mêmes dépôts que l'équipe de data science ;
-- **des compétences** : Python, Git, statistique, et connaissance de la nomenclature ;
+- **des compétences** : Python, Git, stats, et connaissance de la nomenclature ;
 - **un mandat** : le pouvoir de décider des mises en production, dans des règles convenues avec le métier et l'informatique.
 
 ## Une plateforme de qualification identique à la production {#sec-qualification-platform}
 
 ### L'écart entre développement et production
 
-Le modèle est développé et entraîné sur le SSP Cloud, une plateforme de data science ouverte, avec des GPU et un accès à internet (voir [Architecture](architecture.qmd)). Il tourne en production sur l'infrastructure interne de l'Insee : CPU uniquement, pas d'accès à internet, limites de ressources strictes et maîtrise des changements. Tout ce qui diffère entre les deux environnements peut faire échouer une mise en production, ou modifier le comportement du modèle sans que personne ne s'en aperçoive :
+Le modèle est développé et entraîné sur le SSP Cloud, une plateforme de data science ouverte, avec des GPU et un accès à internet (voir [Architecture](architecture.qmd)). Il tourne en production sur l'infrastructure interne de l'Insee : CPU uniquement, pas d'accès à internet, limites de ressources strictes et changements très encadrés. Toute différence entre les deux environnements peut faire échouer une mise en production, ou changer le comportement du modèle sans que personne ne s'en rende compte :
 
-- une version de bibliothèque différente, qui change le prétraitement ou les résultats numériques ;
+- une version de librairie différente, qui change le prétraitement ou les résultats numériques ;
 - une ressource que le modèle télécharge au démarrage, inaccessible dans un réseau fermé ;
-- une latence ou une empreinte mémoire mesurée sur une machine de développement, et non sur le CPU de production ;
+- une latence ou une empreinte mémoire mesurée sur une machine de développement, pas sur le CPU de production ;
 - une différence de configuration dans la façon dont l'API est exposée au répertoire.
 
 ### Ce que signifie « iso-production »
 
-La **plateforme de qualification** supprime cet écart. Elle reproduit la production aussi fidèlement que possible :
+La **plateforme de qualification** comble cet écart en reproduisant la production aussi fidèlement que possible :
 
-- le même environnement d'exécution : image de base, versions de Python et des bibliothèques, versions CPU uniquement ;
+- le même environnement d'exécution : image de base, versions de Python et des librairies, builds CPU uniquement ;
 - les mêmes ressources : limites de CPU et de mémoire, nombre de réplicas ;
 - les mêmes contraintes réseau : pas d'accès à internet, dépendances servies par le gestionnaire de dépôts interne ;
 - le même mécanisme de déploiement et la même configuration qu'en production.
 
 ### Ce qu'on y mesure
 
-Chaque modèle candidat passe la même série de vérifications avant sa mise en production (voir [Protocole de réentraînement](retraining.qmd#sec-preprod)) :
+Chaque modèle candidat passe la même batterie de tests avant sa mise en production (voir [Protocole de réentraînement](retraining.qmd#sec-preprod)) :
 
-- la **latence** des appels unitaires (médiane, p95, p99) et le **débit** en traitement par lots, sous une charge réaliste ;
+- la **latence** des appels unitaires (médiane, p95, p99) et le **débit** en batch, sous une charge réaliste ;
 - l'**empreinte mémoire** et le **temps de démarrage** ;
-- la **parité en ligne / hors ligne** : le modèle servi doit reproduire exactement les prédictions hors ligne sur le *golden set* de test ;
+- la **cohérence online / offline** : le modèle servi doit reproduire exactement les prédictions hors ligne sur le *golden set* de test ;
 - la **robustesse** : des entrées mal formées ou inattendues doivent être rejetées proprement, sans faire tomber le service.
 
-Ce sont les [métriques non fonctionnelles](evaluation.qmd#sec-eval-nonfunctional) de l'évaluation. Elles n'ont de sens qu'ici.
+Ce sont les [métriques non fonctionnelles](evaluation.qmd#sec-eval-nonfunctional) de l'évaluation, qui n'ont de sens qu'ici.
 
 ```{mermaid}
 %%| label: fig-qualification
 %%| fig-cap: "Du développement à la production."
 flowchart LR
-  DEV["Développement et entraînement<br/>(SSP Cloud : GPU, internet)"] --> REG[("Registre<br/>MLflow")]
+  DEV["Développement et entraînement<br/>(SSP Cloud : GPU, internet)"] --> REG[("Model registry<br/>MLflow")]
   REG --> QUAL["Plateforme de qualification<br/>(iso-production : CPU, réseau fermé)"]
-  QUAL -->|"latence, mémoire,<br/>parité, robustesse"| GO{"Go / no-go"}
+  QUAL -->|"latence, mémoire,<br/>cohérence, robustesse"| GO{"Go / no-go"}
   GO -->|"non"| DEV
   GO -->|"oui"| PROD["Production<br/>(infrastructure interne)"]
 ```
@@ -121,12 +121,12 @@ flowchart LR
 | Artefact du modèle et suite de tests | Fournit | Relit | — |
 | Plateforme de qualification | Utilise | Utilise | Fournit et maintient |
 | Go / no-go | Conseille | Décide | Vérifie les critères d'exploitation |
-| Mise en production et retour arrière | — | Demande | Exécute |
+| Mise en production et rollback | — | Demande | Exécute |
 
 : Partage des responsabilités autour de la qualification. {#tbl-qualification-raci}
 
 ## Défis ouverts
 
-- **Pérenniser l'annotation.** Le *golden set* demande aux experts métier un effort d'annotation modeste mais continu, en concurrence avec leur travail quotidien de codification.
-- **Compétences et continuité.** Un data scientist métier unique est un point de défaillance unique. Le rôle a besoin d'un suppléant et de documentation.
-- **Garder les plateformes alignées.** Chaque changement de la production (image de base, limites de ressources, règles réseau) doit être reporté sur la plateforme de qualification, faute de quoi la qualification perd son sens.
+- **Pérenniser l'annotation.** Le *golden set* demande aux experts métier un effort d'annotation modeste mais continu, qui entre en concurrence avec leur travail quotidien de codification.
+- **Compétences et continuité.** Un seul data scientist métier, c'est un *single point of failure* : il faut un suppléant et de la documentation.
+- **Garder les plateformes alignées.** Chaque changement en production (image de base, limites de ressources, règles réseau) doit être répercuté sur la plateforme de qualification, sinon la qualification perd son sens.
