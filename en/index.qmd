@@ -48,7 +48,7 @@ Since the end of 2022, this coding has been done by a machine learning model, ca
 | 1. [Context and history](context.qmd) | The APE code, the one-stop-shop reform, from Sicore to fastText to PyTorch |
 | 2. [Architecture](architecture.qmd) | Platform, repositories, end-to-end flow |
 | 3. [Data](data.qmd) | Training data, auditable rule engine, the NAF 2025 revision with LLMs, GRAAL agents |
-| 4. [Model](model.qmd) | Architecture, torchTextClassifiers, training, confidence index, calibration, results |
+| 4. [Model](model.qmd) | Architecture, torchTextClassifiers, training, confidence index, calibration, results, future work |
 | 5. [Evaluation](evaluation.qmd) | Metrics beyond accuracy, golden set, auxiliary engines, inference time |
 | 6. [Serving and deployment](serving.qmd) | MLflow packaging, API, CI/CD and GitOps |
 | 7. [Monitoring and annotation](monitoring.qmd) | Drift, dashboards, Label Studio, LLM audits |

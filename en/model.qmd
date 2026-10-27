@@ -116,7 +116,7 @@ For each declaration, the model returns its five most likely codes and their pro
 
 The threshold sets the trade-off between **automation rate** and **accuracy of automatic coding**. With fastText, a threshold of about 0.75 sent roughly 20 % of declarations to manual coding [@randriamanana2025jms]. Since the score distribution changes from one model to the next, the threshold must be **recalibrated for every new model** on a representative sample. Reusing the previous threshold would shift the manual coding workload in an uncontrolled way.
 
-This is why **calibration** matters. A probability of 0.9 should be right about 90 % of the time. fastText's one-versus-all scores were poorly calibrated. The PyTorch model, trained with a softmax cross-entropy loss, is well calibrated out of the box, as measured on a test sample of 300,000 descriptions [@tayebjee2025jms]. Calibration is measured at every run with the expected calibration error (ECE) and the Brier score.
+This is why **calibration** matters. A probability of 0.9 should be right about 90 % of the time. fastText's one-versus-all scores were poorly calibrated. The PyTorch model, trained with a softmax cross-entropy loss, is well calibrated out of the box, as measured on a test sample of 300,000 descriptions [@tayebjee2025jms]. Calibration is measured at every run with the expected calibration error (ECE) and the Brier score. Going beyond a single threshold, conformal prediction is explored under [Future work](#sec-conformal).
 
 ## Evaluation
 
@@ -152,3 +152,40 @@ Accuracy on the test set of the NAF 2025 retraining, by level [@randriamanana202
 : Test accuracy of the models retrained on NAF 2025 data, before data editing. {#tbl-naf2025}
 
 Applying business rules to the training data (data editing) raised sub-class accuracy to about 0.88–0.90 for both models. The gain is large but must be read with care: rules also change the test labels, so part of the gain reflects closer agreement with the rules rather than better generalisation. The [retraining protocol](retraining.qmd) is designed precisely to separate the two effects.
+
+## Future work {#sec-future}
+
+The production model is deliberately simple. Two lines of work look at how to go further without breaking the [production constraints](context.qmd#production-constraints): a richer architecture, and a better use of the model's uncertainty.
+
+### Architecture: Julien Bernardi's internship {#sec-internship}
+
+<!-- TODO: school, year, link to the report or slides, main figures. -->
+
+Julien Bernardi's internship at the SSP Lab served two purposes.
+
+1. **Validating torchTextClassifiers.** The library is meant to become a common tool beyond APE, so its implementation must be checked on its own, not only through the APE results. The internship benchmarked TTC for this purpose, and the benchmark validated the implementation.
+2. **Proposing architecture innovations.** The internship then proposed changes to the architecture of the library's models.
+
+As for the options already in the library ([above](#architecture)), an innovation is adopted only if it fits within the CPU latency budget and passes the [quality gates](retraining.qmd#sec-gates) of the retraining protocol.
+
+### Conformal prediction {#sec-conformal}
+
+The [confidence index](#sec-calibration) answers one question: can this declaration be coded automatically? It says little about the cases sent to manual coding. The coder always sees the same five suggestions, whether the model hesitates between two codes or has no idea.
+
+**Conformal prediction** [@angelopoulos2023gentle] replaces this fixed list with a statistical guarantee. A threshold is computed on a calibration set held out from training. For a new description, the model then returns a **set of codes** that contains the right one with probability at least $1 - \alpha$, for example 95 %. The guarantee holds for any model, provided the calibration data and the production data are exchangeable. The size of the set carries the uncertainty: one or two codes when the model is sure, many more when it is not.
+
+Exploratory work in codif-ape-train ([`src/conformal_pred`](https://github.com/InseeFrLab/codif-ape-train/tree/main/src/conformal_pred)) applies split conformal prediction to the trained model:
+
+- **Calibration on manual cases only.** Only validation declarations whose CI is below the threshold, those that would go to manual coding, are used. This selection depends only on the model's output, so the guarantee still holds within the subset. It therefore applies exactly to the declarations that human coders see.
+- **Three scores** are compared:
+  - $1 - \hat{p}(y \mid x)$, which tends to give the smallest sets;
+  - the cumulative probability of the codes ranked up to the true one (*adaptive prediction sets*, @romano2020classification), which adapts the size of the set to the difficulty of each case;
+  - the rank of the true code, which amounts to choosing the length $k$ of a top-$k$ list with a guarantee.
+- **Evaluation** on the test set, by empirical coverage and mean set size.
+
+Several questions remain open before any production use:
+
+- **Conditional coverage.** The guarantee is marginal: 95 % on average over all declarations, possibly much less for some sections. Calibrating separately by section (Mondrian conformal prediction) would fix this, at the cost of more calibration data.
+- **Drift.** The way declarants describe their activity changes over time ([Monitoring](monitoring.qmd)), which weakens exchangeability. Like $\tau$, the conformal threshold must be recomputed for every new model on recent data, and its coverage must be monitored.
+- **Interface.** A set of variable size changes the API contract, which currently returns a fixed top 5 ([Serving](serving.qmd#the-api)), and the manual coding interface.
+- **Choosing $\tau$.** The same tools could set the threshold $\tau$ itself, with a guarantee on the error rate of automatic coding (conformal risk control, @angelopoulos2024crc).

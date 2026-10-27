@@ -116,7 +116,7 @@ Pour chaque déclaration, le modèle renvoie ses cinq codes les plus probables e
 
 Le seuil fixe le compromis entre **taux de codification automatique** et **accuracy de la codification automatique**. Avec fastText, un seuil d'environ 0,75 envoyait environ 20 % des déclarations en reprise manuelle [@randriamanana2025jms]. La distribution des scores change d'un modèle à l'autre : il faut donc **recalibrer le seuil pour chaque nouveau modèle**, sur un échantillon représentatif. Garder l'ancien seuil ferait varier la charge de reprise manuelle sans contrôle.
 
-D'où l'importance de la **calibration** : une probabilité de 0,9 doit être juste dans environ 90 % des cas. Les scores *one-vs-all* de fastText étaient mal calibrés. Le modèle PyTorch, entraîné avec une cross-entropy sur un softmax, est bien calibré d'emblée, comme l'a montré une mesure sur 300 000 libellés de test [@tayebjee2025jms]. La calibration est mesurée à chaque run par l'ECE (*expected calibration error*) et le score de Brier.
+D'où l'importance de la **calibration** : une probabilité de 0,9 doit être juste dans environ 90 % des cas. Les scores *one-vs-all* de fastText étaient mal calibrés. Le modèle PyTorch, entraîné avec une cross-entropy sur un softmax, est bien calibré d'emblée, comme l'a montré une mesure sur 300 000 libellés de test [@tayebjee2025jms]. La calibration est mesurée à chaque run par l'ECE (*expected calibration error*) et le score de Brier. Pour aller au-delà d'un simple seuil, la prédiction conforme est explorée dans les [Perspectives](#sec-conformal).
 
 ## Évaluation
 
@@ -152,3 +152,40 @@ Accuracy sur le jeu de test après réentraînement en NAF 2025, par niveau [@ra
 : Accuracy sur le jeu de test des modèles réentraînés sur les données NAF 2025, avant correction des données. {#tbl-naf2025}
 
 Après application des règles métier aux données d'entraînement (*data editing*), l'accuracy au niveau sous-classe monte à environ 0,88–0,90 pour les deux modèles. Le gain est important, mais à prendre avec prudence : les règles modifient aussi les labels de test, donc une partie du gain reflète un meilleur alignement sur les règles plutôt qu'une meilleure généralisation. Le [protocole de réentraînement](retraining.qmd) est justement conçu pour séparer ces deux effets.
+
+## Perspectives {#sec-future}
+
+Le modèle de production est volontairement simple. Deux pistes cherchent à aller plus loin sans sortir des [contraintes de production](context.qmd#contraintes-de-production) : une architecture plus riche, et une meilleure exploitation de l'incertitude du modèle.
+
+### Architecture : le stage de Julien Bernardi {#sec-internship}
+
+<!-- TODO : école, année, lien vers le rapport ou les slides, principaux chiffres. -->
+
+Le stage de Julien Bernardi au SSP Lab avait deux objectifs.
+
+1. **Valider torchTextClassifiers.** La librairie a vocation à devenir un outil commun au-delà de l'APE : son implémentation doit donc être vérifiée pour elle-même, pas seulement à travers les résultats sur l'APE. Le stage a benchmarké TTC dans ce but, et ce benchmark a validé l'implémentation.
+2. **Proposer des innovations d'architecture.** Le stage a ensuite proposé des évolutions de l'architecture des modèles de la librairie.
+
+Comme pour les options déjà présentes dans la librairie ([plus haut](#architecture)), une innovation n'est retenue que si elle tient dans le budget de latence sur CPU et passe les [critères de validation](retraining.qmd#sec-gates) du protocole de réentraînement.
+
+### Prédiction conforme {#sec-conformal}
+
+L'[indice de confiance](#sec-calibration) répond à une seule question : peut-on coder automatiquement cette déclaration ? Il dit peu de choses sur les cas envoyés en reprise manuelle. Le gestionnaire voit toujours les cinq mêmes suggestions, que le modèle hésite entre deux codes ou qu'il n'en ait aucune idée.
+
+La **prédiction conforme** (*conformal prediction*) [@angelopoulos2023gentle] remplace cette liste fixe par une garantie statistique. Un seuil est calculé sur un jeu de calibration, mis de côté à l'entraînement. Pour un nouveau libellé, le modèle renvoie alors un **ensemble de codes** qui contient le bon code avec une probabilité d'au moins $1 - \alpha$, par exemple 95 %. La garantie vaut quel que soit le modèle, à condition que les données de calibration et de production soient échangeables. La taille de l'ensemble porte l'incertitude : un ou deux codes quand le modèle est sûr, beaucoup plus quand il ne l'est pas.
+
+Un travail exploratoire dans codif-ape-train ([`src/conformal_pred`](https://github.com/InseeFrLab/codif-ape-train/tree/main/src/conformal_pred)) applique la prédiction conforme *split* au modèle entraîné :
+
+- **Calibration sur les seuls cas en reprise.** On ne garde que les déclarations de validation dont l'IC est sous le seuil, celles qui partiraient en reprise manuelle. Cette sélection ne dépend que de la sortie du modèle, donc la garantie tient toujours sur ce sous-ensemble. Elle porte ainsi exactement sur les déclarations que voient les gestionnaires.
+- **Trois scores** sont comparés :
+  - $1 - \hat{p}(y \mid x)$, qui donne en général les ensembles les plus petits ;
+  - la probabilité cumulée des codes classés jusqu'au vrai code (*adaptive prediction sets*, @romano2020classification), qui adapte la taille de l'ensemble à la difficulté de chaque cas ;
+  - le rang du vrai code, ce qui revient à choisir avec une garantie la longueur $k$ d'une liste top $k$.
+- **Évaluation** sur le jeu de test, par la couverture empirique et la taille moyenne des ensembles.
+
+Plusieurs questions restent ouvertes avant tout usage en production :
+
+- **Couverture conditionnelle.** La garantie est marginale : 95 % en moyenne sur l'ensemble des déclarations, peut-être beaucoup moins pour certaines sections. Calibrer séparément par section (prédiction conforme *Mondrian*) corrigerait ce point, au prix de davantage de données de calibration.
+- **Dérive.** La façon dont les déclarants décrivent leur activité évolue ([Monitoring](monitoring.qmd)), ce qui fragilise l'échangeabilité. Comme $\tau$, le seuil conforme doit être recalculé pour chaque nouveau modèle sur des données récentes, et sa couverture monitorée.
+- **Interface.** Un ensemble de taille variable change le contrat de l'API, qui renvoie aujourd'hui un top 5 fixe ([Mise en production](serving.qmd#lapi)), et l'interface de reprise manuelle.
+- **Choix de $\tau$.** Les mêmes outils pourraient fixer le seuil $\tau$ lui-même, avec une garantie sur le taux d'erreur de la codification automatique (*conformal risk control*, @angelopoulos2024crc).

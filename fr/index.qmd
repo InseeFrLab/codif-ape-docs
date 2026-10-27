@@ -48,7 +48,7 @@ Depuis fin 2022, cette codification est assurée par un modèle de machine learn
 | 1. [Contexte et historique](context.qmd) | Le code APE, la réforme du guichet unique, de Sicore à fastText puis à PyTorch |
 | 2. [Architecture](architecture.qmd) | Plateforme, dépôts, flux de bout en bout |
 | 3. [Données](data.qmd) | Données d'entraînement, moteur de règles auditable, passage à la NAF 2025 avec des LLM, agents GRAAL |
-| 4. [Modèle](model.qmd) | Architecture, torchTextClassifiers, entraînement, indice de confiance, calibration, résultats |
+| 4. [Modèle](model.qmd) | Architecture, torchTextClassifiers, entraînement, indice de confiance, calibration, résultats, perspectives |
 | 5. [Évaluation](evaluation.qmd) | Métriques au-delà de l'accuracy, *golden set*, moteurs auxiliaires, temps d'inférence |
 | 6. [Mise en production](serving.qmd) | Packaging MLflow, API, CI/CD et GitOps |
 | 7. [Monitoring et annotation](monitoring.qmd) | Drift, dashboards, Label Studio, audits par LLM |
