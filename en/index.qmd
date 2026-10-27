@@ -7,7 +7,7 @@ author:
     url: https://github.com/meilame-tayebjee
     email: meilame.tayebjee@insee.fr
     affiliations:
-      - SSP Lab, Insee
+      - Innovation Lab, Insee
 lang: en
 number-sections: false
 toc: false
@@ -64,5 +64,5 @@ Readers interested mainly in **methodology** can go straight to [Evaluation](eva
 
 ::: {.callout-note}
 ## About this note
-This note is written by the SSP Lab, INSEE's data science team. All the code is open source on [GitHub](https://github.com/InseeFrLab). The team's slides are collected [here](https://inseefrlab.github.io/codif-ape-prez/). A [French version](../fr/index.qmd) is available.
+This note is written by the Innovation Lab, INSEE's data science team. All the code is open source on [GitHub](https://github.com/InseeFrLab). The team's slides are collected [here](https://inseefrlab.github.io/codif-ape-prez/). A [French version](../fr/index.qmd) is available.
 :::

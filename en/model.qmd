@@ -6,7 +6,7 @@ author:
     url: https://github.com/meilame-tayebjee
     email: meilame.tayebjee@insee.fr
     affiliations:
-      - SSP Lab, Insee
+      - Innovation Lab, Insee
 lang: en
 # The former chapter on TTC and GRAAL, now split between Model and Data.
 aliases:
@@ -161,7 +161,7 @@ The production model is deliberately simple. Two lines of work look at how to go
 
 <!-- TODO: school, year, link to the report or slides, main figures. -->
 
-Julien Bernardi's internship at the SSP Lab served two purposes.
+Julien Bernardi's internship at the Innovation Lab served two purposes.
 
 1. **Validating torchTextClassifiers.** The library is meant to become a common tool beyond APE, so its implementation must be checked on its own, not only through the APE results. The internship benchmarked TTC for this purpose, and the benchmark validated the implementation.
 2. **Proposing architecture innovations.** The internship then proposed changes to the architecture of the library's models.

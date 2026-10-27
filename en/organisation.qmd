@@ -33,7 +33,7 @@ Three teams share responsibility for the model, each with its own constraints:
 |---|---|---|
 | Business team (Sirene register) | The classification, the coding rules, the manual coding teams | Quality of the APE code and workload of the coders |
 | IT production teams | The register's information system and the production infrastructure | Availability, security, change control |
-| Data science team (SSP Lab) | The training pipeline, the libraries, the development platform | Methods, tools, model quality |
+| Data science team (Innovation Lab) | The training pipeline, the libraries, the development platform | Methods, tools, model quality |
 
 : Teams involved in APE coding. {#tbl-teams}
 

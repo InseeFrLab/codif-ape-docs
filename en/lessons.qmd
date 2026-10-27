@@ -6,7 +6,7 @@ author:
     url: https://github.com/meilame-tayebjee
     email: meilame.tayebjee@insee.fr
     affiliations:
-      - SSP Lab, Insee
+      - Innovation Lab, Insee
 lang: en
 ---
 
@@ -38,7 +38,7 @@ lang: en
 
 - the business team, which owns the register and the classification;
 - the IT teams that run production;
-- the data science team (SSP Lab).
+- the data science team (Innovation Lab).
 
 The decisive step was to name a **model owner** in the business team, who is responsible for retraining, qualification and operation, distinct from the innovation team. This mirrors the AIML4OS recommendation that every model in production have a named owner [@aiml4os2025, ch. 3]. The role is described in [Organisational and infrastructural challenges](organisation.qmd#sec-business-ds).
 

@@ -6,7 +6,7 @@ author:
     url: https://github.com/meilame-tayebjee
     email: meilame.tayebjee@insee.fr
     affiliations:
-      - SSP Lab, Insee
+      - Innovation Lab, Insee
 lang: en
 number-sections: false
 ---
@@ -17,7 +17,7 @@ All the team's presentations are collected at **[inseefrlab.github.io/codif-ape-
 
 | Date | Title | Venue |
 |---|---|---|
-| 2026-08 | [Code2Text: generating synthetic descriptions to train automatic coding](https://mateomorin.github.io/Code2Text-presentation/) (M. Morin, in French) | ENSAE internship, SSP Lab |
+| 2026-08 | [Code2Text: generating synthetic descriptions to train automatic coding](https://mateomorin.github.io/Code2Text-presentation/) (M. Morin, in French) | ENSAE internship, Innovation Lab |
 | 2026-06 | [torchTextClassifiers from an MLOps perspective](https://inseefrlab.github.io/codif-ape-prez/slides/isi-malta/) | ISI World Statistics Congress, Malta |
 | 2026-06 | [When Classifications Change but Deadlines Don't: Scaling Recoding with LLMs](https://inseefrlab.github.io/codif-ape-prez/slides/isi-malta-relabeling/) | ISI World Statistics Congress, Malta |
 | 2026-05 | [From Accuracy to Trust: practical methods for uncertainty-aware automatic coding](https://meilame-tayebjee.github.io/IAOS-Vilnius-conference/presentations/accuracy2trust/) | IAOS Conference, Vilnius |

@@ -6,7 +6,7 @@ author:
     url: https://github.com/meilame-tayebjee
     email: meilame.tayebjee@insee.fr
     affiliations:
-      - SSP Lab, Insee
+      - Innovation Lab, Insee
   - name: Nathan Randriamanana
     url: https://github.com/TheAIWizard
     email: nathan.randriamanana@insee.fr
@@ -181,7 +181,7 @@ GRAAL and the probabilistic part of the [rule engine](#sec-rules) play the same 
 
 ## Synthetic data: Code2Text {#sec-synthetic}
 
-Matéo Morin's internship (ENSAE Paris, SSP Lab, 2026) studied how to generate synthetic activity descriptions with LLMs for NAF 2025. It builds on GRAAL's Code2Text agent ([GRAAL](#sec-graal)). The report, slides and appendices are online at [mateomorin.github.io/Code2Text-presentation](https://mateomorin.github.io/Code2Text-presentation/) (in French). This is exploratory work.
+Matéo Morin's internship (ENSAE Paris, Innovation Lab, 2026) studied how to generate synthetic activity descriptions with LLMs for NAF 2025. It builds on GRAAL's Code2Text agent ([GRAAL](#sec-graal)). The report, slides and appendices are online at [mateomorin.github.io/Code2Text-presentation](https://mateomorin.github.io/Code2Text-presentation/) (in French). This is exploratory work.
 
 ### Why synthetic data
 
