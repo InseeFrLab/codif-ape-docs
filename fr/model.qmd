@@ -7,6 +7,11 @@ author:
     email: meilame.tayebjee@insee.fr
     affiliations:
       - SSP Lab, Insee
+  - name: Cédric Couralet
+    url: https://github.com/micedre
+    email: cedric.couralet@insee.fr
+    affiliations:
+      - SSP Lab, Insee
 lang: fr
 # The former chapter on TTC and GRAAL, now split between Model and Data.
 aliases:

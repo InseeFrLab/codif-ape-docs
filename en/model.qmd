@@ -7,6 +7,11 @@ author:
     email: meilame.tayebjee@insee.fr
     affiliations:
       - Innovation Lab, Insee
+  - name: Cédric Couralet
+    url: https://github.com/micedre
+    email: cedric.couralet@insee.fr
+    affiliations:
+      - Innovation Lab, Insee
 lang: en
 # The former chapter on TTC and GRAAL, now split between Model and Data.
 aliases:
