@@ -6,8 +6,8 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="author" content="SSP Lab">
-<meta name="description" content="Pourquoi l’Insee code automatiquement l’activité économique, et comment le système est passé d’un moteur de règles à l’apprentissage profond.">
+<meta name="author" content="Meilame Tayebjee">
+<meta name="description" content="Pourquoi l’Insee code automatiquement l’activité économique, et comment le système est passé d’un moteur de règles au deep learning.">
 
 <title>Contexte et historique – APE coding · MLOps</title>
 <style>
@@ -68,7 +68,7 @@ div.csl-indent {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-fc581236a46ad31b3ea501458e50ff32.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-7ac3c55ca58f93c4c6c73bcc24e20e69.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -99,7 +99,7 @@ div.csl-indent {
 
 
 <meta property="og:title" content="Contexte et historique – APE coding · MLOps">
-<meta property="og:description" content="Pourquoi l’Insee code automatiquement l’activité économique, et comment le système est passé d’un moteur de règles à l’apprentissage profond.">
+<meta property="og:description" content="Pourquoi l’Insee code automatiquement l’activité économique, et comment le système est passé d’un moteur de règles au deep learning.">
 <meta property="og:site_name" content="APE coding · MLOps">
 </head>
 
@@ -184,14 +184,20 @@ div.csl-indent {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../fr/evaluation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Évaluation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../fr/serving.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Mise à disposition du modèle et déploiement</span></a>
+ <span class="menu-text">Mise en production</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../fr/monitoring.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Suivi et annotation</span></a>
+ <span class="menu-text">Monitoring et annotation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -202,14 +208,20 @@ div.csl-indent {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../fr/companion-projects.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Projets associés&nbsp;: TTC et GRAAL</span></a>
+  <a href="../fr/organisation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Défis organisationnels et d’infrastructure</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../fr/lessons.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Enseignements</span></a>
+ <span class="menu-text">Retours d’expérience</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/glossary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glossaire et notations</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -246,7 +258,7 @@ div.csl-indent {
 
 <div>
   <div class="description">
-    Pourquoi l’Insee code automatiquement l’activité économique, et comment le système est passé d’un moteur de règles à l’apprentissage profond.
+    Pourquoi l’Insee code automatiquement l’activité économique, et comment le système est passé d’un moteur de règles au deep learning.
   </div>
 </div>
 
@@ -255,11 +267,11 @@ div.csl-indent {
   <div class="quarto-title-meta-heading">Affiliation</div>
   
     <div class="quarto-title-meta-contents">
-    <p class="author">SSP Lab </p>
+    <p class="author"><a href="https://github.com/meilame-tayebjee">Meilame Tayebjee</a> <a href="mailto:meilame.tayebjee@insee.fr" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> </p>
   </div>
   <div class="quarto-title-meta-contents">
         <p class="affiliation">
-            Insee
+            SSP Lab, Insee
           </p>
       </div>
   </div>
@@ -278,14 +290,13 @@ div.csl-indent {
 
 <section id="le-code-ape-et-la-nomenclature-nace" class="level2" data-number="1">
 <h2 data-number="1" class="anchored" data-anchor-id="le-code-ape-et-la-nomenclature-nace"><span class="header-section-number">1</span> Le code APE et la nomenclature NACE</h2>
-<p>Toute entreprise immatriculée en France reçoit un <strong>code APE</strong> (activité principale exercée). Ce code situe l’unité dans la <strong>NAF</strong> (nomenclature d’activités française), déclinaison nationale de la nomenclature européenne <strong>NACE</strong>. Il est rattaché aux identifiants de l’entreprise dans le répertoire <strong>Sirene</strong>, que l’Insee gère depuis 1973 et qui fait foi pour les numéros SIREN et SIRET.</p>
-<p>Le code APE n’est pas une simple étiquette administrative. Il sert à&nbsp;:</p>
+<p>Toute entreprise immatriculée en France reçoit un <strong>code APE</strong> (activité principale exercée). Ce code situe l’unité dans la <strong>NAF</strong> (nomenclature d’activités française), déclinaison nationale de la nomenclature européenne <strong>NACE</strong>. Il est associé aux identifiants de l’entreprise dans le répertoire <strong>Sirene</strong>, que l’Insee gère depuis 1973 et qui fait référence pour les numéros SIREN et SIRET.</p>
+<p>Le code APE sert à&nbsp;:</p>
 <ul>
 <li>constituer les bases de sondage des enquêtes auprès des entreprises et produire les statistiques structurelles d’entreprises&nbsp;;</li>
-<li>produire les comptes nationaux et les indicateurs conjoncturels par branche&nbsp;;</li>
-<li>appliquer des réglementations sectorielles (conventions collectives, assurances, certains impôts et aides).</li>
+<li>produire les comptes nationaux et les indicateurs conjoncturels par branche.</li>
 </ul>
-<p>Une erreur de codification se propage donc à la fois dans les statistiques et dans la vie administrative de l’entreprise.</p>
+<p>Une erreur de codification se propage donc dans les statistiques qui en dépendent.</p>
 <p>La nomenclature est hiérarchique et compte cinq niveaux&nbsp;:</p>
 <div id="tbl-naf" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -342,7 +353,7 @@ Table&nbsp;1: Taille de la nomenclature NAF à chaque niveau. Pour la NAF 2025, 
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>La cible est la <strong>sous-classe</strong>, le niveau le plus fin, avec environ 750 modalités possibles. Les niveaux supérieurs se déduisent directement du code. Les métriques sont donc calculées à chaque niveau de la hiérarchie.</p>
+<p>On prédit la <strong>sous-classe</strong>, le niveau le plus fin, soit environ 750 modalités. Les niveaux supérieurs s’en déduisent directement, et les métriques sont donc calculées à chaque niveau de la hiérarchie.</p>
 </div>
 </div>
 </section>
@@ -352,9 +363,9 @@ Table&nbsp;1: Taille de la nomenclature NAF à chaque niveau. Pour la NAF 2025, 
 <p>Deux réformes ont changé la donne&nbsp;:</p>
 <ol type="1">
 <li><strong>La loi PACTE (2019)</strong> a créé un <strong>guichet unique</strong> en ligne, géré par l’INPI. Depuis le 1er janvier 2023, toutes les formalités d’entreprise passent par lui. Le libellé d’activité est devenu un champ de texte libre, saisi par le déclarant sans aucune aide.</li>
-<li><strong>Sirene 4</strong>, le nouveau système d’information du répertoire, est passé d’un traitement par lots nocturne à un <strong>traitement au fil de l’eau</strong>, fondé sur des micro-services. La migration a été progressive, à partir de fin 2022.</li>
+<li><strong>Sirene 4</strong>, le nouveau système d’information du répertoire, est passé d’un traitement batch la nuit à un <strong>traitement au fil de l’eau</strong>, fondé sur des micro-services. La migration a été progressive, à partir de fin 2022.</li>
 </ol>
-<p>Résultat&nbsp;: les textes sont plus longs, plus verbeux et plus variés. Ils comportent aussi toutes les fautes et les particularités d’écriture propres à une saisie libre.</p>
+<p>Résultat&nbsp;: les textes sont plus longs, plus verbeux et plus variés, avec toutes les fautes et les tournures qu’on attend d’une saisie libre.</p>
 <p>Chaque année, environ <strong>2&nbsp;millions</strong> de libellés doivent être codés.</p>
 </section>
 <section id="trois-générations-de-moteurs-de-codification" class="level2 page-columns page-full" data-number="3">
@@ -384,13 +395,13 @@ Table&nbsp;2: Moteurs successifs de codification APE.
 <tr class="even">
 <td>Fin 2022 → 2025</td>
 <td><strong>fastText</strong></td>
-<td>Modèle supervisé (sac de mots et n-grammes de caractères), les variables annexes étant ajoutées au texte sous forme de tokens</td>
-<td>Meta a archivé la bibliothèque en mars 2024. Ni calibration, ni explicabilité, ni prise en charge des GPU.</td>
+<td>Modèle supervisé (bag of words et n-grammes de caractères), les variables annexes étant ajoutées au texte sous forme de tokens</td>
+<td>Meta a archivé la librairie en mars 2024. Ni calibration, ni explicabilité, ni support GPU.</td>
 </tr>
 <tr class="odd">
 <td>2025 →</td>
-<td><strong>PyTorch</strong> (<a href="../fr/companion-projects.html#sec-ttc">torchTextClassifiers</a>)</td>
-<td>Même famille de modèles, reconstruite en PyTorch&nbsp;: un plongement (<em>embedding</em>) dédié par variable catégorielle, calibration, explicabilité</td>
+<td><strong>PyTorch</strong> (<a href="../fr/model.html#sec-ttc">torchTextClassifiers</a>)</td>
+<td>Même famille de modèles, réimplémentée en PyTorch&nbsp;: un embedding dédié par variable catégorielle, calibration, explicabilité</td>
 <td>Inférence un peu plus lente qu’avec fastText, mais dans le budget.</td>
 </tr>
 </tbody>
@@ -403,30 +414,30 @@ Table&nbsp;2: Moteurs successifs de codification APE.
 Meyer, Pascal, et Pascal Rivière. 1997. <span>«&nbsp;<span>SICORE</span>, un outil et une méthode pour le chiffrement automatique à l’<span>INSEE</span>&nbsp;»</span>. <em>Blaise Users Conference</em>. <a href="https://www.blaiseusers.org/1997/papers/meyer97.pdf">https://www.blaiseusers.org/1997/papers/meyer97.pdf</a>.
 </div><div id="ref-avouac2025" class="csl-entry" role="listitem">
 Avouac, Romain, Thomas Faria, et Frédéric Comte. 2025. <em>L’apport des technologies cloud pour industrialiser le processus d’innovation statistique</em>. Document de travail -- Méthodologie statistique Nos. M2025-05. Insee. <a href="https://www.insee.fr/fr/statistiques/8614378">https://www.insee.fr/fr/statistiques/8614378</a>.
-</div></div><p>Le modèle <strong>fastText</strong> a été mis en production progressivement à partir de novembre 2022, avec un seuil d’abord volontairement prudent. Il a ramené le taux de codification automatique à environ <strong>80&nbsp;%</strong>, ce qui a rendu la réforme du guichet unique tenable.</p>
-<p>Lorsque Meta a archivé le dépôt fastText en mars 2024, l’équipe a engagé la migration vers <strong>PyTorch</strong>. Elle en a profité pour corriger les faiblesses structurelles du modèle&nbsp;: traitement des variables catégorielles, calibration et explicabilité. Il en est résulté le package open source torchTextClassifiers, présenté dans <a href="../fr/companion-projects.html">Projets associés</a>.</p>
+</div></div><p>Le modèle <strong>fastText</strong> a été mis en production progressivement à partir de novembre 2022, avec un seuil volontairement prudent au départ. Il a fait remonter le taux de codification automatique à environ <strong>80&nbsp;%</strong>, ce qui a rendu la réforme du guichet unique tenable.</p>
+<p>Lorsque Meta a archivé le dépôt fastText en mars 2024, l’équipe a engagé la migration vers <strong>PyTorch</strong>. Elle en a profité pour corriger les faiblesses structurelles du modèle&nbsp;: traitement des variables catégorielles, calibration et explicabilité. C’est ainsi qu’est né le package open source torchTextClassifiers, présenté dans le chapitre <a href="../fr/model.html#sec-ttc">Modèle</a>.</p>
 </section>
 <section id="contraintes-de-production" class="level2" data-number="4">
 <h2 data-number="4" class="anchored" data-anchor-id="contraintes-de-production"><span class="header-section-number">4</span> Contraintes de production</h2>
 <p>Le modèle est appelé par le système d’information Sirene pour chaque déclaration, dès son arrivée. Cela impose des contraintes fortes&nbsp;:</p>
 <ul>
 <li><strong>Inférence unitaire sur CPU</strong> dans un environnement fermé&nbsp;: pas de GPU, pas d’accès à internet, et toutes les dépendances embarquées avec le modèle.</li>
-<li><strong>Faible latence</strong>&nbsp;: l’objectif est d’environ 200&nbsp;ms par appel.</li>
-<li><strong>Repli sur l’humain</strong>&nbsp;: le modèle renvoie ses cinq codes les plus probables, chacun avec sa probabilité, ainsi qu’un <strong>indice de confiance</strong>. En dessous d’un seuil, la déclaration part en reprise manuelle&nbsp;: une équipe de gestionnaires la code en s’appuyant sur les suggestions du modèle.</li>
+<li><strong>Faible latence</strong>&nbsp;: de l’ordre de 200&nbsp;ms par appel.</li>
+<li><strong>Reprise par un humain</strong>&nbsp;: le modèle renvoie ses cinq codes les plus probables, chacun avec sa probabilité, ainsi qu’un <strong>indice de confiance</strong>. En dessous d’un seuil, la déclaration part en reprise manuelle&nbsp;: une équipe de gestionnaires la code en s’appuyant sur les suggestions du modèle.</li>
 <li><strong>Traçabilité</strong>&nbsp;: chaque prédiction doit pouvoir être rattachée à la version exacte du modèle qui l’a produite.</li>
 </ul>
-<p>Le <strong>taux de codification automatique</strong> est la part des déclarations codées sans intervention humaine, avec une qualité maîtrisée. C’est l’indicateur métier clé, car il détermine la charge de travail des équipes de reprise manuelle.</p>
+<p>Le <strong>taux de codification automatique</strong> est la part des déclarations codées sans intervention humaine, avec une qualité maîtrisée. C’est le principal indicateur métier&nbsp;: il détermine la charge de travail des équipes de reprise manuelle.</p>
 </section>
 <section id="pourquoi-le-mlops" class="level2" data-number="5">
 <h2 data-number="5" class="anchored" data-anchor-id="pourquoi-le-mlops"><span class="header-section-number">5</span> Pourquoi le MLOps</h2>
-<p>Un modèle entraîné une fois puis laissé en l’état ne reste pas performant longtemps, pour plusieurs raisons&nbsp;:</p>
+<p>Un modèle entraîné une fois pour toutes ne reste pas performant longtemps&nbsp;:</p>
 <ul>
-<li>la façon dont les déclarants décrivent leur activité dérive avec le temps&nbsp;: nouveaux métiers, nouvelles formes juridiques, nouvelles formulations&nbsp;;</li>
+<li>la façon dont les déclarants décrivent leur activité évolue&nbsp;: nouveaux métiers, nouvelles formes juridiques, nouvelles formulations&nbsp;;</li>
 <li>les experts métier signalent des erreurs qu’il faut corriger vite et durablement&nbsp;;</li>
 <li>la nomenclature elle-même évolue&nbsp;: le passage de la NAF rév. 2 à la NAF 2025 a imposé de recoder tout le jeu d’entraînement (voir <a href="../fr/data.html#sec-naf2025">Données</a>)&nbsp;;</li>
-<li>les bibliothèques dont dépend le modèle sont abandonnées (fastText) ou changent de version majeure (MLflow, PyTorch).</li>
+<li>les librairies dont dépend le modèle sont abandonnées (fastText) ou changent de version majeure (MLflow, PyTorch).</li>
 </ul>
-<p>La suite de cette note décrit le système qui fait de ce travail une routine&nbsp;: un entraînement reproductible, un registre de modèles versionné, une API déployée en GitOps, un suivi et une annotation en continu, et un protocole de réentraînement doté de critères de validation explicites.</p>
+<p>La suite de cette note décrit ce qui permet d’en faire une routine&nbsp;: un entraînement reproductible, un model registry versionné, une API déployée en GitOps, du monitoring et de l’annotation en continu, et un protocole de réentraînement avec des critères de validation explicites.</p>
 
 
 
@@ -434,57 +445,404 @@ Avouac, Romain, Thomas Faria, et Frédéric Comte. 2025. <em>L’apport des tech
 
 <a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Retour au sommet</a></main> <!-- /main -->
 <!--
-  EN | FR switch in the navbar. en/ and fr/ use the same file names and the
-  same anchors, so the switch links to the same page and section in the other
-  language. The choice is remembered for the root page redirect (index.qmd).
+  Site navigation, added at the end of every page.
+
+  1. Table of contents. The left sidebar becomes a single, collapsible table
+     of contents for the whole note: chapters, then their sections and
+     sub-sections, read from outline.json (written by scripts/outline.py).
+     The section being read is highlighted as the reader scrolls.
+
+  2. EN | FR switch. en/ and fr/ use the same file names and the same
+     anchors, so switching language swaps the page content in place: same
+     page, same section, no reload. The choice is remembered for the root
+     page redirect (index.qmd).
 -->
 <script>
 (function () {
+  "use strict";
+
   var KEY = "codif-ape-lang";
   var LANGS = ["en", "fr"];
-  var TITLES = {
-    en: { label: "EN", hint: "Read this page in English", brand: "APE coding · MLOps" },
-    fr: { label: "FR", hint: "Lire cette page en français", brand: "Codification APE · MLOps" }
+  var STRINGS = {
+    en: {
+      label: "EN", hint: "Read this page in English", brand: "APE coding · MLOps",
+      group: "Language", toc: "Table of contents", expand: "Expand", collapse: "Collapse"
+    },
+    fr: {
+      label: "FR", hint: "Lire cette page en français", brand: "Codification APE · MLOps",
+      group: "Langue", toc: "Sommaire", expand: "Déplier", collapse: "Replier"
+    }
   };
+  // Parts of the page that differ between languages, swapped on a switch.
+  var SWAPPED = [
+    "main#quarto-document-content",
+    "#quarto-margin-sidebar",
+    "nav.page-navigation",
+    ".nav-footer-center",
+    ".quarto-secondary-nav-title"
+  ];
+  var PATH = /^(.*\/)(en|fr)(\/.*)?$/;
 
-  var m = window.location.pathname.match(/^(.*\/)(en|fr)(\/.*)?$/);
+  var m = window.location.pathname.match(PATH);
   if (!m) return;
-  var base = m[1], current = m[2], rest = m[3] || "/";
+  var base = m[1];
+  var state = { lang: m[2], page: pageOf(m[3]) };
 
-  try { localStorage.setItem(KEY, current); } catch (e) {}
+  // "/data.html", "/data" and "/" all name a page; compare them without ".html".
+  function pageOf(rest) {
+    var page = (rest || "/").replace(/^\//, "").replace(/\.html$/, "");
+    return page === "" ? "index" : page;
+  }
 
-  var brand = document.querySelector(".navbar-brand");
-  if (brand) brand.setAttribute("href", base + current + "/index.html");
-  var brandTitle = document.querySelector(".navbar-title");
-  if (brandTitle) brandTitle.textContent = TITLES[current].brand;
+  function urlFor(lang, page) {
+    return base + lang + "/" + page + ".html";
+  }
 
-  var group = document.createElement("div");
-  group.className = "lang-switch";
-  group.setAttribute("role", "group");
-  group.setAttribute("aria-label", current === "fr" ? "Langue" : "Language");
+  function el(tag, className, attrs) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    Object.keys(attrs || {}).forEach(function (k) { node.setAttribute(k, attrs[k]); });
+    return node;
+  }
+
+  // ---------------------------------------------------------------- MathJax
+
+  // Section titles can hold math; MathJax loads after this script.
+  function typeset(nodes) {
+    var mj = window.MathJax;
+    if (mj && mj.startup && mj.startup.promise) {
+      return mj.startup.promise.then(function () { return mj.typesetPromise(nodes); });
+    }
+    if (document.readyState !== "complete") {
+      return new Promise(function (resolve) {
+        window.addEventListener("load", function () { typeset(nodes).then(resolve); }, { once: true });
+      });
+    }
+    return Promise.resolve();
+  }
+
+  // ----------------------------------------------------- Table of contents
+
+  var outline = fetch(base + "outline.json")
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .catch(function () { return null; });
+
+  var links = {};       // section id -> link, for the current page
+  var activeLink = null;
+
+  function setOpen(li, open) {
+    li.classList.toggle("is-open", open);
+    var button = li.querySelector(":scope > .toc-row > .toc-toggle");
+    if (button) {
+      button.setAttribute("aria-expanded", String(open));
+      button.setAttribute("aria-label", STRINGS[state.lang][open ? "collapse" : "expand"]);
+    }
+  }
+
+  function tocItem(node, depth, page, isCurrentPage) {
+    var li = el("li", "toc-item toc-depth-" + depth);
+    var row = el("div", "toc-row");
+    var children = depth === 0 ? node.sections : node.children;
+
+    if (children && children.length) {
+      var button = el("button", "toc-toggle", { type: "button" });
+      button.addEventListener("click", function () {
+        li.dataset.pinned = "1";
+        setOpen(li, !li.classList.contains("is-open"));
+      });
+      row.appendChild(button);
+    } else {
+      row.appendChild(el("span", "toc-spacer"));
+    }
+
+    var a = el("a", "toc-link no-external");
+    if (depth === 0) {
+      a.href = urlFor(state.lang, page);
+      if (node.number) {
+        var num = el("span", "toc-number");
+        num.textContent = node.number + ".";
+        a.appendChild(num);
+      }
+      a.insertAdjacentHTML("beforeend", node.title);
+      if (isCurrentPage) {
+        a.classList.add("is-current");
+        a.setAttribute("aria-current", "page");
+        a.addEventListener("click", function (e) {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      }
+    } else {
+      a.href = (isCurrentPage ? "" : urlFor(state.lang, page)) + "#" + node.id;
+      a.innerHTML = node.title;
+      if (isCurrentPage) links[node.id] = a;
+    }
+    row.appendChild(a);
+    li.appendChild(row);
+
+    if (children && children.length) {
+      var ul = el("ul", "toc-children");
+      children.forEach(function (child) {
+        ul.appendChild(tocItem(child, depth + 1, page, isCurrentPage));
+      });
+      li.appendChild(ul);
+      setOpen(li, false);
+    }
+    return li;
+  }
+
+  function buildToc(data) {
+    var container = document.querySelector("#quarto-sidebar .sidebar-menu-container");
+    if (!container || !data || !data[state.lang]) return;
+
+    links = {};
+    activeLink = null;
+    var nav = el("nav", "site-toc", { "aria-label": STRINGS[state.lang].toc });
+    var ul = el("ul", "toc-children toc-chapters");
+    data[state.lang].forEach(function (chapter) {
+      var page = pageOf(chapter.href);
+      var isCurrent = page === state.page;
+      var li = tocItem(chapter, 0, page, isCurrent);
+      if (isCurrent) {
+        li.classList.add("is-current");
+        setOpen(li, true);
+      }
+      ul.appendChild(li);
+    });
+    nav.appendChild(ul);
+    container.replaceChildren(nav);
+    document.body.classList.add("has-site-toc");
+
+    typeset([nav]);
+    updateActive();
+    var current = nav.querySelector(".toc-link.is-current");
+    if (current) revealInSidebar(current);
+  }
+
+  function revealInSidebar(link) {
+    var sidebar = document.getElementById("quarto-sidebar");
+    if (!sidebar) return;
+    var r = link.getBoundingClientRect();
+    var s = sidebar.getBoundingClientRect();
+    if (r.top < s.top || r.bottom > s.bottom) {
+      sidebar.scrollTop += r.top - s.top - s.height / 3;
+    }
+  }
+
+  function sectionList() {
+    return Array.prototype.slice.call(document.querySelectorAll(
+      "main#quarto-document-content section.level2[id], main#quarto-document-content section.level3[id]"
+    ));
+  }
+
+  // The section being read: the last one whose top has scrolled past the
+  // navbar.
+  function currentSection() {
+    var sections = sectionList();
+    if (!sections.length) return null;
+    var atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    if (atBottom) return sections[sections.length - 1];
+    var current = null;
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].getBoundingClientRect().top > 100) break;
+      current = sections[i];
+    }
+    return current;
+  }
+
+  function updateActive() {
+    var section = currentSection();
+    var link = (section && links[section.id]) || null;
+    if (link === activeLink) return;
+    if (activeLink) activeLink.classList.remove("active");
+    activeLink = link;
+    if (!link) return;
+    link.classList.add("active");
+
+    // Open the branch that holds the active section, and close the branches
+    // opened automatically before, unless the reader opened them by hand.
+    var branch = [];
+    for (var li = link.closest(".toc-item"); li; li = li.parentElement.closest(".toc-item")) {
+      branch.push(li);
+    }
+    document.querySelectorAll(".site-toc .toc-item.is-open").forEach(function (li) {
+      if (branch.indexOf(li) === -1 && !li.classList.contains("is-current") && !li.dataset.pinned) {
+        setOpen(li, false);
+      }
+    });
+    branch.forEach(function (li) {
+      if (li.querySelector(":scope > .toc-children")) setOpen(li, true);
+    });
+    revealInSidebar(link);
+  }
+
+  var ticking = false;
+  window.addEventListener("scroll", function () {
+    if (ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(function () { ticking = false; updateActive(); });
+  }, { passive: true });
+
+  // -------------------------------------------------------- Language switch
+
+  var switchGroup = el("div", "lang-switch", { role: "group" });
+
+  function updateChrome() {
+    var s = STRINGS[state.lang];
+    var brand = document.querySelector(".navbar-brand");
+    if (brand) brand.setAttribute("href", urlFor(state.lang, "index"));
+    var brandTitle = document.querySelector(".navbar-title");
+    if (brandTitle) brandTitle.textContent = s.brand;
+    switchGroup.setAttribute("aria-label", s.group);
+    Array.prototype.forEach.call(switchGroup.children, function (a) {
+      var lang = a.getAttribute("lang");
+      var active = lang === state.lang;
+      a.classList.toggle("active", active);
+      if (active) a.setAttribute("aria-current", "true");
+      else a.removeAttribute("aria-current");
+      a.href = urlFor(lang, state.page) + window.location.hash;
+    });
+  }
 
   LANGS.forEach(function (lang) {
-    var a = document.createElement("a");
-    a.textContent = TITLES[lang].label;
-    a.setAttribute("lang", lang);
-    a.setAttribute("hreflang", lang);
-    a.setAttribute("title", TITLES[lang].hint);
-    if (lang === current) {
-      a.className = "active";
-      a.setAttribute("aria-current", "true");
-    }
-    a.href = base + lang + rest + window.location.hash;
-    a.addEventListener("click", function () {
-      try { localStorage.setItem(KEY, lang); } catch (e) {}
-      // Keep the section the reader is on, even after scrolling.
-      a.href = base + lang + rest + window.location.hash;
+    var a = el("a", "no-external", { lang: lang, hreflang: lang, title: STRINGS[lang].hint });
+    a.textContent = STRINGS[lang].label;
+    a.addEventListener("click", function (e) {
+      // Let modified clicks open the other language in a new tab.
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      switchLang(lang, true);
     });
-    group.appendChild(a);
+    switchGroup.appendChild(a);
   });
 
   var slot = document.querySelector(".quarto-navbar-tools") ||
              document.querySelector(".navbar-container");
-  if (slot) slot.insertBefore(group, slot.firstChild);
+  if (slot) slot.insertBefore(switchGroup, slot.firstChild);
+
+  // Quarto marks external links (icon, new tab) on page load only.
+  function adornExternalLinks(root) {
+    root.querySelectorAll("a[href]:not(.no-external):not([aria-hidden])").forEach(function (a) {
+      if (/^https?:$/.test(a.protocol) && a.origin !== window.location.origin) {
+        a.setAttribute("target", "_blank");
+        if (a.getAttribute("rel") === null) a.setAttribute("rel", "noopener");
+        a.classList.add("external");
+      }
+    });
+  }
+
+  // Same steps as Quarto's mermaid-init.js, which only runs on page load.
+  var mermaidCount = 0;
+  function renderMermaid(root) {
+    var mermaid = window.mermaid;
+    if (!mermaid) return Promise.resolve();
+    var blocks = Array.prototype.slice.call(root.querySelectorAll("pre.mermaid-js"));
+    return blocks.reduce(function (done, pre) {
+      return done.then(function () {
+        var text = pre.textContent.replace(/&nbsp;/g, " ");
+        return mermaid.mermaidAPI.render("mermaid-switch-" + (++mermaidCount), text, pre)
+          .then(function (result) {
+            pre.innerHTML = result.svg;
+            var svg = pre.querySelector("svg");
+            if (pre.dataset.label) {
+              var style = svg.querySelector("style");
+              if (style) style.innerHTML = style.innerHTML.split("#" + svg.id).join("#" + pre.dataset.label + "-mermaid");
+              svg.id = pre.dataset.label + "-mermaid";
+            }
+            pre.parentElement.replaceChild(svg, pre);
+            svg.classList.add("mermaid-js");
+            /* global _quartoMermaid */
+            if (typeof _quartoMermaid !== "undefined") {
+              try { _quartoMermaid.postProcess(svg); } catch (e) {}
+            }
+          });
+      });
+    }, Promise.resolve());
+  }
+
+  var switching = false;
+  function switchLang(lang, push) {
+    if (lang === state.lang || switching) return;
+    switching = true;
+    var url = urlFor(lang, state.page);
+
+    // Remember where the reader is, to land at the same place. Both
+    // languages have the same sections in the same order, but not always the
+    // same ids (those derived from French titles differ), so sections are
+    // matched by position.
+    var before = sectionList();
+    var anchor = currentSection();
+    var anchorIndex = before.indexOf(anchor);
+    var anchorTop = anchor ? anchor.getBoundingClientRect().top : null;
+    var hashIndex = before.findIndex(function (s) { return "#" + s.id === window.location.hash; });
+    var scrollY = window.scrollY;
+
+    document.documentElement.classList.add("lang-switching");
+    fetch(url)
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (html) {
+        var doc = new DOMParser().parseFromString(html, "text/html");
+        var after = doc.querySelectorAll(
+          "main#quarto-document-content section.level2[id], main#quarto-document-content section.level3[id]"
+        );
+        var hash = hashIndex >= 0 && after[hashIndex] ? "#" + after[hashIndex].id : window.location.hash;
+        state.lang = lang;
+        if (push) history.pushState({ lang: lang }, "", url + hash);
+        else if (hash !== window.location.hash) history.replaceState(history.state, "", url + hash);
+        try { localStorage.setItem(KEY, lang); } catch (e) {}
+
+        SWAPPED.forEach(function (selector) {
+          var current = document.querySelector(selector);
+          var next = doc.querySelector(selector);
+          if (!current || !next) return;
+          next.querySelectorAll("script").forEach(function (s) { s.remove(); });
+          current.replaceWith(document.importNode(next, true));
+        });
+        document.title = doc.title;
+        document.documentElement.lang = doc.documentElement.lang || lang;
+        updateChrome();
+
+        var main = document.querySelector("main#quarto-document-content");
+        adornExternalLinks(main);
+        return Promise.all([
+          renderMermaid(main).catch(function () {}),
+          typeset([main]).catch(function () {}),
+          outline.then(buildToc)
+        ]);
+      })
+      .then(function () {
+        var target = anchorIndex >= 0 ? sectionList()[anchorIndex] : null;
+        if (target && anchorTop !== null) {
+          window.scrollTo(0, window.scrollY + target.getBoundingClientRect().top - anchorTop);
+        } else {
+          window.scrollTo(0, scrollY);
+        }
+        updateActive();
+      })
+      .catch(function () {
+        // Fall back to a normal page load.
+        window.location.href = url + window.location.hash;
+      })
+      .then(function () {
+        switching = false;
+        document.documentElement.classList.remove("lang-switching");
+      });
+  }
+
+  // Back and forward between two languages of the same page stay in place.
+  window.addEventListener("popstate", function () {
+    var mm = window.location.pathname.match(PATH);
+    if (!mm) return;
+    if (pageOf(mm[3]) !== state.page) {
+      window.location.reload();
+    } else if (mm[2] !== state.lang) {
+      switchLang(mm[2], false);
+    }
+  });
+
+  try { localStorage.setItem(KEY, state.lang); } catch (e) {}
+  updateChrome();
+  outline.then(buildToc);
 })();
 </script>
 <script id="quarto-html-after-body" type="application/javascript">

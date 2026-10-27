@@ -6,8 +6,8 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="author" content="SSP Lab">
-<meta name="description" content="Comment le flux de production de chaque trimestre devient un meilleur modèle, sans se leurrer&nbsp;: golden set, curation des données, règles métier, portes de qualité et qualification.">
+<meta name="author" content="Meilame Tayebjee">
+<meta name="description" content="Comment le flux de production de chaque trimestre devient un meilleur modèle, sans se raconter d’histoires&nbsp;: golden set, curation des données, règles métier, quality gates et qualification.">
 
 <title>Protocole de réentraînement – APE coding · MLOps</title>
 <style>
@@ -38,7 +38,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../fr/companion-projects.html" rel="next">
+<link href="../fr/organisation.html" rel="next">
 <link href="../fr/monitoring.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -49,7 +49,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-fc581236a46ad31b3ea501458e50ff32.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-7ac3c55ca58f93c4c6c73bcc24e20e69.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -113,7 +113,7 @@ window.Quarto = {
 </script>
 
 <meta property="og:title" content="Protocole de réentraînement – APE coding · MLOps">
-<meta property="og:description" content="Comment le flux de production de chaque trimestre devient un meilleur modèle, sans se leurrer&nbsp;: golden set, curation des données, règles métier, portes de qualité et qualification.">
+<meta property="og:description" content="Comment le flux de production de chaque trimestre devient un meilleur modèle, sans se raconter d’histoires&nbsp;: golden set, curation des données, règles métier, quality gates et qualification.">
 <meta property="og:site_name" content="APE coding · MLOps">
 </head>
 
@@ -198,14 +198,20 @@ window.Quarto = {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../fr/evaluation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Évaluation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../fr/serving.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Mise à disposition du modèle et déploiement</span></a>
+ <span class="menu-text">Mise en production</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../fr/monitoring.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Suivi et annotation</span></a>
+ <span class="menu-text">Monitoring et annotation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -216,14 +222,20 @@ window.Quarto = {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../fr/companion-projects.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Projets associés&nbsp;: TTC et GRAAL</span></a>
+  <a href="../fr/organisation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Défis organisationnels et d’infrastructure</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../fr/lessons.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Enseignements</span></a>
+ <span class="menu-text">Retours d’expérience</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/glossary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glossaire et notations</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -242,18 +254,19 @@ window.Quarto = {
     <h2 id="toc-title">Sur cette page</h2>
    
   <ul>
-  <li><a href="#sec-golden" id="toc-sec-golden" class="nav-link active" data-scroll-target="#sec-golden"><span class="header-section-number">1</span> Ce que fournit le flux de production</a></li>
-  <li><a href="#construire-le-prochain-jeu-dentraînement" id="toc-construire-le-prochain-jeu-dentraînement" class="nav-link" data-scroll-target="#construire-le-prochain-jeu-dentraînement"><span class="header-section-number">2</span> Construire le prochain jeu d’entraînement</a>
+  <li><a href="#sec-status" id="toc-sec-status" class="nav-link active" data-scroll-target="#sec-status"><span class="header-section-number">1</span> Où en sommes-nous&nbsp;?</a></li>
+  <li><a href="#sec-golden" id="toc-sec-golden" class="nav-link" data-scroll-target="#sec-golden"><span class="header-section-number">2</span> Ce que fournit le flux de production</a></li>
+  <li><a href="#sec-next-training-set" id="toc-sec-next-training-set" class="nav-link" data-scroll-target="#sec-next-training-set"><span class="header-section-number">3</span> Construire le prochain jeu d’entraînement</a>
   <ul class="collapse">
-  <li><a href="#lexactitude-de-la-codification-automatique-peut-être-estimée" id="toc-lexactitude-de-la-codification-automatique-peut-être-estimée" class="nav-link" data-scroll-target="#lexactitude-de-la-codification-automatique-peut-être-estimée"><span class="header-section-number">2.1</span> L’exactitude de la codification automatique peut être estimée</a></li>
-  <li><a href="#curation-des-codifications-automatiques-se-concentrer-sur-les-désaccords" id="toc-curation-des-codifications-automatiques-se-concentrer-sur-les-désaccords" class="nav-link" data-scroll-target="#curation-des-codifications-automatiques-se-concentrer-sur-les-désaccords"><span class="header-section-number">2.2</span> Curation des codifications automatiques&nbsp;: se concentrer sur les désaccords</a></li>
-  <li><a href="#sec-known-cases" id="toc-sec-known-cases" class="nav-link" data-scroll-target="#sec-known-cases"><span class="header-section-number">2.3</span> Cas connus&nbsp;: propager plutôt que surpondérer</a></li>
-  <li><a href="#sec-assembly" id="toc-sec-assembly" class="nav-link" data-scroll-target="#sec-assembly"><span class="header-section-number">2.4</span> Assemblage</a></li>
+  <li><a href="#on-peut-estimer-laccuracy-de-la-codification-automatique" id="toc-on-peut-estimer-laccuracy-de-la-codification-automatique" class="nav-link" data-scroll-target="#on-peut-estimer-laccuracy-de-la-codification-automatique"><span class="header-section-number">3.1</span> On peut estimer l’accuracy de la codification automatique</a></li>
+  <li><a href="#sec-curation" id="toc-sec-curation" class="nav-link" data-scroll-target="#sec-curation"><span class="header-section-number">3.2</span> Curation des codifications automatiques&nbsp;: se concentrer sur les désaccords</a></li>
+  <li><a href="#sec-known-cases" id="toc-sec-known-cases" class="nav-link" data-scroll-target="#sec-known-cases"><span class="header-section-number">3.3</span> Cas connus&nbsp;: propager plutôt que surpondérer</a></li>
+  <li><a href="#sec-assembly" id="toc-sec-assembly" class="nav-link" data-scroll-target="#sec-assembly"><span class="header-section-number">3.4</span> Assemblage</a></li>
   </ul></li>
-  <li><a href="#portes-de-qualité-gates-f_n1-face-à-f_n" id="toc-portes-de-qualité-gates-f_n1-face-à-f_n" class="nav-link" data-scroll-target="#portes-de-qualité-gates-f_n1-face-à-f_n"><span class="header-section-number">3</span> Portes de qualité (<em>gates</em>)&nbsp;: <span class="math inline">\(f_{n+1}\)</span> face à <span class="math inline">\(f_n\)</span></a></li>
-  <li><a href="#sec-preprod" id="toc-sec-preprod" class="nav-link" data-scroll-target="#sec-preprod"><span class="header-section-number">4</span> Qualification et mise en production</a></li>
-  <li><a href="#comparer-les-modèles-dans-le-temps" id="toc-comparer-les-modèles-dans-le-temps" class="nav-link" data-scroll-target="#comparer-les-modèles-dans-le-temps"><span class="header-section-number">5</span> Comparer les modèles dans le temps</a></li>
-  <li><a href="#vue-densemble" id="toc-vue-densemble" class="nav-link" data-scroll-target="#vue-densemble"><span class="header-section-number">6</span> Vue d’ensemble</a></li>
+  <li><a href="#sec-gates" id="toc-sec-gates" class="nav-link" data-scroll-target="#sec-gates"><span class="header-section-number">4</span> Quality gates&nbsp;: <span class="math inline">\(f_{n+1}\)</span> face à <span class="math inline">\(f_n\)</span></a></li>
+  <li><a href="#sec-preprod" id="toc-sec-preprod" class="nav-link" data-scroll-target="#sec-preprod"><span class="header-section-number">5</span> Qualification et mise en production</a></li>
+  <li><a href="#comparer-les-modèles-dans-le-temps" id="toc-comparer-les-modèles-dans-le-temps" class="nav-link" data-scroll-target="#comparer-les-modèles-dans-le-temps"><span class="header-section-number">6</span> Comparer les modèles dans le temps</a></li>
+  <li><a href="#vue-densemble" id="toc-vue-densemble" class="nav-link" data-scroll-target="#vue-densemble"><span class="header-section-number">7</span> Vue d’ensemble</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/InseeFrLab/codif-ape-docs/edit/main/fr/retraining.qmd" class="toc-action"><i class="bi bi-github"></i>Modifier cette page</a></li><li><a href="https://github.com/InseeFrLab/codif-ape-docs/issues/new" class="toc-action"><i class="bi empty"></i>Faire part d'un problème</a></li></ul></div></nav>
     </div>
@@ -267,7 +280,7 @@ window.Quarto = {
 
 <div>
   <div class="description">
-    Comment le flux de production de chaque trimestre devient un meilleur modèle, sans se leurrer&nbsp;: golden set, curation des données, règles métier, portes de qualité et qualification.
+    Comment le flux de production de chaque trimestre devient un meilleur modèle, sans se raconter d’histoires&nbsp;: golden set, curation des données, règles métier, quality gates et qualification.
   </div>
 </div>
 
@@ -276,11 +289,11 @@ window.Quarto = {
   <div class="quarto-title-meta-heading">Affiliation</div>
   
     <div class="quarto-title-meta-contents">
-    <p class="author">SSP Lab </p>
+    <p class="author"><a href="https://github.com/meilame-tayebjee">Meilame Tayebjee</a> <a href="mailto:meilame.tayebjee@insee.fr" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> </p>
   </div>
   <div class="quarto-title-meta-contents">
         <p class="affiliation">
-            Insee
+            SSP Lab, Insee
           </p>
       </div>
   </div>
@@ -297,15 +310,117 @@ window.Quarto = {
 </header>
 
 
-<p>Réentraîner un modèle est facile. Le réentraîner de sorte qu’il soit, <strong>de façon démontrable, au moins aussi bon</strong> que celui en production, avec des annotations produites en partie par ce même modèle, est difficile. Ce chapitre décrit le protocole que nous utilisons à cette fin. C’est le cœur méthodologique de la chaîne.</p>
-<p>Le protocole suit un cycle trimestriel. Pendant le trimestre <span class="math inline">\(n\)</span>, le modèle <span class="math inline">\(f_n\)</span> est en production avec un seuil <span class="math inline">\(\tau_n\)</span>, et le cycle produit <span class="math inline">\(f_{n+1}\)</span> et <span class="math inline">\(\tau_{n+1}\)</span>.</p>
-<section id="sec-golden" class="level2" data-number="1">
-<h2 data-number="1" class="anchored" data-anchor-id="sec-golden"><span class="header-section-number">1</span> Ce que fournit le flux de production</h2>
-<p>Le flux de déclarations <span class="math inline">\(F_n\)</span> reçu pendant le trimestre <span class="math inline">\(n\)</span> se décompose naturellement en plusieurs ensembles. Chacun a sa propre valeur et son propre <strong>biais de sélection</strong>&nbsp;:</p>
+<p>Réentraîner un modèle, c’est facile. Le réentraîner en <strong>prouvant qu’il est au moins aussi bon</strong> que celui en production, avec des annotations produites en partie par ce même modèle, c’est beaucoup plus dur. Ce chapitre décrit le protocole que nous mettons en place pour y arriver&nbsp;: c’est le cœur méthodologique du pipeline.</p>
+<p>Le protocole suit un cycle trimestriel. Pendant le trimestre <span class="math inline">\(n\)</span>, le modèle <span class="math inline">\(f_n\)</span> est en production avec un seuil <span class="math inline">\(\tau_n\)</span>, et le cycle produit <span class="math inline">\(f_{n+1}\)</span> et <span class="math inline">\(\tau_{n+1}\)</span>. Toutes les notations sont rassemblées dans le <a href="../fr/glossary.html#sec-notation">glossaire</a>.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Une cible, en partie en place
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Ce chapitre décrit le protocole que nous mettons en place, pas seulement ce qui tourne aujourd’hui. L’<a href="#sec-status">état des lieux</a> ci-dessous indique, pour chaque brique, ce qui est en place, ce qui l’est en partie et ce qui reste à faire.</p>
+</div>
+</div>
+<section id="sec-status" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="sec-status"><span class="header-section-number">1</span> Où en sommes-nous&nbsp;?</h2>
+<div id="tbl-status" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-status-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: État du protocole.
+</figcaption>
+<div aria-describedby="tbl-status-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Composant</th>
+<th style="text-align: left;">État</th>
+<th style="text-align: left;">Aujourd’hui</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Moteur de règles avec logs d’audit, appliqué avant chaque entraînement</td>
+<td style="text-align: left;"><span class="status status-done">En place</span></td>
+<td style="text-align: left;">Tourne dans le workflow de preprocessing (<a href="../fr/data.html#sec-rules">Données</a>)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Entraînement reproductible, jeux de données loggés avec chaque run</td>
+<td style="text-align: left;"><span class="status status-done">En place</span></td>
+<td style="text-align: left;">Fichiers de configuration, environnements figés, jeux de données loggés dans MLflow (<a href="../fr/model.html">Modèle</a>)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Métriques loggées à chaque run</td>
+<td style="text-align: left;"><span class="status status-partial">En partie</span></td>
+<td style="text-align: left;">Accuracy à chaque niveau, ECE, score de Brier, histogramme des confiances et courbe accuracy–taux d’automatisation. Reliability diagram, AURC, macro-F1 et métriques par trimestre restent à faire (<a href="../fr/evaluation.html">Évaluation</a>)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Pondération des observations</td>
+<td style="text-align: left;"><span class="status status-partial">En partie</span></td>
+<td style="text-align: left;">Sert à pondérer les lignes créées par les règles métier. Les poids par source et par ancienneté restent à faire</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><em>Golden set</em></td>
+<td style="text-align: left;"><span class="status status-partial">En partie</span></td>
+<td style="text-align: left;">Des campagnes d’annotation par les experts ont eu lieu (NAF rév. 2, NAF 2025), mais pas encore d’échantillon aléatoire continu du flux, ni de split figé en <span class="math inline">\(\bar{G}^{\text{val}}\)</span> et <span class="math inline">\(\bar{G}^{\text{test}}\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Curation des codifications automatiques par désaccord avec des moteurs indépendants</td>
+<td style="text-align: left;"><span class="status status-partial">En partie</span></td>
+<td style="text-align: left;">Prototypée avec <a href="../fr/data.html#sec-graal">GRAAL</a> sur des échantillons de test&nbsp;; pas encore appliquée au flux codé automatiquement</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Monitoring sans annotation</td>
+<td style="text-align: left;"><span class="status status-partial">En partie</span></td>
+<td style="text-align: left;">Un dashboard existe&nbsp;; la collecte des logs de production et les tests de drift restent à faire (<a href="../fr/monitoring.html">Monitoring</a>)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Cycle trimestriel</td>
+<td style="text-align: left;"><span class="status status-target">Cible</span></td>
+<td style="text-align: left;">Les modèles sont réentraînés à la demande</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Contrôles des cas connus avant entraînement, extraction de règles à partir des reprises manuelles</td>
+<td style="text-align: left;"><span class="status status-target">Cible</span></td>
+<td style="text-align: left;">Les règles sont écrites à la main à partir des retours des experts</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Quality gates bloquantes avant mise en production (cas connus, non-infériorité, couverture à <span class="math inline">\(p^*\)</span>)</td>
+<td style="text-align: left;"><span class="status status-target">Cible</span></td>
+<td style="text-align: left;">Tests appariés et intervalles par bootstrap existent dans le module d’évaluation de GRAAL, pas encore pour le modèle de production</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Seuil et calibration dans l’artefact du modèle, champion et challenger dans le model registry</td>
+<td style="text-align: left;"><span class="status status-target">Cible</span></td>
+<td style="text-align: left;">Les modèles sont référencés par leur numéro de version dans les manifestes de déploiement</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Qualification automatisée (latence, cohérence online/offline), shadow mode</td>
+<td style="text-align: left;"><span class="status status-target">Cible</span></td>
+<td style="text-align: left;">Voir <a href="../fr/organisation.html#sec-qualification-platform">Défis organisationnels et d’infrastructure</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Têtes multiniveaux, label attention</td>
+<td style="text-align: left;"><span class="status status-target">Cible</span></td>
+<td style="text-align: left;">Disponibles dans <a href="../fr/model.html#sec-ttc">torchTextClassifiers</a>, pas utilisées par le modèle de production</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<!-- État établi à partir du code des dépôts (octobre 2026). La qualification se fait avec les équipes de production, hors de ces dépôts : à confirmer par les auteurs du chapitre organisationnel. -->
+</section>
+<section id="sec-golden" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="sec-golden"><span class="header-section-number">2</span> Ce que fournit le flux de production</h2>
+<p>Le flux de déclarations <span class="math inline">\(F_n\)</span> reçu pendant le trimestre <span class="math inline">\(n\)</span> se découpe naturellement en plusieurs ensembles, chacun avec son intérêt et son propre <strong>biais de sélection</strong>&nbsp;:</p>
 <div id="tbl-sets" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-sets-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;1: Les quatre sources d’annotations d’un cycle de production.
+Table&nbsp;2: Les quatre sources d’annotations d’un cycle de production.
 </figcaption>
 <div aria-describedby="tbl-sets-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <table class="caption-top table">
@@ -352,17 +467,17 @@ Table&nbsp;1: Les quatre sources d’annotations d’un cycle de production.
 <td>Règles métier validées (par exemple «&nbsp;LMNP&nbsp;» → location meublée)</td>
 <td>Experts métier</td>
 <td>Oui&nbsp;: erreurs signalées</td>
-<td>Doivent être réussis à 100&nbsp;% ou presque</td>
+<td>Doivent passer à 100&nbsp;% ou presque</td>
 </tr>
 </tbody>
 </table>
 </div>
 </figure>
 </div>
-<p><span class="math inline">\(G_n\)</span>, <span class="math inline">\(M_n\)</span> et <span class="math inline">\(A_n\)</span> forment une partition du flux, tandis que <span class="math inline">\(K_n\)</span> vient de l’extérieur. Les cas connus ont deux origines&nbsp;:</p>
+<p><span class="math inline">\(G_n\)</span>, <span class="math inline">\(M_n\)</span> et <span class="math inline">\(A_n\)</span> forment une partition du flux&nbsp;; <span class="math inline">\(K_n\)</span>, lui, vient de l’extérieur. Les cas connus ont deux origines&nbsp;:</p>
 <ul>
-<li>les <strong>retours métier</strong>, surtout des erreurs repérées a posteriori parmi les cas codés automatiquement&nbsp;;</li>
-<li>les <strong>erreurs récurrentes</strong> extraites de l’ensemble des reprises manuelles (voir <a href="#sec-known-cases">plus bas</a>).</li>
+<li>les <strong>retours métier</strong>, surtout des erreurs repérées après coup parmi les cas codés automatiquement&nbsp;;</li>
+<li>les <strong>erreurs récurrentes</strong> extraites des reprises manuelles (voir <a href="#sec-known-cases">plus bas</a>).</li>
 </ul>
 <p>On note <span class="math inline">\(\bar{X}_n = \bigcup_{k \le n} X_k\)</span> l’ensemble cumulé au fil des trimestres, éventuellement sur une fenêtre glissante.</p>
 <div class="cell" data-layout-align="default">
@@ -398,33 +513,33 @@ Figure&nbsp;1: Décomposition du flux de production.
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Sans échantillon aléatoire du flux annoté à l’aveugle, il n’existe pas d’estimation sans biais de l’exactitude de la codification automatique. Il est alors impossible de fixer le seuil, de comparer deux modèles ou de mesurer la dérive à partir d’annotations. Les reprises manuelles ne peuvent pas le remplacer, car elles sont sélectionnées sur les échecs du modèle. Une annotation continue du flux, même modeste, est le prérequis organisationnel le plus important du protocole.</p>
+<p>Sans échantillon aléatoire du flux annoté à l’aveugle, pas d’estimation sans biais de l’accuracy de la codification automatique. Impossible alors de fixer le seuil, de comparer deux modèles ou de mesurer le drift à partir d’annotations. Les reprises manuelles ne peuvent pas le remplacer, puisqu’elles sont sélectionnées sur les échecs du modèle. Annoter le flux en continu, même en petite quantité, est le prérequis organisationnel numéro un du protocole.</p>
 </div>
 </div>
-<p>Le golden set est scindé <strong>une fois pour toutes</strong> en deux moitiés, à l’aide d’un hachage de l’identifiant de chaque déclaration. Ce partage reste ainsi stable à mesure que l’ensemble grandit&nbsp;:</p>
+<p>Le golden set est coupé <strong>une fois pour toutes</strong> en deux moitiés, à partir d’un hash de l’identifiant de chaque déclaration. Le split reste ainsi stable à mesure que l’ensemble grossit&nbsp;:</p>
 <ul>
 <li><span class="math inline">\(\bar{G}^{\text{val}}\)</span> sert à tous les <strong>choix</strong>&nbsp;: seuil, calibration, architecture et hyperparamètres, sélection des moteurs auxiliaires et des règles candidates&nbsp;;</li>
 <li><span class="math inline">\(\bar{G}^{\text{test}}\)</span> ne sert qu’au <strong>verdict final</strong>.</li>
 </ul>
 </section>
-<section id="construire-le-prochain-jeu-dentraînement" class="level2" data-number="2">
-<h2 data-number="2" class="anchored" data-anchor-id="construire-le-prochain-jeu-dentraînement"><span class="header-section-number">2</span> Construire le prochain jeu d’entraînement</h2>
-<section id="lexactitude-de-la-codification-automatique-peut-être-estimée" class="level3" data-number="2.1">
-<h3 data-number="2.1" class="anchored" data-anchor-id="lexactitude-de-la-codification-automatique-peut-être-estimée"><span class="header-section-number">2.1</span> L’exactitude de la codification automatique peut être estimée</h3>
-<p>On ne sait pas quels codes automatiques sont faux, mais on peut estimer <strong>combien</strong> le sont. Le golden set étant un échantillon aléatoire du flux, sa partie au-dessus du seuil, <span class="math inline">\(G_n^A = \{x \in G_n : \text{IC}_n(x) \ge \tau_n\}\)</span>, est un échantillon aléatoire de <span class="math inline">\(A_n\)</span>. L’exactitude de <span class="math inline">\(f_n\)</span> sur <span class="math inline">\(G_n^A\)</span>, assortie d’un intervalle de confiance (Wilson ou bootstrap), estime l’exactitude de la codification automatique. Le cumul sur plusieurs trimestres fournit assez de données pour cette estimation.</p>
+<section id="sec-next-training-set" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="sec-next-training-set"><span class="header-section-number">3</span> Construire le prochain jeu d’entraînement</h2>
+<section id="on-peut-estimer-laccuracy-de-la-codification-automatique" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="on-peut-estimer-laccuracy-de-la-codification-automatique"><span class="header-section-number">3.1</span> On peut estimer l’accuracy de la codification automatique</h3>
+<p>On ne sait pas quels codes automatiques sont faux, mais on peut estimer <strong>combien</strong> le sont. Comme le golden set est un échantillon aléatoire du flux, sa partie au-dessus du seuil, <span class="math inline">\(G_n^A = \{x \in G_n&nbsp;: \text{IC}_n(x) \ge \tau_n\}\)</span>, est un échantillon aléatoire de <span class="math inline">\(A_n\)</span>. L’accuracy de <span class="math inline">\(f_n\)</span> sur <span class="math inline">\(G_n^A\)</span>, avec un intervalle de confiance (Wilson ou bootstrap), estime donc l’accuracy de la codification automatique. En cumulant plusieurs trimestres, on a assez de données pour cette estimation.</p>
 </section>
-<section id="curation-des-codifications-automatiques-se-concentrer-sur-les-désaccords" class="level3" data-number="2.2">
-<h3 data-number="2.2" class="anchored" data-anchor-id="curation-des-codifications-automatiques-se-concentrer-sur-les-désaccords"><span class="header-section-number">2.2</span> Curation des codifications automatiques&nbsp;: se concentrer sur les désaccords</h3>
-<p>Réinjecter <span class="math inline">\(A_n\)</span> dans l’entraînement avec les codes de <span class="math inline">\(f_n\)</span>, c’est faire du <em>self-training</em>&nbsp;: le modèle n’apprend rien de nouveau, et ses erreurs à forte confiance sont renforcées. Pour briser cette boucle, on compare <span class="math inline">\(f_n\)</span> à des <strong>moteurs indépendants</strong> <span class="math inline">\(E\)</span>. Aucun n’est un oracle&nbsp;:</p>
+<section id="sec-curation" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="sec-curation"><span class="header-section-number">3.2</span> Curation des codifications automatiques&nbsp;: se concentrer sur les désaccords</h3>
+<p>Réinjecter <span class="math inline">\(A_n\)</span> dans l’entraînement avec les codes de <span class="math inline">\(f_n\)</span>, c’est faire du <em>self-training</em>&nbsp;: le modèle n’apprend rien de nouveau et renforce ses erreurs à forte confiance. Pour casser cette boucle, on compare <span class="math inline">\(f_n\)</span> à des <strong>moteurs indépendants</strong> <span class="math inline">\(E\)</span>, dont aucun n’est un oracle&nbsp;:</p>
 <ul>
-<li>le <strong>moteur de règles</strong> de <a href="../fr/data.html#sec-rules">codif-ape-preprocess</a> applique des règles déterministes, qui s’abstiennent souvent, complétées par une extension prudente aux libellés similaires&nbsp;;</li>
-<li>les <strong>agents LLM</strong> de <a href="../fr/companion-projects.html#sec-graal">GRAAL</a> parcourent la nomenclature et lisent les notes explicatives. Ils sont lents, mais la latence importe peu dans un traitement par lots hors ligne.</li>
+<li>le <strong>moteur de règles</strong> de <a href="../fr/data.html#sec-rules">codif-ape-preprocess</a> applique des règles déterministes, qui s’abstiennent souvent, étendues prudemment aux libellés similaires&nbsp;;</li>
+<li>les <strong>agents LLM</strong> de <a href="../fr/data.html#sec-graal">GRAAL</a> parcourent la nomenclature et lisent les notes explicatives. Ils sont lents, mais la latence compte peu dans un job batch hors ligne.</li>
 </ul>
-<p>L’exactitude globale d’un moteur sur le golden set n’est pas la bonne question. Ce qui compte, c’est de savoir <strong>qui a raison quand <span class="math inline">\(E\)</span> et <span class="math inline">\(f_n\)</span> sont en désaccord</strong> sur les codifications automatiques&nbsp;:</p>
+<p>L’accuracy globale d’un moteur sur le golden set n’est pas la bonne question. Ce qui compte, c’est <strong>qui a raison quand <span class="math inline">\(E\)</span> et <span class="math inline">\(f_n\)</span> ne sont pas d’accord</strong> sur les codifications automatiques&nbsp;:</p>
 <div id="tbl-curation" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-curation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;2: Règle de décision pour les cas codés automatiquement.
+Table&nbsp;3: Règle de décision pour les cas codés automatiquement.
 </figcaption>
 <div aria-describedby="tbl-curation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <table class="caption-top table">
@@ -445,8 +560,8 @@ Table&nbsp;2: Règle de décision pour les cas codés automatiquement.
 <tbody>
 <tr class="odd">
 <td>Action</td>
-<td>Conserver le code de <span class="math inline">\(f_n\)</span> (son exactitude est connue), avec un poids réduit</td>
-<td>Conserver, avec une confiance élevée</td>
+<td>Garder le code de <span class="math inline">\(f_n\)</span> (son accuracy est connue), avec un poids réduit</td>
+<td>Garder, avec une confiance élevée</td>
 <td><strong>Arbitrer</strong></td>
 </tr>
 </tbody>
@@ -454,74 +569,74 @@ Table&nbsp;2: Règle de décision pour les cas codés automatiquement.
 </div>
 </figure>
 </div>
-<p>Les désaccords sont très probablement les <strong>erreurs à forte confiance</strong> de <span class="math inline">\(f_n\)</span>&nbsp;: ce sont donc les exemples les plus précieux. Ils peuvent être traités de trois façons&nbsp;:</p>
+<p>Les désaccords, ce sont très probablement les <strong>erreurs à forte confiance</strong> de <span class="math inline">\(f_n\)</span>, et donc les exemples les plus précieux. Trois façons de les traiter&nbsp;:</p>
 <ol type="1">
 <li><strong>Annotation humaine ciblée</strong> des désaccords. C’est sans doute le meilleur usage d’un budget d’annotation, dans l’esprit du <em>query by committee</em>.</li>
-<li><strong>Adoption du code du moteur</strong>, si, sur <span class="math inline">\(\bar{G}^{\text{val}} \cap \{\text{IC}_n \ge \tau_n,\ E \ne f_n\}\)</span>, le moteur a raison significativement plus souvent que <span class="math inline">\(f_n\)</span>. Il n’y a pas de seuil de fiabilité absolu&nbsp;: le critère est <strong>comparatif</strong>, et <strong>conditionnel</strong> à la zone de désaccord.</li>
-<li><strong>Exclusion</strong> des désaccords non arbitrés de l’entraînement. C’est l’option par défaut, faute de budget et d’éléments probants. Elle retire les cas automatiques les plus difficiles, ce qui est acceptable puisque les reprises manuelles couvrent déjà la zone difficile.</li>
+<li><strong>Adoption du code du moteur</strong>, si, sur <span class="math inline">\(\bar{G}^{\text{val}} \cap \{\text{IC}_n \ge \tau_n,\ E \ne f_n\}\)</span>, le moteur a raison significativement plus souvent que <span class="math inline">\(f_n\)</span>. Pas de seuil de fiabilité absolu&nbsp;: le critère est <strong>comparatif</strong>, et <strong>conditionnel</strong> à la zone de désaccord.</li>
+<li><strong>Exclusion</strong> de l’entraînement des désaccords non arbitrés. C’est l’option par défaut, quand on n’a ni budget ni preuve. On perd les cas automatiques les plus difficiles, ce qui est acceptable puisque les reprises manuelles couvrent déjà la zone difficile.</li>
 </ol>
-<p>Le même critère sert à choisir entre les variantes du moteur LLM (recherche augmentée, agentique, agent complet, ou vote entre elles). Trois précautions s’imposent&nbsp;:</p>
+<p>Le même critère sert à choisir entre les variantes du moteur LLM (RAG, RAG agentique, agent complet, ou vote entre eux). Trois précautions&nbsp;:</p>
 <ul>
-<li>mesurer sur <span class="math inline">\(\bar{G}^{\text{val}}\)</span>, jamais sur <span class="math inline">\(\bar{G}^{\text{test}}\)</span>, puisque ce choix façonne les données d’entraînement&nbsp;;</li>
-<li>comparer à <strong>couverture comparable</strong>, car un moteur qui s’abstient souvent l’emporte mécaniquement dans la zone de désaccord&nbsp;;</li>
-<li>ne changer de variante que lorsque l’écart dépasse les intervalles de confiance.</li>
+<li>mesurer sur <span class="math inline">\(\bar{G}^{\text{val}}\)</span>, jamais sur <span class="math inline">\(\bar{G}^{\text{test}}\)</span>, puisque ce choix modifie les données d’entraînement&nbsp;;</li>
+<li>comparer à <strong>couverture égale</strong>, car un moteur qui s’abstient souvent gagne mécaniquement sur la zone de désaccord&nbsp;;</li>
+<li>ne changer de variante que si l’écart sort des intervalles de confiance.</li>
 </ul>
-<p>Pour maîtriser le coût des moteurs LLM, on peut les limiter à une bande de confiance intermédiaire, <span class="math inline">\(\tau_n \le \text{IC} &lt; \tau'\)</span>&nbsp;: les prédictions très confiantes sont rarement fausses.</p>
+<p>Pour limiter le coût des moteurs LLM, on peut ne les faire tourner que sur une bande de confiance intermédiaire, <span class="math inline">\(\tau_n \le \text{IC} &lt; \tau'\)</span>&nbsp;: les prédictions très confiantes sont rarement fausses.</p>
 </section>
-<section id="sec-known-cases" class="level3" data-number="2.3">
-<h3 data-number="2.3" class="anchored" data-anchor-id="sec-known-cases"><span class="header-section-number">2.3</span> Cas connus&nbsp;: propager plutôt que surpondérer</h3>
-<p>Surpondérer simplement les cas connus fonctionne rarement. Le jeu d’entraînement contient en général <strong>les mêmes libellés avec l’ancien code</strong>, si bien que le modèle voit des codes contradictoires. Le protocole consiste donc à&nbsp;:</p>
+<section id="sec-known-cases" class="level3" data-number="3.3">
+<h3 data-number="3.3" class="anchored" data-anchor-id="sec-known-cases"><span class="header-section-number">3.3</span> Cas connus&nbsp;: propager plutôt que surpondérer</h3>
+<p>Se contenter de surpondérer les cas connus marche rarement&nbsp;: le jeu d’entraînement contient en général <strong>les mêmes libellés avec l’ancien code</strong>, et le modèle voit des codes contradictoires. Le protocole consiste donc à&nbsp;:</p>
 <ol type="1">
-<li>transformer chaque retour métier en <strong>règle</strong>, et l’appliquer à <strong>l’ensemble</strong> du jeu d’entraînement au moyen du moteur de règles&nbsp;;</li>
-<li>éventuellement, pour la très courte liste de cas où une exactitude de 100&nbsp;% est exigée, ajouter en production une <strong>couche de règles en amont du modèle</strong>. La correction est alors garantie, auditable et immédiate, sans réentraînement. Cette couche doit rester réduite&nbsp;: c’est l’accumulation sans fin de règles qui a fait échouer Sicore.</li>
+<li>transformer chaque retour métier en <strong>règle</strong>, et l’appliquer à <strong>tout</strong> le jeu d’entraînement via le moteur de règles&nbsp;;</li>
+<li>éventuellement, pour la très courte liste de cas où l’on exige 100&nbsp;% de bonnes réponses, ajouter en production une <strong>couche de règles en amont du modèle</strong>. La correction est alors garantie, traçable et immédiate, sans réentraînement. Cette couche doit rester petite&nbsp;: c’est l’empilement sans fin de règles qui a fait échouer Sicore.</li>
 </ol>
-<p><strong>Contrôles avant entraînement.</strong> La propagation est vérifiée automatiquement, et les contrôles bloquent l’entraînement en cas d’échec&nbsp;:</p>
+<p><strong>Contrôles avant entraînement.</strong> La propagation est vérifiée automatiquement, et l’entraînement est bloqué si un contrôle échoue&nbsp;:</p>
 <ul>
-<li><strong>contradictions exactes</strong>&nbsp;: une jointure entre les cas connus et le nouveau jeu d’entraînement sur la clé de dédoublonnage (libellé normalisé et variables auxiliaires) ne doit renvoyer aucune ligne avec un code différent&nbsp;;</li>
-<li><strong>quasi-doublons</strong>&nbsp;: les plus proches voisins de chaque cas connu (TF-IDF sur n-grammes de caractères, ou plongements du modèle) qui portent un autre code sont soumis à une <strong>revue humaine</strong>, car un libellé similaire peut légitimement relever d’un autre code&nbsp;;</li>
-<li>le nombre de conflits, par source et par trimestre, est journalisé. On voit ainsi d’où viennent les erreurs, et l’on mesure le taux de contradiction interne du jeu d’entraînement, indicateur direct du bruit sur les codes.</li>
+<li><strong>contradictions exactes</strong>&nbsp;: une jointure entre les cas connus et le nouveau jeu d’entraînement sur la clé de dédoublonnage (libellé normalisé et variables annexes) ne doit renvoyer aucune ligne avec un code différent&nbsp;;</li>
+<li><strong>quasi-doublons</strong>&nbsp;: les plus proches voisins de chaque cas connu (TF-IDF sur n-grammes de caractères, ou embeddings du modèle) qui ont un autre code passent en <strong>revue humaine</strong>, car un libellé proche peut très bien relever d’un autre code&nbsp;;</li>
+<li>le nombre de conflits, par source et par trimestre, est loggé. On voit ainsi d’où viennent les erreurs, et on mesure le taux de contradictions internes du jeu d’entraînement, indicateur direct du bruit sur les labels.</li>
 </ul>
-<p><strong>Extraire des règles des corrections manuelles.</strong> Parmi les reprises manuelles, les lignes où le code humain diffère de la prédiction de <span class="math inline">\(f_n\)</span> sont des erreurs corrigées. Une erreur isolée ne fait pas une règle, mais une erreur récurrente est une bonne candidate. Le principe est le suivant&nbsp;: <em>l’automatisation propose, des filtres statistiques trient, un expert décide.</em></p>
+<p><strong>Extraire des règles des corrections manuelles.</strong> Parmi les reprises manuelles, les lignes où le code humain diffère de la prédiction de <span class="math inline">\(f_n\)</span> sont des erreurs corrigées. Une erreur isolée ne fait pas une règle, mais une erreur récurrente est une bonne candidate. Le principe&nbsp;: <em>l’automatique propose, des filtres statistiques trient, un expert décide.</em></p>
 <ol type="1">
-<li><strong>Détecter les erreurs récurrentes</strong> sur l’ensemble cumulé des reprises manuelles&nbsp;:
+<li><strong>Détecter les erreurs récurrentes</strong> sur le cumul des reprises manuelles&nbsp;:
 <ul>
 <li>libellés normalisés identiques, avec un support suffisant et un code dominant que <span class="math inline">\(f_n\)</span> manque&nbsp;;</li>
-<li>mots discriminants, repérés par des règles d’association (support, confiance, lift), efficaces pour des sigles comme «&nbsp;LMNP&nbsp;»&nbsp;;</li>
-<li>groupes d’erreurs portant sur un même couple (code prédit, code corrigé), dans l’espace des plongements du modèle.</li>
+<li>mots discriminants, repérés par des règles d’association (support, confiance, lift), qui marchent bien sur des sigles comme «&nbsp;LMNP&nbsp;»&nbsp;;</li>
+<li>clusters d’erreurs sur un même couple (code prédit, code corrigé), dans l’espace des embeddings du modèle.</li>
 </ul></li>
 <li><strong>Rédiger la règle avec un LLM</strong>, qui a accès aux notes explicatives, <strong>sans le laisser décider</strong>.</li>
-<li><strong>Filtrer automatiquement.</strong> Appliquer chaque règle candidate au jeu d’entraînement et à <span class="math inline">\(\bar{G}^{\text{val}}\)</span>, puis mesurer combien de lignes elle touche et quelle est sa précision. Rejeter les règles trop larges ou trop imprécises.</li>
+<li><strong>Filtrer automatiquement.</strong> Appliquer chaque règle candidate au jeu d’entraînement et à <span class="math inline">\(\bar{G}^{\text{val}}\)</span>, puis mesurer combien de lignes elle touche et sa précision. Rejeter celles qui ratissent trop large ou se trompent trop.</li>
 <li><strong>Faire valider par un expert</strong>, dans une file de revue qui présente la règle, ses exemples et ses contre-exemples.</li>
 </ol>
-<p>Le dépôt des règles est versionné. Chaque règle indique son origine, sa date et la personne qui l’a validée, afin de pouvoir être auditée ou retirée.</p>
+<p>Le dépôt des règles est versionné. Chaque règle indique son origine, sa date et qui l’a validée, pour pouvoir être auditée ou retirée.</p>
 </section>
-<section id="sec-assembly" class="level3" data-number="2.4">
-<h3 data-number="2.4" class="anchored" data-anchor-id="sec-assembly"><span class="header-section-number">2.4</span> Assemblage</h3>
+<section id="sec-assembly" class="level3" data-number="3.4">
+<h3 data-number="3.4" class="anchored" data-anchor-id="sec-assembly"><span class="header-section-number">3.4</span> Assemblage</h3>
 <p>Le prochain jeu d’entraînement est</p>
 <p><span class="math display">\[
 \mathcal{D}_{n+1} = \mathcal{D}_n \cup M_n \cup \tilde{A}_n \cup K_n,
 \]</span></p>
 <p>où <span class="math inline">\(\tilde{A}_n\)</span> désigne les codifications automatiques après curation. Ce jeu est ensuite&nbsp;:</p>
 <ul>
-<li><strong>Dédoublonné</strong> sur le couple (libellé normalisé, variables auxiliaires). Les conflits sont résolus par priorité de source (cas connus &gt; reprises manuelles &gt; codifications automatiques après curation &gt; historique), puis au profit du plus récent.</li>
-<li><strong>Marqué</strong>&nbsp;: chaque observation porte sa <strong>source</strong> et son <strong>trimestre</strong>. Cela permet des poids qui dépendent de la source (par exemple, les codes automatiques pèsent moins que les codes humains) et un suivi de la perte par source.</li>
-<li><strong>Pondéré selon l’ancienneté</strong>&nbsp;: l’historique est sous-pondéré, voire tronqué. Les anciens codes sont plus bruités et reflètent un flux plus ancien.</li>
-<li><strong>Versionné</strong>&nbsp;: chaque jeu d’entraînement est un instantané sur S3 avec son empreinte (hash), enregistré avec l’exécution d’entraînement.</li>
+<li><strong>Dédoublonné</strong> sur le couple (libellé normalisé, variables annexes). Les conflits sont tranchés par priorité de source (cas connus &gt; reprises manuelles &gt; codifications automatiques après curation &gt; historique), puis en faveur du plus récent.</li>
+<li><strong>Taggé</strong>&nbsp;: chaque observation porte sa <strong>source</strong> et son <strong>trimestre</strong>. On peut ainsi pondérer selon la source (par exemple, les codes automatiques pèsent moins que les codes humains) et suivre la loss par source.</li>
+<li><strong>Pondéré selon l’ancienneté</strong>&nbsp;: l’historique est sous-pondéré, voire coupé, car les anciens codes sont plus bruités et reflètent un flux plus ancien.</li>
+<li><strong>Versionné</strong>&nbsp;: chaque jeu d’entraînement est un snapshot sur S3 avec son hash, loggé avec le run d’entraînement.</li>
 </ul>
 <p>Deux règles s’ajoutent&nbsp;:</p>
 <ul>
 <li>Le jeu d’entraînement <strong>n’est pas représentatif</strong> du flux, puisque les reprises manuelles surreprésentent les cas difficiles. C’est pourquoi le seuil et la calibration sont toujours fixés sur <span class="math inline">\(\bar{G}^{\text{val}}\)</span>, jamais sur un échantillon de validation tiré des données d’entraînement.</li>
-<li>Le golden set <strong>n’entre jamais</strong> dans l’entraînement. Le flux étant très répétitif, il est normal de trouver des libellés identiques dans les deux. Les métriques sont donc aussi publiées sur les <strong>libellés jamais vus</strong>.</li>
+<li>Le golden set <strong>n’entre jamais</strong> dans l’entraînement. Comme le flux est très répétitif, il est normal de retrouver des libellés identiques dans les deux. Les métriques sont donc aussi calculées sur les <strong>libellés jamais vus</strong>.</li>
 </ul>
-<p>Un échantillon de validation aléatoire, tiré du jeu d’entraînement, sert uniquement à l’arrêt précoce.</p>
+<p>Un échantillon de validation aléatoire, tiré du jeu d’entraînement, sert uniquement à l’early stopping.</p>
 </section>
 </section>
-<section id="portes-de-qualité-gates-f_n1-face-à-f_n" class="level2" data-number="3">
-<h2 data-number="3" class="anchored" data-anchor-id="portes-de-qualité-gates-f_n1-face-à-f_n"><span class="header-section-number">3</span> Portes de qualité (<em>gates</em>)&nbsp;: <span class="math inline">\(f_{n+1}\)</span> face à <span class="math inline">\(f_n\)</span></h2>
+<section id="sec-gates" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="sec-gates"><span class="header-section-number">4</span> Quality gates&nbsp;: <span class="math inline">\(f_{n+1}\)</span> face à <span class="math inline">\(f_n\)</span></h2>
 <div id="tbl-gates" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-gates-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;3: Portes qu’un modèle candidat doit franchir.
+Table&nbsp;4: Gates qu’un modèle candidat doit passer.
 </figcaption>
 <div aria-describedby="tbl-gates-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <table class="caption-top table">
@@ -533,7 +648,7 @@ Table&nbsp;3: Portes qu’un modèle candidat doit franchir.
 </colgroup>
 <thead>
 <tr class="header">
-<th>Porte</th>
+<th>Gate</th>
 <th>Données</th>
 <th>Objectif</th>
 <th>Critère</th>
@@ -556,57 +671,57 @@ Table&nbsp;3: Portes qu’un modèle candidat doit franchir.
 <td>3</td>
 <td><span class="math inline">\(\bar{G}^{\text{test}}\)</span></td>
 <td>Indicateur métier</td>
-<td>Taux de codification automatique à l’exactitude cible <span class="math inline">\(p^*\)</span> ≥ celui de <span class="math inline">\(f_n\)</span></td>
+<td>Taux de codification automatique à l’accuracy cible <span class="math inline">\(p^*\)</span> ≥ celui de <span class="math inline">\(f_n\)</span></td>
 </tr>
 </tbody>
 </table>
 </div>
 </figure>
 </div>
-<p>Sur les cas connus, un score élevé peut simplement signifier que le modèle les a mémorisés. Les variantes reformulées vérifient que la correction <strong>se généralise</strong>. Elles peuvent être produites par les agents <em>Code2Text</em> de GRAAL.</p>
-<p><strong>On n’évalue pas sur les reprises manuelles.</strong> Elles font partie des données d’entraînement de <span class="math inline">\(f_{n+1}\)</span> et sont sélectionnées sur les échecs de <span class="math inline">\(f_n\)</span>&nbsp;: par construction, elles sont biaisées en défaveur de <span class="math inline">\(f_n\)</span>. Pour obtenir un signal sur les cas difficiles, on utilise <span class="math inline">\(\bar{G} \cap \{\text{IC}_n &lt; \tau_n\}\)</span>, échantillon aléatoire et sans biais de la zone difficile.</p>
-<p><strong>Métriques</strong> publiées sur <span class="math inline">\(\bar{G}^{\text{test}}\)</span>&nbsp;:</p>
+<p>Sur les cas connus, un bon score peut juste vouloir dire que le modèle les a appris par cœur. Les variantes reformulées vérifient que la correction <strong>se généralise</strong>&nbsp;; elles peuvent être générées par les agents <em>Code2Text</em> de GRAAL.</p>
+<p><strong>On n’évalue pas sur les reprises manuelles.</strong> Elles font partie des données d’entraînement de <span class="math inline">\(f_{n+1}\)</span> et sont sélectionnées sur les échecs de <span class="math inline">\(f_n\)</span>&nbsp;: par construction, elles désavantagent <span class="math inline">\(f_n\)</span>. Pour avoir un signal sur les cas difficiles, on utilise <span class="math inline">\(\bar{G} \cap \{\text{IC}_n &lt; \tau_n\}\)</span>, échantillon aléatoire et sans biais de la zone difficile.</p>
+<p><strong>Métriques</strong> calculées sur <span class="math inline">\(\bar{G}^{\text{test}}\)</span>&nbsp;:</p>
 <ul>
-<li>exactitude à chaque niveau de la nomenclature&nbsp;;</li>
+<li>accuracy à chaque niveau de la nomenclature&nbsp;;</li>
 <li>macro-F1 et performance sur les classes rares&nbsp;;</li>
 <li>calibration (ECE)&nbsp;;</li>
 <li>courbe risque–couverture et aire sous cette courbe (AURC)&nbsp;;</li>
-<li><strong>couverture à l’exactitude cible <span class="math inline">\(p^*\)</span></strong>, l’indicateur qui détermine la charge de reprise manuelle&nbsp;;</li>
-<li>l’ensemble de ces indicateurs par trimestre du golden set, pour révéler la dérive.</li>
+<li><strong>couverture à l’accuracy cible <span class="math inline">\(p^*\)</span></strong>, l’indicateur qui détermine la charge de reprise manuelle&nbsp;;</li>
+<li>tous ces indicateurs par trimestre du golden set, pour faire apparaître le drift.</li>
 </ul>
 <p>Le seuil est <strong>recalibré pour chaque modèle</strong> sur <span class="math inline">\(\bar{G}^{\text{val}}\)</span>.</p>
 <p>Trois principes guident la comparaison&nbsp;:</p>
 <ul>
-<li><strong>Comment faire mieux que <span class="math inline">\(f_n\)</span>.</strong> Les leviers sont les reprises manuelles (des annotations humaines exactement là où le modèle échoue, ce qui revient à de l’apprentissage actif), les désaccords arbitrés, des données plus propres et des données plus récentes. Itérer sur les architectures jusqu’à améliorer le score sur le jeu de test reviendrait à surajuster ce jeu&nbsp;: ces itérations se font donc sur <span class="math inline">\(\bar{G}^{\text{val}}\)</span>.</li>
-<li><strong>La non-régression conditionne le passage&nbsp;; l’amélioration est l’objectif.</strong> Exiger une amélioration stricte à chaque trimestre n’est pas réaliste.</li>
-<li><strong>Entraîner sur les cas connus et les corrections manuelles n’est pas une fuite de données.</strong> La fuite commence lorsqu’une métrique calculée sur les données d’entraînement est présentée comme une mesure de la capacité de généralisation. Tant que <span class="math inline">\(\bar{G}^{\text{test}}\)</span> reste intact, le protocole est sain.</li>
+<li><strong>Comment faire mieux que <span class="math inline">\(f_n\)</span>.</strong> Les leviers sont les reprises manuelles (des annotations humaines pile là où le modèle se trompe, ce qui revient à de l’active learning), les désaccords arbitrés, des données plus propres et plus récentes. Itérer sur les architectures jusqu’à gagner sur le jeu de test reviendrait à overfitter ce jeu&nbsp;: ces itérations se font donc sur <span class="math inline">\(\bar{G}^{\text{val}}\)</span>.</li>
+<li><strong>La non-régression est la condition pour passer&nbsp;; l’amélioration est l’objectif.</strong> Exiger une amélioration stricte à chaque trimestre n’est pas réaliste.</li>
+<li><strong>Entraîner sur les cas connus et les corrections manuelles, ce n’est pas du data leakage.</strong> Le leakage commence quand une métrique calculée sur les données d’entraînement est présentée comme une mesure de la généralisation. Tant que <span class="math inline">\(\bar{G}^{\text{test}}\)</span> reste intact, le protocole tient.</li>
 </ul>
-<p><strong>Traçabilité.</strong> L’exécution MLflow de chaque candidat enregistre&nbsp;:</p>
+<p><strong>Traçabilité.</strong> Le run MLflow de chaque candidat logge&nbsp;:</p>
 <ul>
 <li>la version du jeu de données, la version du dépôt de règles et la variante du moteur LLM&nbsp;;</li>
 <li>les hyperparamètres et les métriques&nbsp;;</li>
 <li>un rapport de comparaison «&nbsp;<span class="math inline">\(n\)</span> vs <span class="math inline">\(n+1\)</span>&nbsp;» sous forme d’artefact HTML.</li>
 </ul>
-<p>Le registre identifie le <em>champion</em> et le <em>challenger</em>.</p>
+<p>Le model registry identifie le <em>champion</em> et le <em>challenger</em>.</p>
 </section>
-<section id="sec-preprod" class="level2" data-number="4">
-<h2 data-number="4" class="anchored" data-anchor-id="sec-preprod"><span class="header-section-number">4</span> Qualification et mise en production</h2>
+<section id="sec-preprod" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="sec-preprod"><span class="header-section-number">5</span> Qualification et mise en production</h2>
 <p>Même à architecture inchangée, la qualification n’est pas une formalité&nbsp;:</p>
 <ul>
-<li><strong>Qualification iso-production</strong>&nbsp;: latence au 95e centile (p95) et mémoire, sur CPU, sur la plateforme de préproduction.</li>
-<li><strong>Parité en ligne/hors ligne</strong>&nbsp;: le modèle servi doit reproduire exactement les prédictions hors ligne sur <span class="math inline">\(\bar{G}^{\text{test}}\)</span>. Ce test peu coûteux détecte les écarts de prétraitement ou de versions de bibliothèques.</li>
-<li><strong>Le seuil et la calibration sont livrés dans l’artefact du modèle</strong>, et non dans une configuration séparée.</li>
-<li><strong>Déploiement en mode <em>shadow</em></strong> pendant quelques semaines&nbsp;: <span class="math inline">\(f_{n+1}\)</span> traite le flux réel en parallèle de <span class="math inline">\(f_n\)</span>. On suit le taux effectif de codification automatique, l’accord avec <span class="math inline">\(f_n\)</span> et la distribution des scores. Les désaccords alimentent l’annotation.</li>
-<li><strong>Revenir en arrière</strong> consiste à faire pointer de nouveau la production vers <span class="math inline">\(f_n\)</span>.</li>
+<li><strong>Qualification iso-production</strong>&nbsp;: latence p95 et mémoire, sur CPU, sur la <a href="../fr/organisation.html#sec-qualification-platform">plateforme de qualification</a>.</li>
+<li><strong>Cohérence online/offline</strong>&nbsp;: le modèle servi doit reproduire exactement les prédictions hors ligne sur <span class="math inline">\(\bar{G}^{\text{test}}\)</span>. Ce test peu coûteux attrape les écarts de prétraitement ou de versions de librairies.</li>
+<li><strong>Le seuil et la calibration sont livrés dans l’artefact du modèle</strong>, pas dans une configuration à part.</li>
+<li><strong>Déploiement en <em>shadow mode</em></strong> pendant quelques semaines&nbsp;: <span class="math inline">\(f_{n+1}\)</span> traite le flux réel en parallèle de <span class="math inline">\(f_n\)</span>. On suit le taux effectif de codification automatique, l’accord avec <span class="math inline">\(f_n\)</span> et la distribution des scores, et les désaccords partent en annotation.</li>
+<li><strong>Revenir en arrière</strong>, c’est refaire pointer la production vers <span class="math inline">\(f_n\)</span>.</li>
 </ul>
 </section>
-<section id="comparer-les-modèles-dans-le-temps" class="level2" data-number="5">
-<h2 data-number="5" class="anchored" data-anchor-id="comparer-les-modèles-dans-le-temps"><span class="header-section-number">5</span> Comparer les modèles dans le temps</h2>
-<p>Des scores obtenus sur des golden sets différents ne sont pas comparables. L’historique des modèles est donc construit en <strong>réévaluant tous les modèles passés</strong> sur le dernier <span class="math inline">\(\bar{G}^{\text{test}}\)</span>.</p>
-<p>Tant que le golden set n’est pas alimenté en continu, les indicateurs sans annotation (taux de codification automatique, distribution de l’indice de confiance, vocabulaire nouveau, accord avec les moteurs auxiliaires) sont les seuls signaux de dérive. Des seuils d’alerte sur ces indicateurs peuvent déclencher un réentraînement hors cycle.</p>
+<section id="comparer-les-modèles-dans-le-temps" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="comparer-les-modèles-dans-le-temps"><span class="header-section-number">6</span> Comparer les modèles dans le temps</h2>
+<p>Des scores obtenus sur des golden sets différents ne se comparent pas. L’historique des modèles se construit donc en <strong>réévaluant tous les anciens modèles</strong> sur le dernier <span class="math inline">\(\bar{G}^{\text{test}}\)</span>.</p>
+<p>Tant que le golden set n’est pas alimenté en continu, les indicateurs sans annotation (taux de codification automatique, distribution de l’indice de confiance, vocabulaire nouveau, accord avec les moteurs auxiliaires) sont les seuls signaux de drift. Des seuils d’alerte sur ces indicateurs peuvent déclencher un réentraînement hors cycle.</p>
 </section>
-<section id="vue-densemble" class="level2" data-number="6">
-<h2 data-number="6" class="anchored" data-anchor-id="vue-densemble"><span class="header-section-number">6</span> Vue d’ensemble</h2>
+<section id="vue-densemble" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="vue-densemble"><span class="header-section-number">7</span> Vue d’ensemble</h2>
 <div class="cell" data-layout-align="default">
 <div class="cell-output-display">
 <div id="fig-cycle" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -629,10 +744,10 @@ Table&nbsp;3: Portes qu’un modèle candidat doit franchir.
   D1 --&gt; T["Entraînement de f_n+1"]
   G --&gt; GV["Ḡ val&nbsp;: seuil, calibration, sélection"] --&gt; T
   G --&gt; GT["Ḡ test"]
-  T --&gt; E{"Portes&nbsp;: K / K', non-infériorité,&lt;br/&gt;couverture à p*"}
+  T --&gt; E{"Gates&nbsp;: K / K', non-infériorité,&lt;br/&gt;couverture à p*"}
   GT --&gt; E
   E --&gt;|"échec"| T
-  E --&gt;|"succès"| P["Qualification&nbsp;: latence, parité, shadow"]
+  E --&gt;|"succès"| P["Qualification&nbsp;: latence, cohérence, shadow"]
   P --&gt; PR["Production&nbsp;: f_n+1, τ_n+1"]
 </pre>
 </div>
@@ -650,57 +765,404 @@ Figure&nbsp;2: Un cycle de réentraînement.
 
 <a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Retour au sommet</a></main> <!-- /main -->
 <!--
-  EN | FR switch in the navbar. en/ and fr/ use the same file names and the
-  same anchors, so the switch links to the same page and section in the other
-  language. The choice is remembered for the root page redirect (index.qmd).
+  Site navigation, added at the end of every page.
+
+  1. Table of contents. The left sidebar becomes a single, collapsible table
+     of contents for the whole note: chapters, then their sections and
+     sub-sections, read from outline.json (written by scripts/outline.py).
+     The section being read is highlighted as the reader scrolls.
+
+  2. EN | FR switch. en/ and fr/ use the same file names and the same
+     anchors, so switching language swaps the page content in place: same
+     page, same section, no reload. The choice is remembered for the root
+     page redirect (index.qmd).
 -->
 <script>
 (function () {
+  "use strict";
+
   var KEY = "codif-ape-lang";
   var LANGS = ["en", "fr"];
-  var TITLES = {
-    en: { label: "EN", hint: "Read this page in English", brand: "APE coding · MLOps" },
-    fr: { label: "FR", hint: "Lire cette page en français", brand: "Codification APE · MLOps" }
+  var STRINGS = {
+    en: {
+      label: "EN", hint: "Read this page in English", brand: "APE coding · MLOps",
+      group: "Language", toc: "Table of contents", expand: "Expand", collapse: "Collapse"
+    },
+    fr: {
+      label: "FR", hint: "Lire cette page en français", brand: "Codification APE · MLOps",
+      group: "Langue", toc: "Sommaire", expand: "Déplier", collapse: "Replier"
+    }
   };
+  // Parts of the page that differ between languages, swapped on a switch.
+  var SWAPPED = [
+    "main#quarto-document-content",
+    "#quarto-margin-sidebar",
+    "nav.page-navigation",
+    ".nav-footer-center",
+    ".quarto-secondary-nav-title"
+  ];
+  var PATH = /^(.*\/)(en|fr)(\/.*)?$/;
 
-  var m = window.location.pathname.match(/^(.*\/)(en|fr)(\/.*)?$/);
+  var m = window.location.pathname.match(PATH);
   if (!m) return;
-  var base = m[1], current = m[2], rest = m[3] || "/";
+  var base = m[1];
+  var state = { lang: m[2], page: pageOf(m[3]) };
 
-  try { localStorage.setItem(KEY, current); } catch (e) {}
+  // "/data.html", "/data" and "/" all name a page; compare them without ".html".
+  function pageOf(rest) {
+    var page = (rest || "/").replace(/^\//, "").replace(/\.html$/, "");
+    return page === "" ? "index" : page;
+  }
 
-  var brand = document.querySelector(".navbar-brand");
-  if (brand) brand.setAttribute("href", base + current + "/index.html");
-  var brandTitle = document.querySelector(".navbar-title");
-  if (brandTitle) brandTitle.textContent = TITLES[current].brand;
+  function urlFor(lang, page) {
+    return base + lang + "/" + page + ".html";
+  }
 
-  var group = document.createElement("div");
-  group.className = "lang-switch";
-  group.setAttribute("role", "group");
-  group.setAttribute("aria-label", current === "fr" ? "Langue" : "Language");
+  function el(tag, className, attrs) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    Object.keys(attrs || {}).forEach(function (k) { node.setAttribute(k, attrs[k]); });
+    return node;
+  }
+
+  // ---------------------------------------------------------------- MathJax
+
+  // Section titles can hold math; MathJax loads after this script.
+  function typeset(nodes) {
+    var mj = window.MathJax;
+    if (mj && mj.startup && mj.startup.promise) {
+      return mj.startup.promise.then(function () { return mj.typesetPromise(nodes); });
+    }
+    if (document.readyState !== "complete") {
+      return new Promise(function (resolve) {
+        window.addEventListener("load", function () { typeset(nodes).then(resolve); }, { once: true });
+      });
+    }
+    return Promise.resolve();
+  }
+
+  // ----------------------------------------------------- Table of contents
+
+  var outline = fetch(base + "outline.json")
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .catch(function () { return null; });
+
+  var links = {};       // section id -> link, for the current page
+  var activeLink = null;
+
+  function setOpen(li, open) {
+    li.classList.toggle("is-open", open);
+    var button = li.querySelector(":scope > .toc-row > .toc-toggle");
+    if (button) {
+      button.setAttribute("aria-expanded", String(open));
+      button.setAttribute("aria-label", STRINGS[state.lang][open ? "collapse" : "expand"]);
+    }
+  }
+
+  function tocItem(node, depth, page, isCurrentPage) {
+    var li = el("li", "toc-item toc-depth-" + depth);
+    var row = el("div", "toc-row");
+    var children = depth === 0 ? node.sections : node.children;
+
+    if (children && children.length) {
+      var button = el("button", "toc-toggle", { type: "button" });
+      button.addEventListener("click", function () {
+        li.dataset.pinned = "1";
+        setOpen(li, !li.classList.contains("is-open"));
+      });
+      row.appendChild(button);
+    } else {
+      row.appendChild(el("span", "toc-spacer"));
+    }
+
+    var a = el("a", "toc-link no-external");
+    if (depth === 0) {
+      a.href = urlFor(state.lang, page);
+      if (node.number) {
+        var num = el("span", "toc-number");
+        num.textContent = node.number + ".";
+        a.appendChild(num);
+      }
+      a.insertAdjacentHTML("beforeend", node.title);
+      if (isCurrentPage) {
+        a.classList.add("is-current");
+        a.setAttribute("aria-current", "page");
+        a.addEventListener("click", function (e) {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      }
+    } else {
+      a.href = (isCurrentPage ? "" : urlFor(state.lang, page)) + "#" + node.id;
+      a.innerHTML = node.title;
+      if (isCurrentPage) links[node.id] = a;
+    }
+    row.appendChild(a);
+    li.appendChild(row);
+
+    if (children && children.length) {
+      var ul = el("ul", "toc-children");
+      children.forEach(function (child) {
+        ul.appendChild(tocItem(child, depth + 1, page, isCurrentPage));
+      });
+      li.appendChild(ul);
+      setOpen(li, false);
+    }
+    return li;
+  }
+
+  function buildToc(data) {
+    var container = document.querySelector("#quarto-sidebar .sidebar-menu-container");
+    if (!container || !data || !data[state.lang]) return;
+
+    links = {};
+    activeLink = null;
+    var nav = el("nav", "site-toc", { "aria-label": STRINGS[state.lang].toc });
+    var ul = el("ul", "toc-children toc-chapters");
+    data[state.lang].forEach(function (chapter) {
+      var page = pageOf(chapter.href);
+      var isCurrent = page === state.page;
+      var li = tocItem(chapter, 0, page, isCurrent);
+      if (isCurrent) {
+        li.classList.add("is-current");
+        setOpen(li, true);
+      }
+      ul.appendChild(li);
+    });
+    nav.appendChild(ul);
+    container.replaceChildren(nav);
+    document.body.classList.add("has-site-toc");
+
+    typeset([nav]);
+    updateActive();
+    var current = nav.querySelector(".toc-link.is-current");
+    if (current) revealInSidebar(current);
+  }
+
+  function revealInSidebar(link) {
+    var sidebar = document.getElementById("quarto-sidebar");
+    if (!sidebar) return;
+    var r = link.getBoundingClientRect();
+    var s = sidebar.getBoundingClientRect();
+    if (r.top < s.top || r.bottom > s.bottom) {
+      sidebar.scrollTop += r.top - s.top - s.height / 3;
+    }
+  }
+
+  function sectionList() {
+    return Array.prototype.slice.call(document.querySelectorAll(
+      "main#quarto-document-content section.level2[id], main#quarto-document-content section.level3[id]"
+    ));
+  }
+
+  // The section being read: the last one whose top has scrolled past the
+  // navbar.
+  function currentSection() {
+    var sections = sectionList();
+    if (!sections.length) return null;
+    var atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    if (atBottom) return sections[sections.length - 1];
+    var current = null;
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].getBoundingClientRect().top > 100) break;
+      current = sections[i];
+    }
+    return current;
+  }
+
+  function updateActive() {
+    var section = currentSection();
+    var link = (section && links[section.id]) || null;
+    if (link === activeLink) return;
+    if (activeLink) activeLink.classList.remove("active");
+    activeLink = link;
+    if (!link) return;
+    link.classList.add("active");
+
+    // Open the branch that holds the active section, and close the branches
+    // opened automatically before, unless the reader opened them by hand.
+    var branch = [];
+    for (var li = link.closest(".toc-item"); li; li = li.parentElement.closest(".toc-item")) {
+      branch.push(li);
+    }
+    document.querySelectorAll(".site-toc .toc-item.is-open").forEach(function (li) {
+      if (branch.indexOf(li) === -1 && !li.classList.contains("is-current") && !li.dataset.pinned) {
+        setOpen(li, false);
+      }
+    });
+    branch.forEach(function (li) {
+      if (li.querySelector(":scope > .toc-children")) setOpen(li, true);
+    });
+    revealInSidebar(link);
+  }
+
+  var ticking = false;
+  window.addEventListener("scroll", function () {
+    if (ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(function () { ticking = false; updateActive(); });
+  }, { passive: true });
+
+  // -------------------------------------------------------- Language switch
+
+  var switchGroup = el("div", "lang-switch", { role: "group" });
+
+  function updateChrome() {
+    var s = STRINGS[state.lang];
+    var brand = document.querySelector(".navbar-brand");
+    if (brand) brand.setAttribute("href", urlFor(state.lang, "index"));
+    var brandTitle = document.querySelector(".navbar-title");
+    if (brandTitle) brandTitle.textContent = s.brand;
+    switchGroup.setAttribute("aria-label", s.group);
+    Array.prototype.forEach.call(switchGroup.children, function (a) {
+      var lang = a.getAttribute("lang");
+      var active = lang === state.lang;
+      a.classList.toggle("active", active);
+      if (active) a.setAttribute("aria-current", "true");
+      else a.removeAttribute("aria-current");
+      a.href = urlFor(lang, state.page) + window.location.hash;
+    });
+  }
 
   LANGS.forEach(function (lang) {
-    var a = document.createElement("a");
-    a.textContent = TITLES[lang].label;
-    a.setAttribute("lang", lang);
-    a.setAttribute("hreflang", lang);
-    a.setAttribute("title", TITLES[lang].hint);
-    if (lang === current) {
-      a.className = "active";
-      a.setAttribute("aria-current", "true");
-    }
-    a.href = base + lang + rest + window.location.hash;
-    a.addEventListener("click", function () {
-      try { localStorage.setItem(KEY, lang); } catch (e) {}
-      // Keep the section the reader is on, even after scrolling.
-      a.href = base + lang + rest + window.location.hash;
+    var a = el("a", "no-external", { lang: lang, hreflang: lang, title: STRINGS[lang].hint });
+    a.textContent = STRINGS[lang].label;
+    a.addEventListener("click", function (e) {
+      // Let modified clicks open the other language in a new tab.
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      switchLang(lang, true);
     });
-    group.appendChild(a);
+    switchGroup.appendChild(a);
   });
 
   var slot = document.querySelector(".quarto-navbar-tools") ||
              document.querySelector(".navbar-container");
-  if (slot) slot.insertBefore(group, slot.firstChild);
+  if (slot) slot.insertBefore(switchGroup, slot.firstChild);
+
+  // Quarto marks external links (icon, new tab) on page load only.
+  function adornExternalLinks(root) {
+    root.querySelectorAll("a[href]:not(.no-external):not([aria-hidden])").forEach(function (a) {
+      if (/^https?:$/.test(a.protocol) && a.origin !== window.location.origin) {
+        a.setAttribute("target", "_blank");
+        if (a.getAttribute("rel") === null) a.setAttribute("rel", "noopener");
+        a.classList.add("external");
+      }
+    });
+  }
+
+  // Same steps as Quarto's mermaid-init.js, which only runs on page load.
+  var mermaidCount = 0;
+  function renderMermaid(root) {
+    var mermaid = window.mermaid;
+    if (!mermaid) return Promise.resolve();
+    var blocks = Array.prototype.slice.call(root.querySelectorAll("pre.mermaid-js"));
+    return blocks.reduce(function (done, pre) {
+      return done.then(function () {
+        var text = pre.textContent.replace(/&nbsp;/g, " ");
+        return mermaid.mermaidAPI.render("mermaid-switch-" + (++mermaidCount), text, pre)
+          .then(function (result) {
+            pre.innerHTML = result.svg;
+            var svg = pre.querySelector("svg");
+            if (pre.dataset.label) {
+              var style = svg.querySelector("style");
+              if (style) style.innerHTML = style.innerHTML.split("#" + svg.id).join("#" + pre.dataset.label + "-mermaid");
+              svg.id = pre.dataset.label + "-mermaid";
+            }
+            pre.parentElement.replaceChild(svg, pre);
+            svg.classList.add("mermaid-js");
+            /* global _quartoMermaid */
+            if (typeof _quartoMermaid !== "undefined") {
+              try { _quartoMermaid.postProcess(svg); } catch (e) {}
+            }
+          });
+      });
+    }, Promise.resolve());
+  }
+
+  var switching = false;
+  function switchLang(lang, push) {
+    if (lang === state.lang || switching) return;
+    switching = true;
+    var url = urlFor(lang, state.page);
+
+    // Remember where the reader is, to land at the same place. Both
+    // languages have the same sections in the same order, but not always the
+    // same ids (those derived from French titles differ), so sections are
+    // matched by position.
+    var before = sectionList();
+    var anchor = currentSection();
+    var anchorIndex = before.indexOf(anchor);
+    var anchorTop = anchor ? anchor.getBoundingClientRect().top : null;
+    var hashIndex = before.findIndex(function (s) { return "#" + s.id === window.location.hash; });
+    var scrollY = window.scrollY;
+
+    document.documentElement.classList.add("lang-switching");
+    fetch(url)
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (html) {
+        var doc = new DOMParser().parseFromString(html, "text/html");
+        var after = doc.querySelectorAll(
+          "main#quarto-document-content section.level2[id], main#quarto-document-content section.level3[id]"
+        );
+        var hash = hashIndex >= 0 && after[hashIndex] ? "#" + after[hashIndex].id : window.location.hash;
+        state.lang = lang;
+        if (push) history.pushState({ lang: lang }, "", url + hash);
+        else if (hash !== window.location.hash) history.replaceState(history.state, "", url + hash);
+        try { localStorage.setItem(KEY, lang); } catch (e) {}
+
+        SWAPPED.forEach(function (selector) {
+          var current = document.querySelector(selector);
+          var next = doc.querySelector(selector);
+          if (!current || !next) return;
+          next.querySelectorAll("script").forEach(function (s) { s.remove(); });
+          current.replaceWith(document.importNode(next, true));
+        });
+        document.title = doc.title;
+        document.documentElement.lang = doc.documentElement.lang || lang;
+        updateChrome();
+
+        var main = document.querySelector("main#quarto-document-content");
+        adornExternalLinks(main);
+        return Promise.all([
+          renderMermaid(main).catch(function () {}),
+          typeset([main]).catch(function () {}),
+          outline.then(buildToc)
+        ]);
+      })
+      .then(function () {
+        var target = anchorIndex >= 0 ? sectionList()[anchorIndex] : null;
+        if (target && anchorTop !== null) {
+          window.scrollTo(0, window.scrollY + target.getBoundingClientRect().top - anchorTop);
+        } else {
+          window.scrollTo(0, scrollY);
+        }
+        updateActive();
+      })
+      .catch(function () {
+        // Fall back to a normal page load.
+        window.location.href = url + window.location.hash;
+      })
+      .then(function () {
+        switching = false;
+        document.documentElement.classList.remove("lang-switching");
+      });
+  }
+
+  // Back and forward between two languages of the same page stay in place.
+  window.addEventListener("popstate", function () {
+    var mm = window.location.pathname.match(PATH);
+    if (!mm) return;
+    if (pageOf(mm[3]) !== state.page) {
+      window.location.reload();
+    } else if (mm[2] !== state.lang) {
+      switchLang(mm[2], false);
+    }
+  });
+
+  try { localStorage.setItem(KEY, state.lang); } catch (e) {}
+  updateChrome();
+  outline.then(buildToc);
 })();
 </script>
 <script id="quarto-html-after-body" type="application/javascript">
@@ -1112,13 +1574,13 @@ Figure&nbsp;2: Un cycle de réentraînement.
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../fr/monitoring.html" class="pagination-link" aria-label="Suivi et annotation">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Suivi et annotation</span>
+      <a href="../fr/monitoring.html" class="pagination-link" aria-label="Monitoring et annotation">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Monitoring et annotation</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../fr/companion-projects.html" class="pagination-link" aria-label="Projets associés&nbsp;: TTC et GRAAL">
-        <span class="nav-page-text">Projets associés&nbsp;: TTC et GRAAL</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../fr/organisation.html" class="pagination-link" aria-label="Défis organisationnels et d'infrastructure">
+        <span class="nav-page-text">Défis organisationnels et d’infrastructure</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

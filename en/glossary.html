@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.19">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Meilame Tayebjee">
+<meta name="description" content="The notation of the retraining protocol and the evaluation, and the terms used throughout the note.">
+
+<title>Glossary and notation – APE coding · MLOps</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../en/references.html" rel="next">
+<link href="../en/lessons.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-7ac3c55ca58f93c4c6c73bcc24e20e69.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<meta property="og:title" content="Glossary and notation – APE coding · MLOps">
+<meta property="og:description" content="The notation of the retraining protocol and the evaluation, and the terms used throughout the note.">
+<meta property="og:site_name" content="APE coding · MLOps">
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">APE coding · MLOps</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="https://inseefrlab.github.io/codif-ape-prez/"> 
+<span class="menu-text">Slides</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/InseeFrLab/codif-ape-docs"> <i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <a class="flex-grow-1 no-decor" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+          <h1 class="quarto-secondary-nav-title">Glossary and notation</h1>
+        </a>     
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Automatic coding of economic activity at INSEE</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/context.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Context and history</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/architecture.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Architecture</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Data</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/model.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Model</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/evaluation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Evaluation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/serving.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Serving and deployment</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/monitoring.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Monitoring and annotation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/retraining.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Retraining protocol</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/organisation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Organisational and infrastructural challenges</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/lessons.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Lessons learned</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/glossary.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Glossary and notation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">References and resources</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#sec-notation" id="toc-sec-notation" class="nav-link active" data-scroll-target="#sec-notation">Notation</a></li>
+  <li><a href="#sec-terms" id="toc-sec-terms" class="nav-link" data-scroll-target="#sec-terms">Terms</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/InseeFrLab/codif-ape-docs/edit/main/en/glossary.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/InseeFrLab/codif-ape-docs/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title d-none d-lg-block">Glossary and notation</h1>
+</div>
+
+<div>
+  <div class="description">
+    The notation of the retraining protocol and the evaluation, and the terms used throughout the note.
+  </div>
+</div>
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author"><a href="https://github.com/meilame-tayebjee">Meilame Tayebjee</a> <a href="mailto:meilame.tayebjee@insee.fr" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Innovation Lab, Insee
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="sec-notation" class="level2">
+<h2 class="anchored" data-anchor-id="sec-notation">Notation</h2>
+<p>The <a href="../en/retraining.html">retraining protocol</a> follows a quarterly cycle. Quarter <span class="math inline">\(n\)</span> is the one in progress: its model is in production, and the cycle prepares the next one.</p>
+<div id="tbl-notation" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-notation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Notation.
+</figcaption>
+<div aria-describedby="tbl-notation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Symbol</th>
+<th style="text-align: left;">Meaning</th>
+<th style="text-align: left;">Defined in</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(n\)</span></td>
+<td style="text-align: left;">Index of the quarter (production cycle)</td>
+<td style="text-align: left;"><a href="../en/retraining.html">Retraining</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(f_n\)</span></td>
+<td style="text-align: left;">Model in production during quarter <span class="math inline">\(n\)</span>; <span class="math inline">\(f_{n+1}\)</span> is the candidate that may replace it</td>
+<td style="text-align: left;"><a href="../en/retraining.html">Retraining</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(p_{(1)}, p_{(2)}\)</span></td>
+<td style="text-align: left;">The two highest probabilities predicted by the model for a description</td>
+<td style="text-align: left;"><a href="../en/model.html#sec-calibration">Model</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(\text{CI}\)</span></td>
+<td style="text-align: left;">Confidence index, <span class="math inline">\(\text{CI} = p_{(1)} - p_{(2)}\)</span></td>
+<td style="text-align: left;"><a href="../en/model.html#sec-calibration">Model</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(\tau\)</span>, <span class="math inline">\(\tau_n\)</span></td>
+<td style="text-align: left;">Threshold on the confidence index: at or above it, the description is coded automatically; below it, it goes to a human coder</td>
+<td style="text-align: left;"><a href="../en/model.html#sec-calibration">Model</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(\tau'\)</span></td>
+<td style="text-align: left;">Upper bound of a band of moderate confidence <span class="math inline">\(\tau_n \le \text{CI} &lt; \tau'\)</span>, to which costly engines can be restricted</td>
+<td style="text-align: left;"><a href="../en/retraining.html#sec-curation">Retraining</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(p^*\)</span></td>
+<td style="text-align: left;">Target accuracy of automatic coding, set by the business</td>
+<td style="text-align: left;"><a href="../en/evaluation.html#sec-metrics">Evaluation</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(F_n\)</span></td>
+<td style="text-align: left;">Flow of declarations received during quarter <span class="math inline">\(n\)</span></td>
+<td style="text-align: left;"><a href="../en/retraining.html#sec-golden">Retraining</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(G_n\)</span></td>
+<td style="text-align: left;">Golden set: random sample of <span class="math inline">\(F_n\)</span>, annotated blind by experts. Used for evaluation only</td>
+<td style="text-align: left;"><a href="../en/retraining.html#sec-golden">Retraining</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(G_n^A\)</span></td>
+<td style="text-align: left;">Part of <span class="math inline">\(G_n\)</span> above the threshold, a random sample of <span class="math inline">\(A_n\)</span></td>
+<td style="text-align: left;"><a href="../en/retraining.html#sec-next-training-set">Retraining</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(M_n\)</span></td>
+<td style="text-align: left;">Manual set: descriptions below the threshold, coded by humans</td>
+<td style="text-align: left;"><a href="../en/retraining.html#sec-golden">Retraining</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(A_n\)</span></td>
+<td style="text-align: left;">Automatic set: descriptions above the threshold, coded by <span class="math inline">\(f_n\)</span></td>
+<td style="text-align: left;"><a href="../en/retraining.html#sec-golden">Retraining</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(\tilde{A}_n\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(A_n\)</span> after curation (agreements kept, disagreements arbitrated or excluded)</td>
+<td style="text-align: left;"><a href="../en/retraining.html#sec-curation">Retraining</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(K_n\)</span></td>
+<td style="text-align: left;">Known cases: business rules validated by experts, encoded by the deterministic part of the rule engine</td>
+<td style="text-align: left;"><a href="../en/retraining.html#sec-known-cases">Retraining</a>, <a href="../en/data.html#sec-rules">Data</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(K'_n\)</span></td>
+<td style="text-align: left;">Reworded variants of the known cases, not seen in training</td>
+<td style="text-align: left;"><a href="../en/retraining.html#sec-gates">Retraining</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(\bar{X}_n\)</span></td>
+<td style="text-align: left;">Set <span class="math inline">\(X\)</span> accumulated over quarters up to <span class="math inline">\(n\)</span>, possibly within a sliding window</td>
+<td style="text-align: left;"><a href="../en/retraining.html#sec-golden">Retraining</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(\bar{G}^{\text{val}}\)</span>, <span class="math inline">\(\bar{G}^{\text{test}}\)</span></td>
+<td style="text-align: left;">The two fixed halves of the accumulated golden set: one for every choice, one for the final verdict</td>
+<td style="text-align: left;"><a href="../en/retraining.html#sec-golden">Retraining</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(E\)</span></td>
+<td style="text-align: left;">An auxiliary coding engine (rule engine, GRAAL agents), compared with <span class="math inline">\(f_n\)</span></td>
+<td style="text-align: left;"><a href="../en/retraining.html#sec-curation">Retraining</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(\mathcal{D}_n\)</span></td>
+<td style="text-align: left;">Training set used for <span class="math inline">\(f_n\)</span></td>
+<td style="text-align: left;"><a href="../en/retraining.html#sec-assembly">Retraining</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+<section id="sec-terms" class="level2">
+<h2 class="anchored" data-anchor-id="sec-terms">Terms</h2>
+<div id="tbl-terms" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-terms-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: Terms.
+</figcaption>
+<div aria-describedby="tbl-terms-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Term</th>
+<th style="text-align: left;">Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>APE code</strong></td>
+<td style="text-align: left;"><em>Activité principale exercée</em>: the principal activity of a business, coded in the NAF</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>NAF</strong>, <strong>NACE</strong></td>
+<td style="text-align: left;">French activity classification (NAF) and its European counterpart (NACE). NAF rev. 2 dates from 2008; NAF 2025 follows NACE Rev.&nbsp;2.1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Sub-class</strong></td>
+<td style="text-align: left;">Finest level of the NAF, the one the model predicts (level 5)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Sirene</strong></td>
+<td style="text-align: left;">The French business register managed by INSEE</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Explanatory notes</strong></td>
+<td style="text-align: left;">The notes of the classification: what each code includes, excludes, and examples</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Univocal / multivocal</strong></td>
+<td style="text-align: left;">A correspondence from an old code to a single new code, or to several</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Automation rate</strong>, <strong>coverage</strong></td>
+<td style="text-align: left;">Share of descriptions coded automatically, without a human</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Risk</strong></td>
+<td style="text-align: left;">Error rate among the descriptions coded automatically</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Risk–coverage curve</strong>, <strong>AURC</strong></td>
+<td style="text-align: left;">Risk as a function of coverage when the threshold varies; the area under that curve</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Calibration</strong></td>
+<td style="text-align: left;">Agreement between the confidence a model announces and the accuracy it achieves</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>ECE</strong>, <strong>Brier score</strong></td>
+<td style="text-align: left;">Expected calibration error; mean squared error of the predicted probabilities</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Golden set</strong></td>
+<td style="text-align: left;">Random sample of the production flow, annotated by experts who do not see the model’s prediction</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Manual coding</strong></td>
+<td style="text-align: left;">Coding by a human of the descriptions below the threshold, with the model’s suggestions in view</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Known case</strong></td>
+<td style="text-align: left;">A description whose code has been fixed by a business rule, and which the model must reproduce</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Rule engine</strong></td>
+<td style="text-align: left;">The component of codif-ape-preprocess that applies business rules to the training data. Its deterministic part encodes known cases; its probabilistic part (fuzzy and semantic matching) extends them to similar descriptions</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Quality gate</strong></td>
+<td style="text-align: left;">A test a candidate model must pass before release</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Non-inferiority</strong></td>
+<td style="text-align: left;">Criterion under which a new model is accepted if it is not significantly worse than the previous one</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Champion / challenger</strong></td>
+<td style="text-align: left;">The model in production, and the candidate compared with it</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Online/offline parity</strong></td>
+<td style="text-align: left;">The served model reproduces exactly the predictions computed offline</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Qualification platform</strong>, <strong>iso-production</strong></td>
+<td style="text-align: left;">An environment that reproduces production, where a model is tested before release</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Shadow deployment</strong></td>
+<td style="text-align: left;">The candidate model scores the real flow next to the production model, without its decisions being used</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>TTC</strong></td>
+<td style="text-align: left;"><a href="../en/model.html#sec-ttc">torchTextClassifiers</a>, the PyTorch library the model is built with</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>GRAAL</strong></td>
+<td style="text-align: left;"><a href="../en/data.html#sec-graal">Graph-based Reasoning Agents for Automatic Labelling</a>, LLM agents that work offline on the classification</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+
+
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
+<!--
+  Site navigation, added at the end of every page.
+
+  1. Table of contents. The left sidebar becomes a single, collapsible table
+     of contents for the whole note: chapters, then their sections and
+     sub-sections, read from outline.json (written by scripts/outline.py).
+     The section being read is highlighted as the reader scrolls.
+
+  2. EN | FR switch. en/ and fr/ use the same file names and the same
+     anchors, so switching language swaps the page content in place: same
+     page, same section, no reload. The choice is remembered for the root
+     page redirect (index.qmd).
+-->
+<script>
+(function () {
+  "use strict";
+
+  var KEY = "codif-ape-lang";
+  var LANGS = ["en", "fr"];
+  var STRINGS = {
+    en: {
+      label: "EN", hint: "Read this page in English", brand: "APE coding · MLOps",
+      group: "Language", toc: "Table of contents", expand: "Expand", collapse: "Collapse"
+    },
+    fr: {
+      label: "FR", hint: "Lire cette page en français", brand: "Codification APE · MLOps",
+      group: "Langue", toc: "Sommaire", expand: "Déplier", collapse: "Replier"
+    }
+  };
+  // Parts of the page that differ between languages, swapped on a switch.
+  var SWAPPED = [
+    "main#quarto-document-content",
+    "#quarto-margin-sidebar",
+    "nav.page-navigation",
+    ".nav-footer-center",
+    ".quarto-secondary-nav-title"
+  ];
+  var PATH = /^(.*\/)(en|fr)(\/.*)?$/;
+
+  var m = window.location.pathname.match(PATH);
+  if (!m) return;
+  var base = m[1];
+  var state = { lang: m[2], page: pageOf(m[3]) };
+
+  // "/data.html", "/data" and "/" all name a page; compare them without ".html".
+  function pageOf(rest) {
+    var page = (rest || "/").replace(/^\//, "").replace(/\.html$/, "");
+    return page === "" ? "index" : page;
+  }
+
+  function urlFor(lang, page) {
+    return base + lang + "/" + page + ".html";
+  }
+
+  function el(tag, className, attrs) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    Object.keys(attrs || {}).forEach(function (k) { node.setAttribute(k, attrs[k]); });
+    return node;
+  }
+
+  // ---------------------------------------------------------------- MathJax
+
+  // Section titles can hold math; MathJax loads after this script.
+  function typeset(nodes) {
+    var mj = window.MathJax;
+    if (mj && mj.startup && mj.startup.promise) {
+      return mj.startup.promise.then(function () { return mj.typesetPromise(nodes); });
+    }
+    if (document.readyState !== "complete") {
+      return new Promise(function (resolve) {
+        window.addEventListener("load", function () { typeset(nodes).then(resolve); }, { once: true });
+      });
+    }
+    return Promise.resolve();
+  }
+
+  // ----------------------------------------------------- Table of contents
+
+  var outline = fetch(base + "outline.json")
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .catch(function () { return null; });
+
+  var links = {};       // section id -> link, for the current page
+  var activeLink = null;
+
+  function setOpen(li, open) {
+    li.classList.toggle("is-open", open);
+    var button = li.querySelector(":scope > .toc-row > .toc-toggle");
+    if (button) {
+      button.setAttribute("aria-expanded", String(open));
+      button.setAttribute("aria-label", STRINGS[state.lang][open ? "collapse" : "expand"]);
+    }
+  }
+
+  function tocItem(node, depth, page, isCurrentPage) {
+    var li = el("li", "toc-item toc-depth-" + depth);
+    var row = el("div", "toc-row");
+    var children = depth === 0 ? node.sections : node.children;
+
+    if (children && children.length) {
+      var button = el("button", "toc-toggle", { type: "button" });
+      button.addEventListener("click", function () {
+        li.dataset.pinned = "1";
+        setOpen(li, !li.classList.contains("is-open"));
+      });
+      row.appendChild(button);
+    } else {
+      row.appendChild(el("span", "toc-spacer"));
+    }
+
+    var a = el("a", "toc-link no-external");
+    if (depth === 0) {
+      a.href = urlFor(state.lang, page);
+      if (node.number) {
+        var num = el("span", "toc-number");
+        num.textContent = node.number + ".";
+        a.appendChild(num);
+      }
+      a.insertAdjacentHTML("beforeend", node.title);
+      if (isCurrentPage) {
+        a.classList.add("is-current");
+        a.setAttribute("aria-current", "page");
+        a.addEventListener("click", function (e) {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      }
+    } else {
+      a.href = (isCurrentPage ? "" : urlFor(state.lang, page)) + "#" + node.id;
+      a.innerHTML = node.title;
+      if (isCurrentPage) links[node.id] = a;
+    }
+    row.appendChild(a);
+    li.appendChild(row);
+
+    if (children && children.length) {
+      var ul = el("ul", "toc-children");
+      children.forEach(function (child) {
+        ul.appendChild(tocItem(child, depth + 1, page, isCurrentPage));
+      });
+      li.appendChild(ul);
+      setOpen(li, false);
+    }
+    return li;
+  }
+
+  function buildToc(data) {
+    var container = document.querySelector("#quarto-sidebar .sidebar-menu-container");
+    if (!container || !data || !data[state.lang]) return;
+
+    links = {};
+    activeLink = null;
+    var nav = el("nav", "site-toc", { "aria-label": STRINGS[state.lang].toc });
+    var ul = el("ul", "toc-children toc-chapters");
+    data[state.lang].forEach(function (chapter) {
+      var page = pageOf(chapter.href);
+      var isCurrent = page === state.page;
+      var li = tocItem(chapter, 0, page, isCurrent);
+      if (isCurrent) {
+        li.classList.add("is-current");
+        setOpen(li, true);
+      }
+      ul.appendChild(li);
+    });
+    nav.appendChild(ul);
+    container.replaceChildren(nav);
+    document.body.classList.add("has-site-toc");
+
+    typeset([nav]);
+    updateActive();
+    var current = nav.querySelector(".toc-link.is-current");
+    if (current) revealInSidebar(current);
+  }
+
+  function revealInSidebar(link) {
+    var sidebar = document.getElementById("quarto-sidebar");
+    if (!sidebar) return;
+    var r = link.getBoundingClientRect();
+    var s = sidebar.getBoundingClientRect();
+    if (r.top < s.top || r.bottom > s.bottom) {
+      sidebar.scrollTop += r.top - s.top - s.height / 3;
+    }
+  }
+
+  function sectionList() {
+    return Array.prototype.slice.call(document.querySelectorAll(
+      "main#quarto-document-content section.level2[id], main#quarto-document-content section.level3[id]"
+    ));
+  }
+
+  // The section being read: the last one whose top has scrolled past the
+  // navbar.
+  function currentSection() {
+    var sections = sectionList();
+    if (!sections.length) return null;
+    var atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    if (atBottom) return sections[sections.length - 1];
+    var current = null;
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].getBoundingClientRect().top > 100) break;
+      current = sections[i];
+    }
+    return current;
+  }
+
+  function updateActive() {
+    var section = currentSection();
+    var link = (section && links[section.id]) || null;
+    if (link === activeLink) return;
+    if (activeLink) activeLink.classList.remove("active");
+    activeLink = link;
+    if (!link) return;
+    link.classList.add("active");
+
+    // Open the branch that holds the active section, and close the branches
+    // opened automatically before, unless the reader opened them by hand.
+    var branch = [];
+    for (var li = link.closest(".toc-item"); li; li = li.parentElement.closest(".toc-item")) {
+      branch.push(li);
+    }
+    document.querySelectorAll(".site-toc .toc-item.is-open").forEach(function (li) {
+      if (branch.indexOf(li) === -1 && !li.classList.contains("is-current") && !li.dataset.pinned) {
+        setOpen(li, false);
+      }
+    });
+    branch.forEach(function (li) {
+      if (li.querySelector(":scope > .toc-children")) setOpen(li, true);
+    });
+    revealInSidebar(link);
+  }
+
+  var ticking = false;
+  window.addEventListener("scroll", function () {
+    if (ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(function () { ticking = false; updateActive(); });
+  }, { passive: true });
+
+  // -------------------------------------------------------- Language switch
+
+  var switchGroup = el("div", "lang-switch", { role: "group" });
+
+  function updateChrome() {
+    var s = STRINGS[state.lang];
+    var brand = document.querySelector(".navbar-brand");
+    if (brand) brand.setAttribute("href", urlFor(state.lang, "index"));
+    var brandTitle = document.querySelector(".navbar-title");
+    if (brandTitle) brandTitle.textContent = s.brand;
+    switchGroup.setAttribute("aria-label", s.group);
+    Array.prototype.forEach.call(switchGroup.children, function (a) {
+      var lang = a.getAttribute("lang");
+      var active = lang === state.lang;
+      a.classList.toggle("active", active);
+      if (active) a.setAttribute("aria-current", "true");
+      else a.removeAttribute("aria-current");
+      a.href = urlFor(lang, state.page) + window.location.hash;
+    });
+  }
+
+  LANGS.forEach(function (lang) {
+    var a = el("a", "no-external", { lang: lang, hreflang: lang, title: STRINGS[lang].hint });
+    a.textContent = STRINGS[lang].label;
+    a.addEventListener("click", function (e) {
+      // Let modified clicks open the other language in a new tab.
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      switchLang(lang, true);
+    });
+    switchGroup.appendChild(a);
+  });
+
+  var slot = document.querySelector(".quarto-navbar-tools") ||
+             document.querySelector(".navbar-container");
+  if (slot) slot.insertBefore(switchGroup, slot.firstChild);
+
+  // Quarto marks external links (icon, new tab) on page load only.
+  function adornExternalLinks(root) {
+    root.querySelectorAll("a[href]:not(.no-external):not([aria-hidden])").forEach(function (a) {
+      if (/^https?:$/.test(a.protocol) && a.origin !== window.location.origin) {
+        a.setAttribute("target", "_blank");
+        if (a.getAttribute("rel") === null) a.setAttribute("rel", "noopener");
+        a.classList.add("external");
+      }
+    });
+  }
+
+  // Same steps as Quarto's mermaid-init.js, which only runs on page load.
+  var mermaidCount = 0;
+  function renderMermaid(root) {
+    var mermaid = window.mermaid;
+    if (!mermaid) return Promise.resolve();
+    var blocks = Array.prototype.slice.call(root.querySelectorAll("pre.mermaid-js"));
+    return blocks.reduce(function (done, pre) {
+      return done.then(function () {
+        var text = pre.textContent.replace(/&nbsp;/g, " ");
+        return mermaid.mermaidAPI.render("mermaid-switch-" + (++mermaidCount), text, pre)
+          .then(function (result) {
+            pre.innerHTML = result.svg;
+            var svg = pre.querySelector("svg");
+            if (pre.dataset.label) {
+              var style = svg.querySelector("style");
+              if (style) style.innerHTML = style.innerHTML.split("#" + svg.id).join("#" + pre.dataset.label + "-mermaid");
+              svg.id = pre.dataset.label + "-mermaid";
+            }
+            pre.parentElement.replaceChild(svg, pre);
+            svg.classList.add("mermaid-js");
+            /* global _quartoMermaid */
+            if (typeof _quartoMermaid !== "undefined") {
+              try { _quartoMermaid.postProcess(svg); } catch (e) {}
+            }
+          });
+      });
+    }, Promise.resolve());
+  }
+
+  var switching = false;
+  function switchLang(lang, push) {
+    if (lang === state.lang || switching) return;
+    switching = true;
+    var url = urlFor(lang, state.page);
+
+    // Remember where the reader is, to land at the same place. Both
+    // languages have the same sections in the same order, but not always the
+    // same ids (those derived from French titles differ), so sections are
+    // matched by position.
+    var before = sectionList();
+    var anchor = currentSection();
+    var anchorIndex = before.indexOf(anchor);
+    var anchorTop = anchor ? anchor.getBoundingClientRect().top : null;
+    var hashIndex = before.findIndex(function (s) { return "#" + s.id === window.location.hash; });
+    var scrollY = window.scrollY;
+
+    document.documentElement.classList.add("lang-switching");
+    fetch(url)
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (html) {
+        var doc = new DOMParser().parseFromString(html, "text/html");
+        var after = doc.querySelectorAll(
+          "main#quarto-document-content section.level2[id], main#quarto-document-content section.level3[id]"
+        );
+        var hash = hashIndex >= 0 && after[hashIndex] ? "#" + after[hashIndex].id : window.location.hash;
+        state.lang = lang;
+        if (push) history.pushState({ lang: lang }, "", url + hash);
+        else if (hash !== window.location.hash) history.replaceState(history.state, "", url + hash);
+        try { localStorage.setItem(KEY, lang); } catch (e) {}
+
+        SWAPPED.forEach(function (selector) {
+          var current = document.querySelector(selector);
+          var next = doc.querySelector(selector);
+          if (!current || !next) return;
+          next.querySelectorAll("script").forEach(function (s) { s.remove(); });
+          current.replaceWith(document.importNode(next, true));
+        });
+        document.title = doc.title;
+        document.documentElement.lang = doc.documentElement.lang || lang;
+        updateChrome();
+
+        var main = document.querySelector("main#quarto-document-content");
+        adornExternalLinks(main);
+        return Promise.all([
+          renderMermaid(main).catch(function () {}),
+          typeset([main]).catch(function () {}),
+          outline.then(buildToc)
+        ]);
+      })
+      .then(function () {
+        var target = anchorIndex >= 0 ? sectionList()[anchorIndex] : null;
+        if (target && anchorTop !== null) {
+          window.scrollTo(0, window.scrollY + target.getBoundingClientRect().top - anchorTop);
+        } else {
+          window.scrollTo(0, scrollY);
+        }
+        updateActive();
+      })
+      .catch(function () {
+        // Fall back to a normal page load.
+        window.location.href = url + window.location.hash;
+      })
+      .then(function () {
+        switching = false;
+        document.documentElement.classList.remove("lang-switching");
+      });
+  }
+
+  // Back and forward between two languages of the same page stay in place.
+  window.addEventListener("popstate", function () {
+    var mm = window.location.pathname.match(PATH);
+    if (!mm) return;
+    if (pageOf(mm[3]) !== state.page) {
+      window.location.reload();
+    } else if (mm[2] !== state.lang) {
+      switchLang(mm[2], false);
+    }
+  });
+
+  try { localStorage.setItem(KEY, state.lang); } catch (e) {}
+  updateChrome();
+  outline.then(buildToc);
+})();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/inseefrlab\.github\.io\/codif-ape-docs\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+            // default icon
+            link.classList.add("external");
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../en/lessons.html" class="pagination-link" aria-label="Lessons learned">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Lessons learned</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../en/references.html" class="pagination-link" aria-label="References and resources">
+        <span class="nav-page-text">References and resources</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>Insee — SSP Lab</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/InseeFrLab/codif-ape-docs/edit/main/en/glossary.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/InseeFrLab/codif-ape-docs/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p>Built with <a href="https://quarto.org/">Quarto</a></p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

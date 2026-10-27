@@ -6,10 +6,10 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="author" content="SSP Lab">
+<meta name="author" content="Meilame Tayebjee">
 <meta name="description" content="Un modèle autonome, une API légère et un déploiement en GitOps.">
 
-<title>Mise à disposition du modèle et déploiement – APE coding · MLOps</title>
+<title>Mise en production – APE coding · MLOps</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -39,7 +39,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
 <link href="../fr/monitoring.html" rel="next">
-<link href="../fr/model.html" rel="prev">
+<link href="../fr/evaluation.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
@@ -49,7 +49,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-fc581236a46ad31b3ea501458e50ff32.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-7ac3c55ca58f93c4c6c73bcc24e20e69.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -83,7 +83,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
 
 
-<meta property="og:title" content="Mise à disposition du modèle et déploiement – APE coding · MLOps">
+<meta property="og:title" content="Mise en production – APE coding · MLOps">
 <meta property="og:description" content="Un modèle autonome, une API légère et un déploiement en GitOps.">
 <meta property="og:site_name" content="APE coding · MLOps">
 </head>
@@ -126,7 +126,7 @@ ul.task-list li input[type="checkbox"] {
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
         <a class="flex-grow-1 no-decor" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Basculer la barre latérale" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
-          <h1 class="quarto-secondary-nav-title">Mise à disposition du modèle et déploiement</h1>
+          <h1 class="quarto-secondary-nav-title">Mise en production</h1>
         </a>     
     </div>
   </nav>
@@ -169,14 +169,20 @@ ul.task-list li input[type="checkbox"] {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../fr/evaluation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Évaluation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../fr/serving.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text">Mise à disposition du modèle et déploiement</span></a>
+ <span class="menu-text">Mise en production</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../fr/monitoring.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Suivi et annotation</span></a>
+ <span class="menu-text">Monitoring et annotation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -187,14 +193,20 @@ ul.task-list li input[type="checkbox"] {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../fr/companion-projects.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Projets associés&nbsp;: TTC et GRAAL</span></a>
+  <a href="../fr/organisation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Défis organisationnels et d’infrastructure</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../fr/lessons.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Enseignements</span></a>
+ <span class="menu-text">Retours d’expérience</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/glossary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glossaire et notations</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -215,7 +227,7 @@ ul.task-list li input[type="checkbox"] {
   <ul>
   <li><a href="#un-modèle-autonome" id="toc-un-modèle-autonome" class="nav-link active" data-scroll-target="#un-modèle-autonome"><span class="header-section-number">1</span> Un modèle autonome</a></li>
   <li><a href="#lapi" id="toc-lapi" class="nav-link" data-scroll-target="#lapi"><span class="header-section-number">2</span> L’API</a></li>
-  <li><a href="#intégration-et-livraison-continues" id="toc-intégration-et-livraison-continues" class="nav-link" data-scroll-target="#intégration-et-livraison-continues"><span class="header-section-number">3</span> Intégration et livraison continues</a></li>
+  <li><a href="#cicd" id="toc-cicd" class="nav-link" data-scroll-target="#cicd"><span class="header-section-number">3</span> CI/CD</a></li>
   <li><a href="#environnements" id="toc-environnements" class="nav-link" data-scroll-target="#environnements"><span class="header-section-number">4</span> Environnements</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/InseeFrLab/codif-ape-docs/edit/main/fr/serving.qmd" class="toc-action"><i class="bi bi-github"></i>Modifier cette page</a></li><li><a href="https://github.com/InseeFrLab/codif-ape-docs/issues/new" class="toc-action"><i class="bi empty"></i>Faire part d'un problème</a></li></ul></div></nav>
@@ -225,7 +237,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title d-none d-lg-block">Mise à disposition du modèle et déploiement</h1>
+<h1 class="title d-none d-lg-block">Mise en production</h1>
 </div>
 
 <div>
@@ -239,11 +251,11 @@ ul.task-list li input[type="checkbox"] {
   <div class="quarto-title-meta-heading">Affiliation</div>
   
     <div class="quarto-title-meta-contents">
-    <p class="author">SSP Lab </p>
+    <p class="author"><a href="https://github.com/meilame-tayebjee">Meilame Tayebjee</a> <a href="mailto:meilame.tayebjee@insee.fr" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> </p>
   </div>
   <div class="quarto-title-meta-contents">
         <p class="affiliation">
-            Insee
+            SSP Lab, Insee
           </p>
       </div>
   </div>
@@ -262,28 +274,28 @@ ul.task-list li input[type="checkbox"] {
 
 <section id="un-modèle-autonome" class="level2" data-number="1">
 <h2 data-number="1" class="anchored" data-anchor-id="un-modèle-autonome"><span class="header-section-number">1</span> Un modèle autonome</h2>
-<p>Le modèle est enregistré dans MLflow sous la forme d’un <strong><code>pyfunc</code></strong>, une enveloppe Python générique qui regroupe tout ce qui est nécessaire à l’inférence&nbsp;:</p>
+<p>Le modèle est enregistré dans MLflow sous forme de <strong><code>pyfunc</code></strong>, un wrapper Python générique qui embarque tout ce qu’il faut pour l’inférence&nbsp;:</p>
 <ul>
-<li>le réseau entraîné et son tokeniseur&nbsp;;</li>
+<li>le réseau entraîné et son tokenizer&nbsp;;</li>
 <li>les encodeurs des variables catégorielles et des classes&nbsp;;</li>
-<li>le code d’inférence&nbsp;: validation de la liasse en entrée, construction des variables, décodage des <em>k</em> meilleurs codes avec leurs libellés et calcul de l’indice de confiance&nbsp;;</li>
-<li>les ressources nécessaires hors ligne, comme les listes de mots vides, afin que rien ne soit téléchargé à l’exécution dans un environnement fermé.</li>
+<li>le code d’inférence&nbsp;: validation de la liasse en entrée, construction des variables, décodage du top <em>k</em> avec les intitulés des codes, calcul de l’indice de confiance&nbsp;;</li>
+<li>les ressources nécessaires hors ligne, comme les listes de stop words, pour que rien ne soit téléchargé à l’exécution dans un environnement fermé.</li>
 </ul>
-<p>Le contrat d’entrée et de sortie est défini par des modèles Pydantic dans le dépôt d’entraînement. Le modèle peut donc être chargé et interrogé de la même façon dans un notebook, dans un traitement par lots ou dans l’API. Le modèle servi est exactement celui qui a été évalué.</p>
-<p>Chaque modèle enregistré porte un <strong>nom</strong>, qui identifie la nomenclature (NAF rév. 2 ou NAF 2025), et une <strong>version</strong>. Chaque réponse contient l’identifiant du modèle qui l’a produite&nbsp;: toute prédiction est ainsi traçable.</p>
+<p>Le contrat d’entrée et de sortie est défini par des modèles Pydantic dans le dépôt d’entraînement. Le modèle se charge et s’appelle donc de la même façon dans un notebook, dans un job batch ou dans l’API, et le modèle servi est exactement celui qui a été évalué.</p>
+<p>Chaque modèle enregistré porte un <strong>nom</strong>, qui identifie la nomenclature (NAF rév. 2 ou NAF 2025), et une <strong>version</strong>. Chaque réponse contient l’identifiant du modèle qui l’a produite, ce qui rend toute prédiction traçable.</p>
 </section>
 <section id="lapi" class="level2" data-number="2">
 <h2 data-number="2" class="anchored" data-anchor-id="lapi"><span class="header-section-number">2</span> L’API</h2>
-<p><a href="https://github.com/InseeFrLab/codif-ape-api">codif-ape-api</a> est une application FastAPI légère. Elle charge le modèle enregistré au démarrage, à partir de son nom et de sa version, passés en variables d’environnement. Elle expose un unique point d’accès de prédiction&nbsp;:</p>
+<p><a href="https://github.com/InseeFrLab/codif-ape-api">codif-ape-api</a> est une application FastAPI légère. Au démarrage, elle charge le modèle à partir de son nom et de sa version, passés en variables d’environnement. Elle expose un seul endpoint de prédiction&nbsp;:</p>
 <ul>
-<li><strong>Entrée&nbsp;:</strong> un lot de liasses de déclaration. Chacune comporte un libellé d’activité obligatoire et des champs auxiliaires facultatifs&nbsp;: forme juridique, nature de l’activité, type de liasse, surface, permanence de l’activité. Les valeurs sont contrôlées par rapport aux modalités autorisées avant l’inférence.</li>
-<li><strong>Sortie&nbsp;:</strong> pour chaque liasse, les <em>k</em> meilleurs codes avec leur probabilité et leur libellé, l’<strong>indice de confiance</strong> et l’<strong>identifiant du modèle</strong>.</li>
-<li><strong>Paramètres&nbsp;:</strong> le nombre de propositions, une probabilité minimale, ainsi que la taille des lots et le nombre de processus. Un même point d’accès sert donc à la fois les appels unitaires du répertoire (une liasse à la fois, latence minimale) et les recodifications en masse (gros lots traités en parallèle).</li>
+<li><strong>Entrée&nbsp;:</strong> un batch de liasses. Chacune contient un libellé d’activité obligatoire et des champs annexes optionnels&nbsp;: forme juridique, nature de l’activité, type de liasse, surface, permanence de l’activité. Les valeurs sont validées par rapport aux modalités autorisées avant l’inférence.</li>
+<li><strong>Sortie&nbsp;:</strong> pour chaque liasse, le top <em>k</em> des codes avec leur probabilité et leur intitulé, l’<strong>indice de confiance</strong> et l’<strong>identifiant du modèle</strong>.</li>
+<li><strong>Paramètres&nbsp;:</strong> le nombre de propositions, une probabilité minimale, la taille des batchs et le nombre de processus. Le même endpoint sert donc à la fois les appels unitaires du répertoire (une liasse à la fois, latence minimale) et les recodages en masse (gros batchs traités en parallèle).</li>
 </ul>
-<p>L’API utilise des versions de PyTorch pour CPU uniquement et n’écrit ses journaux que sur la sortie standard, comme l’exige la plateforme de production. C’est le seul composant appelé par le système d’information Sirene. L’application Java qui gère les déclarations envoie la liasse à l’API, puis l’oriente selon l’indice de confiance.</p>
+<p>L’API utilise des builds PyTorch CPU uniquement et n’écrit ses logs que sur la sortie standard, comme l’exige la plateforme de production. C’est le seul composant appelé par le système d’information Sirene&nbsp;: l’application Java qui gère les déclarations envoie la liasse à l’API, puis l’aiguille selon l’indice de confiance.</p>
 </section>
-<section id="intégration-et-livraison-continues" class="level2" data-number="3">
-<h2 data-number="3" class="anchored" data-anchor-id="intégration-et-livraison-continues"><span class="header-section-number">3</span> Intégration et livraison continues</h2>
+<section id="cicd" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="cicd"><span class="header-section-number">3</span> CI/CD</h2>
 <div class="cell" data-layout-align="default">
 <div class="cell-output-display">
 <div id="fig-cicd" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -291,9 +303,9 @@ ul.task-list li input[type="checkbox"] {
 <div aria-describedby="fig-cicd-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div>
 <pre class="mermaid mermaid-js" data-label="fig-cicd">flowchart LR
-  DEV["Commit / tag&lt;br/&gt;codif-ape-api"] --&gt; GHA["GitHub Actions&lt;br/&gt;construction + publication de l'image"]
-  GHA --&gt; HUB[("Registre&lt;br/&gt;d'images")]
-  TRN["Entraînement"] --&gt; REG[("Registre&lt;br/&gt;MLflow")]
+  DEV["Commit / tag&lt;br/&gt;codif-ape-api"] --&gt; GHA["GitHub Actions&lt;br/&gt;build + push de l'image"]
+  GHA --&gt; HUB[("Registry&lt;br/&gt;d'images")]
+  TRN["Entraînement"] --&gt; REG[("Model registry&lt;br/&gt;MLflow")]
   MAN["Modification du manifeste&lt;br/&gt;codif-ape-cd&lt;br/&gt;(tag d'image, version du modèle)"] --&gt; ARGO["Argo CD&lt;br/&gt;synchronisation automatique"]
   HUB --&gt; ARGO
   ARGO --&gt; POD["Pod de l'API"]
@@ -302,39 +314,39 @@ ul.task-list li input[type="checkbox"] {
 </div>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cicd-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;1: Du commit au service en fonctionnement.
+Figure&nbsp;1: Du commit au service déployé.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p>La chaîne de livraison fonctionne ainsi&nbsp;:</p>
+<p>Le déploiement fonctionne ainsi&nbsp;:</p>
 <ol type="1">
-<li><strong>Images.</strong> À chaque push sur <code>main</code> et à chaque tag de version, GitHub Actions construit l’image Docker de l’API et la publie dans le registre d’images. Pour chaque pull request, on vérifie que l’image se construit.</li>
+<li><strong>Images.</strong> À chaque push sur <code>main</code> et à chaque tag de version, GitHub Actions build l’image Docker de l’API et la pousse sur le registry. Sur chaque pull request, on vérifie que l’image build.</li>
 <li><strong>Manifestes.</strong> <a href="https://github.com/InseeFrLab/codif-ape-cd">codif-ape-cd</a> contient les manifestes Kubernetes bruts de tous les services&nbsp;:
 <ul>
 <li>les instances de l’API, pour chaque nomenclature et chaque environnement&nbsp;;</li>
-<li>le tableau de bord de suivi&nbsp;;</li>
-<li>les tâches planifiées d’annotation et de suivi&nbsp;;</li>
+<li>le dashboard de monitoring&nbsp;;</li>
+<li>les cron jobs d’annotation et de monitoring&nbsp;;</li>
 <li>les applications de revue de GRAAL.</li>
 </ul></li>
-<li><strong>Synchronisation.</strong> Chaque répertoire du dépôt a son <code>Application</code> Argo CD, avec synchronisation automatique et auto-réparation activées. Le cluster reflète toujours le contenu du dépôt.</li>
+<li><strong>Synchronisation.</strong> Chaque dossier du dépôt a son <code>Application</code> Argo CD, avec auto-sync et self-heal activés&nbsp;: le cluster reflète toujours le contenu du dépôt.</li>
 </ol>
-<p><strong>Déployer un nouveau modèle</strong> revient à modifier une ligne d’un manifeste&nbsp;: la version du modèle, ou le tag de l’image si le code de l’API a changé. La modification est relue et fusionnée, puis Argo CD la déploie. <strong>Revenir en arrière</strong>, c’est annuler ce commit. L’historique de ce qui a tourné, où et quand, est le journal Git.</p>
+<p><strong>Déployer un nouveau modèle</strong> revient à modifier une ligne d’un manifeste&nbsp;: la version du modèle, ou le tag de l’image si le code de l’API a changé. Le changement est relu et mergé, puis Argo CD le déploie. Pour <strong>revenir en arrière</strong>, il suffit de revert ce commit. L’historique de ce qui a tourné, où et quand, c’est le log Git.</p>
 </section>
 <section id="environnements" class="level2" data-number="4">
 <h2 data-number="4" class="anchored" data-anchor-id="environnements"><span class="header-section-number">4</span> Environnements</h2>
-<p>Plusieurs instances de l’API tournent côte à côte sur la plateforme. Chacune est identifiée par sa nomenclature et sa génération de modèle, par exemple un modèle NAF 2008 et un modèle NAF 2025 construit avec PyTorch. Elles servent&nbsp;:</p>
+<p>Plusieurs instances de l’API tournent en parallèle sur la plateforme, chacune identifiée par sa nomenclature et sa génération de modèle, par exemple un modèle NAF 2008 et un modèle NAF 2025 en PyTorch. Elles servent&nbsp;:</p>
 <ul>
 <li>au développement et aux démonstrations&nbsp;;</li>
-<li>à la comparaison des générations de modèles sur les mêmes entrées&nbsp;;</li>
-<li>aux traitements de recodification en masse.</li>
+<li>à comparer les générations de modèles sur les mêmes entrées&nbsp;;</li>
+<li>aux recodages en masse.</li>
 </ul>
-<p>Avant la production, le modèle passe par une <strong>qualification</strong> sur une plateforme de préproduction identique à l’environnement de production&nbsp;:</p>
+<p>Avant la production, le modèle passe par une <strong>qualification</strong> sur une préproduction identique à la production (voir <a href="../fr/organisation.html#sec-qualification-platform">Défis organisationnels et d’infrastructure</a>)&nbsp;:</p>
 <ul>
-<li>la <strong>latence</strong> et la mémoire sont mesurées sur CPU&nbsp;;</li>
-<li>la <strong>parité en ligne/hors ligne</strong> est vérifiée&nbsp;: le modèle servi doit reproduire exactement les prédictions de l’évaluation hors ligne&nbsp;;</li>
-<li>une période en mode <em>shadow</em> peut suivre&nbsp;: le nouveau modèle traite le flux réel sans que ses décisions soient utilisées.</li>
+<li>on mesure la <strong>latence</strong> et la mémoire sur CPU&nbsp;;</li>
+<li>on vérifie la <strong>cohérence online/offline</strong>&nbsp;: le modèle servi doit reproduire exactement les prédictions de l’évaluation hors ligne&nbsp;;</li>
+<li>une période en <em>shadow mode</em> peut suivre&nbsp;: le nouveau modèle traite le flux réel sans que ses décisions soient utilisées.</li>
 </ul>
 <p>Ces étapes sont détaillées dans le <a href="../fr/retraining.html#sec-preprod">protocole de réentraînement</a>.</p>
 
@@ -343,57 +355,404 @@ Figure&nbsp;1: Du commit au service en fonctionnement.
 
 <a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Retour au sommet</a></main> <!-- /main -->
 <!--
-  EN | FR switch in the navbar. en/ and fr/ use the same file names and the
-  same anchors, so the switch links to the same page and section in the other
-  language. The choice is remembered for the root page redirect (index.qmd).
+  Site navigation, added at the end of every page.
+
+  1. Table of contents. The left sidebar becomes a single, collapsible table
+     of contents for the whole note: chapters, then their sections and
+     sub-sections, read from outline.json (written by scripts/outline.py).
+     The section being read is highlighted as the reader scrolls.
+
+  2. EN | FR switch. en/ and fr/ use the same file names and the same
+     anchors, so switching language swaps the page content in place: same
+     page, same section, no reload. The choice is remembered for the root
+     page redirect (index.qmd).
 -->
 <script>
 (function () {
+  "use strict";
+
   var KEY = "codif-ape-lang";
   var LANGS = ["en", "fr"];
-  var TITLES = {
-    en: { label: "EN", hint: "Read this page in English", brand: "APE coding · MLOps" },
-    fr: { label: "FR", hint: "Lire cette page en français", brand: "Codification APE · MLOps" }
+  var STRINGS = {
+    en: {
+      label: "EN", hint: "Read this page in English", brand: "APE coding · MLOps",
+      group: "Language", toc: "Table of contents", expand: "Expand", collapse: "Collapse"
+    },
+    fr: {
+      label: "FR", hint: "Lire cette page en français", brand: "Codification APE · MLOps",
+      group: "Langue", toc: "Sommaire", expand: "Déplier", collapse: "Replier"
+    }
   };
+  // Parts of the page that differ between languages, swapped on a switch.
+  var SWAPPED = [
+    "main#quarto-document-content",
+    "#quarto-margin-sidebar",
+    "nav.page-navigation",
+    ".nav-footer-center",
+    ".quarto-secondary-nav-title"
+  ];
+  var PATH = /^(.*\/)(en|fr)(\/.*)?$/;
 
-  var m = window.location.pathname.match(/^(.*\/)(en|fr)(\/.*)?$/);
+  var m = window.location.pathname.match(PATH);
   if (!m) return;
-  var base = m[1], current = m[2], rest = m[3] || "/";
+  var base = m[1];
+  var state = { lang: m[2], page: pageOf(m[3]) };
 
-  try { localStorage.setItem(KEY, current); } catch (e) {}
+  // "/data.html", "/data" and "/" all name a page; compare them without ".html".
+  function pageOf(rest) {
+    var page = (rest || "/").replace(/^\//, "").replace(/\.html$/, "");
+    return page === "" ? "index" : page;
+  }
 
-  var brand = document.querySelector(".navbar-brand");
-  if (brand) brand.setAttribute("href", base + current + "/index.html");
-  var brandTitle = document.querySelector(".navbar-title");
-  if (brandTitle) brandTitle.textContent = TITLES[current].brand;
+  function urlFor(lang, page) {
+    return base + lang + "/" + page + ".html";
+  }
 
-  var group = document.createElement("div");
-  group.className = "lang-switch";
-  group.setAttribute("role", "group");
-  group.setAttribute("aria-label", current === "fr" ? "Langue" : "Language");
+  function el(tag, className, attrs) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    Object.keys(attrs || {}).forEach(function (k) { node.setAttribute(k, attrs[k]); });
+    return node;
+  }
+
+  // ---------------------------------------------------------------- MathJax
+
+  // Section titles can hold math; MathJax loads after this script.
+  function typeset(nodes) {
+    var mj = window.MathJax;
+    if (mj && mj.startup && mj.startup.promise) {
+      return mj.startup.promise.then(function () { return mj.typesetPromise(nodes); });
+    }
+    if (document.readyState !== "complete") {
+      return new Promise(function (resolve) {
+        window.addEventListener("load", function () { typeset(nodes).then(resolve); }, { once: true });
+      });
+    }
+    return Promise.resolve();
+  }
+
+  // ----------------------------------------------------- Table of contents
+
+  var outline = fetch(base + "outline.json")
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .catch(function () { return null; });
+
+  var links = {};       // section id -> link, for the current page
+  var activeLink = null;
+
+  function setOpen(li, open) {
+    li.classList.toggle("is-open", open);
+    var button = li.querySelector(":scope > .toc-row > .toc-toggle");
+    if (button) {
+      button.setAttribute("aria-expanded", String(open));
+      button.setAttribute("aria-label", STRINGS[state.lang][open ? "collapse" : "expand"]);
+    }
+  }
+
+  function tocItem(node, depth, page, isCurrentPage) {
+    var li = el("li", "toc-item toc-depth-" + depth);
+    var row = el("div", "toc-row");
+    var children = depth === 0 ? node.sections : node.children;
+
+    if (children && children.length) {
+      var button = el("button", "toc-toggle", { type: "button" });
+      button.addEventListener("click", function () {
+        li.dataset.pinned = "1";
+        setOpen(li, !li.classList.contains("is-open"));
+      });
+      row.appendChild(button);
+    } else {
+      row.appendChild(el("span", "toc-spacer"));
+    }
+
+    var a = el("a", "toc-link no-external");
+    if (depth === 0) {
+      a.href = urlFor(state.lang, page);
+      if (node.number) {
+        var num = el("span", "toc-number");
+        num.textContent = node.number + ".";
+        a.appendChild(num);
+      }
+      a.insertAdjacentHTML("beforeend", node.title);
+      if (isCurrentPage) {
+        a.classList.add("is-current");
+        a.setAttribute("aria-current", "page");
+        a.addEventListener("click", function (e) {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      }
+    } else {
+      a.href = (isCurrentPage ? "" : urlFor(state.lang, page)) + "#" + node.id;
+      a.innerHTML = node.title;
+      if (isCurrentPage) links[node.id] = a;
+    }
+    row.appendChild(a);
+    li.appendChild(row);
+
+    if (children && children.length) {
+      var ul = el("ul", "toc-children");
+      children.forEach(function (child) {
+        ul.appendChild(tocItem(child, depth + 1, page, isCurrentPage));
+      });
+      li.appendChild(ul);
+      setOpen(li, false);
+    }
+    return li;
+  }
+
+  function buildToc(data) {
+    var container = document.querySelector("#quarto-sidebar .sidebar-menu-container");
+    if (!container || !data || !data[state.lang]) return;
+
+    links = {};
+    activeLink = null;
+    var nav = el("nav", "site-toc", { "aria-label": STRINGS[state.lang].toc });
+    var ul = el("ul", "toc-children toc-chapters");
+    data[state.lang].forEach(function (chapter) {
+      var page = pageOf(chapter.href);
+      var isCurrent = page === state.page;
+      var li = tocItem(chapter, 0, page, isCurrent);
+      if (isCurrent) {
+        li.classList.add("is-current");
+        setOpen(li, true);
+      }
+      ul.appendChild(li);
+    });
+    nav.appendChild(ul);
+    container.replaceChildren(nav);
+    document.body.classList.add("has-site-toc");
+
+    typeset([nav]);
+    updateActive();
+    var current = nav.querySelector(".toc-link.is-current");
+    if (current) revealInSidebar(current);
+  }
+
+  function revealInSidebar(link) {
+    var sidebar = document.getElementById("quarto-sidebar");
+    if (!sidebar) return;
+    var r = link.getBoundingClientRect();
+    var s = sidebar.getBoundingClientRect();
+    if (r.top < s.top || r.bottom > s.bottom) {
+      sidebar.scrollTop += r.top - s.top - s.height / 3;
+    }
+  }
+
+  function sectionList() {
+    return Array.prototype.slice.call(document.querySelectorAll(
+      "main#quarto-document-content section.level2[id], main#quarto-document-content section.level3[id]"
+    ));
+  }
+
+  // The section being read: the last one whose top has scrolled past the
+  // navbar.
+  function currentSection() {
+    var sections = sectionList();
+    if (!sections.length) return null;
+    var atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    if (atBottom) return sections[sections.length - 1];
+    var current = null;
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].getBoundingClientRect().top > 100) break;
+      current = sections[i];
+    }
+    return current;
+  }
+
+  function updateActive() {
+    var section = currentSection();
+    var link = (section && links[section.id]) || null;
+    if (link === activeLink) return;
+    if (activeLink) activeLink.classList.remove("active");
+    activeLink = link;
+    if (!link) return;
+    link.classList.add("active");
+
+    // Open the branch that holds the active section, and close the branches
+    // opened automatically before, unless the reader opened them by hand.
+    var branch = [];
+    for (var li = link.closest(".toc-item"); li; li = li.parentElement.closest(".toc-item")) {
+      branch.push(li);
+    }
+    document.querySelectorAll(".site-toc .toc-item.is-open").forEach(function (li) {
+      if (branch.indexOf(li) === -1 && !li.classList.contains("is-current") && !li.dataset.pinned) {
+        setOpen(li, false);
+      }
+    });
+    branch.forEach(function (li) {
+      if (li.querySelector(":scope > .toc-children")) setOpen(li, true);
+    });
+    revealInSidebar(link);
+  }
+
+  var ticking = false;
+  window.addEventListener("scroll", function () {
+    if (ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(function () { ticking = false; updateActive(); });
+  }, { passive: true });
+
+  // -------------------------------------------------------- Language switch
+
+  var switchGroup = el("div", "lang-switch", { role: "group" });
+
+  function updateChrome() {
+    var s = STRINGS[state.lang];
+    var brand = document.querySelector(".navbar-brand");
+    if (brand) brand.setAttribute("href", urlFor(state.lang, "index"));
+    var brandTitle = document.querySelector(".navbar-title");
+    if (brandTitle) brandTitle.textContent = s.brand;
+    switchGroup.setAttribute("aria-label", s.group);
+    Array.prototype.forEach.call(switchGroup.children, function (a) {
+      var lang = a.getAttribute("lang");
+      var active = lang === state.lang;
+      a.classList.toggle("active", active);
+      if (active) a.setAttribute("aria-current", "true");
+      else a.removeAttribute("aria-current");
+      a.href = urlFor(lang, state.page) + window.location.hash;
+    });
+  }
 
   LANGS.forEach(function (lang) {
-    var a = document.createElement("a");
-    a.textContent = TITLES[lang].label;
-    a.setAttribute("lang", lang);
-    a.setAttribute("hreflang", lang);
-    a.setAttribute("title", TITLES[lang].hint);
-    if (lang === current) {
-      a.className = "active";
-      a.setAttribute("aria-current", "true");
-    }
-    a.href = base + lang + rest + window.location.hash;
-    a.addEventListener("click", function () {
-      try { localStorage.setItem(KEY, lang); } catch (e) {}
-      // Keep the section the reader is on, even after scrolling.
-      a.href = base + lang + rest + window.location.hash;
+    var a = el("a", "no-external", { lang: lang, hreflang: lang, title: STRINGS[lang].hint });
+    a.textContent = STRINGS[lang].label;
+    a.addEventListener("click", function (e) {
+      // Let modified clicks open the other language in a new tab.
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      switchLang(lang, true);
     });
-    group.appendChild(a);
+    switchGroup.appendChild(a);
   });
 
   var slot = document.querySelector(".quarto-navbar-tools") ||
              document.querySelector(".navbar-container");
-  if (slot) slot.insertBefore(group, slot.firstChild);
+  if (slot) slot.insertBefore(switchGroup, slot.firstChild);
+
+  // Quarto marks external links (icon, new tab) on page load only.
+  function adornExternalLinks(root) {
+    root.querySelectorAll("a[href]:not(.no-external):not([aria-hidden])").forEach(function (a) {
+      if (/^https?:$/.test(a.protocol) && a.origin !== window.location.origin) {
+        a.setAttribute("target", "_blank");
+        if (a.getAttribute("rel") === null) a.setAttribute("rel", "noopener");
+        a.classList.add("external");
+      }
+    });
+  }
+
+  // Same steps as Quarto's mermaid-init.js, which only runs on page load.
+  var mermaidCount = 0;
+  function renderMermaid(root) {
+    var mermaid = window.mermaid;
+    if (!mermaid) return Promise.resolve();
+    var blocks = Array.prototype.slice.call(root.querySelectorAll("pre.mermaid-js"));
+    return blocks.reduce(function (done, pre) {
+      return done.then(function () {
+        var text = pre.textContent.replace(/&nbsp;/g, " ");
+        return mermaid.mermaidAPI.render("mermaid-switch-" + (++mermaidCount), text, pre)
+          .then(function (result) {
+            pre.innerHTML = result.svg;
+            var svg = pre.querySelector("svg");
+            if (pre.dataset.label) {
+              var style = svg.querySelector("style");
+              if (style) style.innerHTML = style.innerHTML.split("#" + svg.id).join("#" + pre.dataset.label + "-mermaid");
+              svg.id = pre.dataset.label + "-mermaid";
+            }
+            pre.parentElement.replaceChild(svg, pre);
+            svg.classList.add("mermaid-js");
+            /* global _quartoMermaid */
+            if (typeof _quartoMermaid !== "undefined") {
+              try { _quartoMermaid.postProcess(svg); } catch (e) {}
+            }
+          });
+      });
+    }, Promise.resolve());
+  }
+
+  var switching = false;
+  function switchLang(lang, push) {
+    if (lang === state.lang || switching) return;
+    switching = true;
+    var url = urlFor(lang, state.page);
+
+    // Remember where the reader is, to land at the same place. Both
+    // languages have the same sections in the same order, but not always the
+    // same ids (those derived from French titles differ), so sections are
+    // matched by position.
+    var before = sectionList();
+    var anchor = currentSection();
+    var anchorIndex = before.indexOf(anchor);
+    var anchorTop = anchor ? anchor.getBoundingClientRect().top : null;
+    var hashIndex = before.findIndex(function (s) { return "#" + s.id === window.location.hash; });
+    var scrollY = window.scrollY;
+
+    document.documentElement.classList.add("lang-switching");
+    fetch(url)
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (html) {
+        var doc = new DOMParser().parseFromString(html, "text/html");
+        var after = doc.querySelectorAll(
+          "main#quarto-document-content section.level2[id], main#quarto-document-content section.level3[id]"
+        );
+        var hash = hashIndex >= 0 && after[hashIndex] ? "#" + after[hashIndex].id : window.location.hash;
+        state.lang = lang;
+        if (push) history.pushState({ lang: lang }, "", url + hash);
+        else if (hash !== window.location.hash) history.replaceState(history.state, "", url + hash);
+        try { localStorage.setItem(KEY, lang); } catch (e) {}
+
+        SWAPPED.forEach(function (selector) {
+          var current = document.querySelector(selector);
+          var next = doc.querySelector(selector);
+          if (!current || !next) return;
+          next.querySelectorAll("script").forEach(function (s) { s.remove(); });
+          current.replaceWith(document.importNode(next, true));
+        });
+        document.title = doc.title;
+        document.documentElement.lang = doc.documentElement.lang || lang;
+        updateChrome();
+
+        var main = document.querySelector("main#quarto-document-content");
+        adornExternalLinks(main);
+        return Promise.all([
+          renderMermaid(main).catch(function () {}),
+          typeset([main]).catch(function () {}),
+          outline.then(buildToc)
+        ]);
+      })
+      .then(function () {
+        var target = anchorIndex >= 0 ? sectionList()[anchorIndex] : null;
+        if (target && anchorTop !== null) {
+          window.scrollTo(0, window.scrollY + target.getBoundingClientRect().top - anchorTop);
+        } else {
+          window.scrollTo(0, scrollY);
+        }
+        updateActive();
+      })
+      .catch(function () {
+        // Fall back to a normal page load.
+        window.location.href = url + window.location.hash;
+      })
+      .then(function () {
+        switching = false;
+        document.documentElement.classList.remove("lang-switching");
+      });
+  }
+
+  // Back and forward between two languages of the same page stay in place.
+  window.addEventListener("popstate", function () {
+    var mm = window.location.pathname.match(PATH);
+    if (!mm) return;
+    if (pageOf(mm[3]) !== state.page) {
+      window.location.reload();
+    } else if (mm[2] !== state.lang) {
+      switchLang(mm[2], false);
+    }
+  });
+
+  try { localStorage.setItem(KEY, state.lang); } catch (e) {}
+  updateChrome();
+  outline.then(buildToc);
 })();
 </script>
 <script id="quarto-html-after-body" type="application/javascript">
@@ -805,13 +1164,13 @@ Figure&nbsp;1: Du commit au service en fonctionnement.
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../fr/model.html" class="pagination-link" aria-label="Modèle">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Modèle</span>
+      <a href="../fr/evaluation.html" class="pagination-link" aria-label="Évaluation">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Évaluation</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../fr/monitoring.html" class="pagination-link" aria-label="Suivi et annotation">
-        <span class="nav-page-text">Suivi et annotation</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../fr/monitoring.html" class="pagination-link" aria-label="Monitoring et annotation">
+        <span class="nav-page-text">Monitoring et annotation</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

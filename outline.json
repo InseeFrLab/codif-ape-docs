@@ -1,0 +1,1152 @@
+{
+ "en": [
+  {
+   "href": "index.html",
+   "title": "Automatic coding of economic activity at INSEE",
+   "sections": []
+  },
+  {
+   "href": "context.html",
+   "title": "Context and history",
+   "sections": [
+    {
+     "id": "the-ape-code-and-the-nace-classification",
+     "title": "The APE code and the NACE classification",
+     "children": []
+    },
+    {
+     "id": "from-a-structured-form-to-free-text",
+     "title": "From a structured form to free text",
+     "children": []
+    },
+    {
+     "id": "three-generations-of-coding-engines",
+     "title": "Three generations of coding engines",
+     "children": []
+    },
+    {
+     "id": "production-constraints",
+     "title": "Production constraints",
+     "children": []
+    },
+    {
+     "id": "why-mlops",
+     "title": "Why MLOps",
+     "children": []
+    }
+   ],
+   "number": 1
+  },
+  {
+   "href": "architecture.html",
+   "title": "Architecture",
+   "sections": [
+    {
+     "id": "design-principles",
+     "title": "Design principles",
+     "children": []
+    },
+    {
+     "id": "the-platform",
+     "title": "The platform",
+     "children": []
+    },
+    {
+     "id": "repositories",
+     "title": "Repositories",
+     "children": []
+    },
+    {
+     "id": "end-to-end-flow",
+     "title": "End-to-end flow",
+     "children": []
+    }
+   ],
+   "number": 2
+  },
+  {
+   "href": "data.html",
+   "title": "Data",
+   "sections": [
+    {
+     "id": "training-data",
+     "title": "Training data",
+     "children": []
+    },
+    {
+     "id": "sec-rules",
+     "title": "Label cleaning: an auditable rule engine",
+     "children": []
+    },
+    {
+     "id": "splits-and-versioning",
+     "title": "Splits and versioning",
+     "children": []
+    },
+    {
+     "id": "sec-naf2025",
+     "title": "Moving to NAF 2025",
+     "children": [
+      {
+       "id": "the-correspondence-problem",
+       "title": "The correspondence problem",
+       "children": []
+      },
+      {
+       "id": "experts-as-the-benchmark-llms-as-the-scale",
+       "title": "Experts as the benchmark, LLMs as the scale",
+       "children": []
+      }
+     ]
+    },
+    {
+     "id": "sec-graal",
+     "title": "GRAAL",
+     "children": [
+      {
+       "id": "principle",
+       "title": "Principle",
+       "children": []
+      },
+      {
+       "id": "components",
+       "title": "Components",
+       "children": []
+      },
+      {
+       "id": "role-in-the-pipeline",
+       "title": "Role in the pipeline",
+       "children": []
+      },
+      {
+       "id": "labels-from-engines-must-be-earned",
+       "title": "Labels from engines must be earned",
+       "children": []
+      }
+     ]
+    },
+    {
+     "id": "sec-synthetic",
+     "title": "Synthetic data: Code2Text",
+     "children": [
+      {
+       "id": "why-synthetic-data",
+       "title": "Why synthetic data",
+       "children": []
+      },
+      {
+       "id": "a-first-generation-from-the-explanatory-notes",
+       "title": "A first generation from the explanatory notes",
+       "children": []
+      },
+      {
+       "id": "measuring-the-llms-fingerprint-labelguard",
+       "title": "Measuring the LLM’s fingerprint: LabelGuard",
+       "children": []
+      },
+      {
+       "id": "rewriting-the-style-code2retext",
+       "title": "Rewriting the style: Code2ReText",
+       "children": []
+      },
+      {
+       "id": "results",
+       "title": "Results",
+       "children": []
+      }
+     ]
+    }
+   ],
+   "number": 3
+  },
+  {
+   "href": "model.html",
+   "title": "Model",
+   "sections": [
+    {
+     "id": "why-a-small-model",
+     "title": "Why a small model",
+     "children": []
+    },
+    {
+     "id": "architecture",
+     "title": "Architecture",
+     "children": []
+    },
+    {
+     "id": "sec-ttc",
+     "title": "torchTextClassifiers",
+     "children": [
+      {
+       "id": "why-a-dedicated-library",
+       "title": "Why a dedicated library",
+       "children": []
+      },
+      {
+       "id": "design",
+       "title": "Design",
+       "children": []
+      },
+      {
+       "id": "in-the-ape-pipeline",
+       "title": "In the APE pipeline",
+       "children": []
+      }
+     ]
+    },
+    {
+     "id": "training",
+     "title": "Training",
+     "children": []
+    },
+    {
+     "id": "sec-calibration",
+     "title": "Confidence index and calibration",
+     "children": []
+    },
+    {
+     "id": "evaluation",
+     "title": "Evaluation",
+     "children": []
+    },
+    {
+     "id": "sec-results",
+     "title": "Results",
+     "children": [
+      {
+       "id": "fasttext-vs.-pytorch",
+       "title": "fastText vs.&nbsp;PyTorch",
+       "children": []
+      },
+      {
+       "id": "naf-2025",
+       "title": "NAF 2025",
+       "children": []
+      }
+     ]
+    },
+    {
+     "id": "sec-future",
+     "title": "Future work",
+     "children": [
+      {
+       "id": "sec-internship",
+       "title": "Architecture: Julien Bernardi’s internship",
+       "children": []
+      },
+      {
+       "id": "sec-conformal",
+       "title": "Conformal prediction",
+       "children": []
+      }
+     ]
+    }
+   ],
+   "number": 4
+  },
+  {
+   "href": "evaluation.html",
+   "title": "Evaluation",
+   "sections": [
+    {
+     "id": "beyond-accuracy",
+     "title": "Beyond accuracy",
+     "children": []
+    },
+    {
+     "id": "sec-metrics",
+     "title": "Metrics",
+     "children": [
+      {
+       "id": "accuracy-at-every-level",
+       "title": "Accuracy at every level",
+       "children": []
+      },
+      {
+       "id": "calibration",
+       "title": "Calibration",
+       "children": []
+      },
+      {
+       "id": "riskcoverage-choosing-the-operating-point",
+       "title": "Risk–coverage: choosing the operating point",
+       "children": []
+      },
+      {
+       "id": "stability-over-time",
+       "title": "Stability over time",
+       "children": []
+      }
+     ]
+    },
+    {
+     "id": "sec-eval-data",
+     "title": "Evaluating on the right data",
+     "children": []
+    },
+    {
+     "id": "uncertainty-and-comparisons",
+     "title": "Uncertainty and comparisons",
+     "children": []
+    },
+    {
+     "id": "sec-eval-engines",
+     "title": "Evaluating auxiliary engines",
+     "children": []
+    },
+    {
+     "id": "architecture-choices-that-serve-trust",
+     "title": "Architecture choices that serve trust",
+     "children": []
+    },
+    {
+     "id": "sec-eval-nonfunctional",
+     "title": "Inference time and other production metrics",
+     "children": []
+    }
+   ],
+   "number": 5
+  },
+  {
+   "href": "serving.html",
+   "title": "Serving and deployment",
+   "sections": [
+    {
+     "id": "a-self-contained-model",
+     "title": "A self-contained model",
+     "children": []
+    },
+    {
+     "id": "the-api",
+     "title": "The API",
+     "children": []
+    },
+    {
+     "id": "continuous-integration-and-delivery",
+     "title": "Continuous integration and delivery",
+     "children": []
+    },
+    {
+     "id": "environments",
+     "title": "Environments",
+     "children": []
+    }
+   ],
+   "number": 6
+  },
+  {
+   "href": "monitoring.html",
+   "title": "Monitoring and annotation",
+   "sections": [
+    {
+     "id": "what-can-go-wrong",
+     "title": "What can go wrong",
+     "children": []
+    },
+    {
+     "id": "label-free-monitoring",
+     "title": "Label-free monitoring",
+     "children": []
+    },
+    {
+     "id": "human-annotation",
+     "title": "Human annotation",
+     "children": [
+      {
+       "id": "label-studio-campaigns",
+       "title": "Label Studio campaigns",
+       "children": []
+      },
+      {
+       "id": "why-random-blind-annotation-matters",
+       "title": "Why random, blind annotation matters",
+       "children": []
+      }
+     ]
+    },
+    {
+     "id": "auditing-with-llms",
+     "title": "Auditing with LLMs",
+     "children": []
+    }
+   ],
+   "number": 7
+  },
+  {
+   "href": "retraining.html",
+   "title": "Retraining protocol",
+   "sections": [
+    {
+     "id": "sec-status",
+     "title": "Where we stand",
+     "children": []
+    },
+    {
+     "id": "sec-golden",
+     "title": "What the production flow gives us",
+     "children": []
+    },
+    {
+     "id": "sec-next-training-set",
+     "title": "Building the next training set",
+     "children": [
+      {
+       "id": "the-accuracy-of-automatic-coding-can-be-estimated",
+       "title": "The accuracy of automatic coding can be estimated",
+       "children": []
+      },
+      {
+       "id": "sec-curation",
+       "title": "Curating the automatic set: focus on disagreements",
+       "children": []
+      },
+      {
+       "id": "sec-known-cases",
+       "title": "Known cases: propagate rather than overweight",
+       "children": []
+      },
+      {
+       "id": "sec-assembly",
+       "title": "Assembly",
+       "children": []
+      }
+     ]
+    },
+    {
+     "id": "sec-gates",
+     "title": "Quality gates: <span class=\"math inline\">\\(f_{n+1}\\)</span> against <span class=\"math inline\">\\(f_n\\)</span>",
+     "children": []
+    },
+    {
+     "id": "sec-preprod",
+     "title": "Qualification and release",
+     "children": []
+    },
+    {
+     "id": "comparing-models-over-time",
+     "title": "Comparing models over time",
+     "children": []
+    },
+    {
+     "id": "overview",
+     "title": "Overview",
+     "children": []
+    }
+   ],
+   "number": 8
+  },
+  {
+   "href": "organisation.html",
+   "title": "Organisational and infrastructural challenges",
+   "sections": [
+    {
+     "id": "three-teams-around-one-model",
+     "title": "Three teams around one model",
+     "children": []
+    },
+    {
+     "id": "sec-business-ds",
+     "title": "The business data scientist as point of contact",
+     "children": [
+      {
+       "id": "why-a-dedicated-role",
+       "title": "Why a dedicated role",
+       "children": []
+      },
+      {
+       "id": "responsibilities",
+       "title": "Responsibilities",
+       "children": []
+      },
+      {
+       "id": "what-it-takes",
+       "title": "What it takes",
+       "children": []
+      }
+     ]
+    },
+    {
+     "id": "sec-qualification-platform",
+     "title": "A qualification platform that matches production",
+     "children": [
+      {
+       "id": "the-gap-between-development-and-production",
+       "title": "The gap between development and production",
+       "children": []
+      },
+      {
+       "id": "what-iso-production-means",
+       "title": "What “iso-production” means",
+       "children": []
+      },
+      {
+       "id": "what-is-measured-there",
+       "title": "What is measured there",
+       "children": []
+      },
+      {
+       "id": "who-does-what",
+       "title": "Who does what",
+       "children": []
+      }
+     ]
+    },
+    {
+     "id": "open-challenges",
+     "title": "Open challenges",
+     "children": []
+    }
+   ],
+   "number": 9
+  },
+  {
+   "href": "lessons.html",
+   "title": "Lessons learned",
+   "sections": [
+    {
+     "id": "technical-lessons",
+     "title": "Technical lessons",
+     "children": []
+    },
+    {
+     "id": "data-lessons",
+     "title": "Data lessons",
+     "children": []
+    },
+    {
+     "id": "organisational-lessons",
+     "title": "Organisational lessons",
+     "children": []
+    },
+    {
+     "id": "a-european-perspective",
+     "title": "A European perspective",
+     "children": []
+    },
+    {
+     "id": "open-questions",
+     "title": "Open questions",
+     "children": []
+    }
+   ],
+   "number": 10
+  },
+  {
+   "href": "glossary.html",
+   "title": "Glossary and notation",
+   "sections": [
+    {
+     "id": "sec-notation",
+     "title": "Notation",
+     "children": []
+    },
+    {
+     "id": "sec-terms",
+     "title": "Terms",
+     "children": []
+    }
+   ]
+  },
+  {
+   "href": "references.html",
+   "title": "References and resources",
+   "sections": [
+    {
+     "id": "presentations",
+     "title": "Presentations",
+     "children": []
+    },
+    {
+     "id": "papers",
+     "title": "Papers",
+     "children": []
+    },
+    {
+     "id": "code",
+     "title": "Code",
+     "children": []
+    },
+    {
+     "id": "bibliography",
+     "title": "Bibliography",
+     "children": []
+    }
+   ]
+  }
+ ],
+ "fr": [
+  {
+   "href": "index.html",
+   "title": "La codification automatique de l’activité économique à l’Insee",
+   "sections": []
+  },
+  {
+   "href": "context.html",
+   "title": "Contexte et historique",
+   "sections": [
+    {
+     "id": "le-code-ape-et-la-nomenclature-nace",
+     "title": "Le code APE et la nomenclature NACE",
+     "children": []
+    },
+    {
+     "id": "dun-formulaire-structuré-au-texte-libre",
+     "title": "D’un formulaire structuré au texte libre",
+     "children": []
+    },
+    {
+     "id": "trois-générations-de-moteurs-de-codification",
+     "title": "Trois générations de moteurs de codification",
+     "children": []
+    },
+    {
+     "id": "contraintes-de-production",
+     "title": "Contraintes de production",
+     "children": []
+    },
+    {
+     "id": "pourquoi-le-mlops",
+     "title": "Pourquoi le MLOps",
+     "children": []
+    }
+   ],
+   "number": 1
+  },
+  {
+   "href": "architecture.html",
+   "title": "Architecture",
+   "sections": [
+    {
+     "id": "principes-de-conception",
+     "title": "Principes de conception",
+     "children": []
+    },
+    {
+     "id": "la-plateforme",
+     "title": "La plateforme",
+     "children": []
+    },
+    {
+     "id": "dépôts",
+     "title": "Dépôts",
+     "children": []
+    },
+    {
+     "id": "flux-de-bout-en-bout",
+     "title": "Flux de bout en bout",
+     "children": []
+    }
+   ],
+   "number": 2
+  },
+  {
+   "href": "data.html",
+   "title": "Données",
+   "sections": [
+    {
+     "id": "données-dentraînement",
+     "title": "Données d’entraînement",
+     "children": []
+    },
+    {
+     "id": "sec-rules",
+     "title": "Nettoyage des labels&nbsp;: un moteur de règles auditable",
+     "children": []
+    },
+    {
+     "id": "splits-et-versionnage",
+     "title": "Splits et versionnage",
+     "children": []
+    },
+    {
+     "id": "sec-naf2025",
+     "title": "Le passage à la NAF 2025",
+     "children": [
+      {
+       "id": "le-problème-de-la-table-de-passage",
+       "title": "Le problème de la table de passage",
+       "children": []
+      },
+      {
+       "id": "les-experts-comme-référence-les-llm-pour-le-volume",
+       "title": "Les experts comme référence, les LLM pour le volume",
+       "children": []
+      }
+     ]
+    },
+    {
+     "id": "sec-graal",
+     "title": "GRAAL",
+     "children": [
+      {
+       "id": "principe",
+       "title": "Principe",
+       "children": []
+      },
+      {
+       "id": "les-agents",
+       "title": "Les agents",
+       "children": []
+      },
+      {
+       "id": "rôle-dans-le-pipeline",
+       "title": "Rôle dans le pipeline",
+       "children": []
+      },
+      {
+       "id": "des-codes-qui-doivent-faire-leurs-preuves",
+       "title": "Des codes qui doivent faire leurs preuves",
+       "children": []
+      }
+     ]
+    },
+    {
+     "id": "sec-synthetic",
+     "title": "Données synthétiques&nbsp;: Code2Text",
+     "children": [
+      {
+       "id": "pourquoi-générer-des-libellés",
+       "title": "Pourquoi générer des libellés",
+       "children": []
+      },
+      {
+       "id": "une-première-version-naivecode2text",
+       "title": "Une première version&nbsp;: NaiveCode2Text",
+       "children": []
+      },
+      {
+       "id": "un-texte-de-llm-ça-se-repère-labelguard",
+       "title": "Un texte de LLM, ça se repère&nbsp;: LabelGuard",
+       "children": []
+      },
+      {
+       "id": "casser-le-style-code2retext",
+       "title": "Casser le style&nbsp;: Code2ReText",
+       "children": []
+      },
+      {
+       "id": "résultats",
+       "title": "Résultats",
+       "children": []
+      }
+     ]
+    }
+   ],
+   "number": 3
+  },
+  {
+   "href": "model.html",
+   "title": "Modèle",
+   "sections": [
+    {
+     "id": "pourquoi-un-petit-modèle",
+     "title": "Pourquoi un petit modèle",
+     "children": []
+    },
+    {
+     "id": "architecture",
+     "title": "Architecture",
+     "children": []
+    },
+    {
+     "id": "sec-ttc",
+     "title": "torchTextClassifiers",
+     "children": [
+      {
+       "id": "pourquoi-une-librairie-dédiée",
+       "title": "Pourquoi une librairie dédiée",
+       "children": []
+      },
+      {
+       "id": "conception",
+       "title": "Conception",
+       "children": []
+      },
+      {
+       "id": "dans-le-pipeline-ape",
+       "title": "Dans le pipeline APE",
+       "children": []
+      }
+     ]
+    },
+    {
+     "id": "entraînement",
+     "title": "Entraînement",
+     "children": []
+    },
+    {
+     "id": "sec-calibration",
+     "title": "Indice de confiance et calibration",
+     "children": []
+    },
+    {
+     "id": "évaluation",
+     "title": "Évaluation",
+     "children": []
+    },
+    {
+     "id": "sec-results",
+     "title": "Résultats",
+     "children": [
+      {
+       "id": "fasttext-face-à-pytorch",
+       "title": "fastText face à PyTorch",
+       "children": []
+      },
+      {
+       "id": "naf-2025",
+       "title": "NAF 2025",
+       "children": []
+      }
+     ]
+    },
+    {
+     "id": "sec-future",
+     "title": "Perspectives",
+     "children": [
+      {
+       "id": "sec-internship",
+       "title": "Architecture&nbsp;: le stage de Julien Bernardi",
+       "children": []
+      },
+      {
+       "id": "sec-conformal",
+       "title": "Prédiction conforme",
+       "children": []
+      }
+     ]
+    }
+   ],
+   "number": 4
+  },
+  {
+   "href": "evaluation.html",
+   "title": "Évaluation",
+   "sections": [
+    {
+     "id": "au-delà-de-laccuracy",
+     "title": "Au-delà de l’accuracy",
+     "children": []
+    },
+    {
+     "id": "sec-metrics",
+     "title": "Métriques",
+     "children": [
+      {
+       "id": "laccuracy-à-chaque-niveau",
+       "title": "L’accuracy à chaque niveau",
+       "children": []
+      },
+      {
+       "id": "la-calibration",
+       "title": "La calibration",
+       "children": []
+      },
+      {
+       "id": "risquecouverture-choisir-le-seuil",
+       "title": "Risque–couverture&nbsp;: choisir le seuil",
+       "children": []
+      },
+      {
+       "id": "la-stabilité-dans-le-temps",
+       "title": "La stabilité dans le temps",
+       "children": []
+      }
+     ]
+    },
+    {
+     "id": "sec-eval-data",
+     "title": "Évaluer sur les bonnes données",
+     "children": []
+    },
+    {
+     "id": "incertitude-et-comparaisons",
+     "title": "Incertitude et comparaisons",
+     "children": []
+    },
+    {
+     "id": "sec-eval-engines",
+     "title": "Évaluer les moteurs auxiliaires",
+     "children": []
+    },
+    {
+     "id": "des-choix-darchitecture-pour-la-confiance",
+     "title": "Des choix d’architecture pour la confiance",
+     "children": []
+    },
+    {
+     "id": "sec-eval-nonfunctional",
+     "title": "Temps d’inférence et autres métriques de production",
+     "children": []
+    }
+   ],
+   "number": 5
+  },
+  {
+   "href": "serving.html",
+   "title": "Mise en production",
+   "sections": [
+    {
+     "id": "un-modèle-autonome",
+     "title": "Un modèle autonome",
+     "children": []
+    },
+    {
+     "id": "lapi",
+     "title": "L’API",
+     "children": []
+    },
+    {
+     "id": "cicd",
+     "title": "CI/CD",
+     "children": []
+    },
+    {
+     "id": "environnements",
+     "title": "Environnements",
+     "children": []
+    }
+   ],
+   "number": 6
+  },
+  {
+   "href": "monitoring.html",
+   "title": "Monitoring et annotation",
+   "sections": [
+    {
+     "id": "les-risques-de-dégradation",
+     "title": "Les risques de dégradation",
+     "children": []
+    },
+    {
+     "id": "monitorer-sans-annotation",
+     "title": "Monitorer sans annotation",
+     "children": []
+    },
+    {
+     "id": "annotation-humaine",
+     "title": "Annotation humaine",
+     "children": [
+      {
+       "id": "campagnes-label-studio",
+       "title": "Campagnes Label Studio",
+       "children": []
+      },
+      {
+       "id": "pourquoi-lannotation-doit-être-aléatoire-et-à-laveugle",
+       "title": "Pourquoi l’annotation doit être aléatoire et à l’aveugle",
+       "children": []
+      }
+     ]
+    },
+    {
+     "id": "audit-par-llm",
+     "title": "Audit par LLM",
+     "children": []
+    }
+   ],
+   "number": 7
+  },
+  {
+   "href": "retraining.html",
+   "title": "Protocole de réentraînement",
+   "sections": [
+    {
+     "id": "sec-status",
+     "title": "Où en sommes-nous&nbsp;?",
+     "children": []
+    },
+    {
+     "id": "sec-golden",
+     "title": "Ce que fournit le flux de production",
+     "children": []
+    },
+    {
+     "id": "sec-next-training-set",
+     "title": "Construire le prochain jeu d’entraînement",
+     "children": [
+      {
+       "id": "on-peut-estimer-laccuracy-de-la-codification-automatique",
+       "title": "On peut estimer l’accuracy de la codification automatique",
+       "children": []
+      },
+      {
+       "id": "sec-curation",
+       "title": "Curation des codifications automatiques&nbsp;: se concentrer sur les désaccords",
+       "children": []
+      },
+      {
+       "id": "sec-known-cases",
+       "title": "Cas connus&nbsp;: propager plutôt que surpondérer",
+       "children": []
+      },
+      {
+       "id": "sec-assembly",
+       "title": "Assemblage",
+       "children": []
+      }
+     ]
+    },
+    {
+     "id": "sec-gates",
+     "title": "Quality gates&nbsp;: <span class=\"math inline\">\\(f_{n+1}\\)</span> face à <span class=\"math inline\">\\(f_n\\)</span>",
+     "children": []
+    },
+    {
+     "id": "sec-preprod",
+     "title": "Qualification et mise en production",
+     "children": []
+    },
+    {
+     "id": "comparer-les-modèles-dans-le-temps",
+     "title": "Comparer les modèles dans le temps",
+     "children": []
+    },
+    {
+     "id": "vue-densemble",
+     "title": "Vue d’ensemble",
+     "children": []
+    }
+   ],
+   "number": 8
+  },
+  {
+   "href": "organisation.html",
+   "title": "Défis organisationnels et d’infrastructure",
+   "sections": [
+    {
+     "id": "trois-équipes-autour-dun-modèle",
+     "title": "Trois équipes autour d’un modèle",
+     "children": []
+    },
+    {
+     "id": "sec-business-ds",
+     "title": "Le data scientist métier comme point de contact",
+     "children": [
+      {
+       "id": "pourquoi-un-rôle-dédié",
+       "title": "Pourquoi un rôle dédié",
+       "children": []
+      },
+      {
+       "id": "responsabilités",
+       "title": "Responsabilités",
+       "children": []
+      },
+      {
+       "id": "les-conditions-du-rôle",
+       "title": "Les conditions du rôle",
+       "children": []
+      }
+     ]
+    },
+    {
+     "id": "sec-qualification-platform",
+     "title": "Une plateforme de qualification identique à la production",
+     "children": [
+      {
+       "id": "lécart-entre-développement-et-production",
+       "title": "L’écart entre développement et production",
+       "children": []
+      },
+      {
+       "id": "ce-que-signifie-iso-production",
+       "title": "Ce que signifie «&nbsp;iso-production&nbsp;»",
+       "children": []
+      },
+      {
+       "id": "ce-quon-y-mesure",
+       "title": "Ce qu’on y mesure",
+       "children": []
+      },
+      {
+       "id": "qui-fait-quoi",
+       "title": "Qui fait quoi",
+       "children": []
+      }
+     ]
+    },
+    {
+     "id": "défis-ouverts",
+     "title": "Défis ouverts",
+     "children": []
+    }
+   ],
+   "number": 9
+  },
+  {
+   "href": "lessons.html",
+   "title": "Retours d’expérience",
+   "sections": [
+    {
+     "id": "côté-technique",
+     "title": "Côté technique",
+     "children": []
+    },
+    {
+     "id": "côté-données",
+     "title": "Côté données",
+     "children": []
+    },
+    {
+     "id": "côté-organisation",
+     "title": "Côté organisation",
+     "children": []
+    },
+    {
+     "id": "une-perspective-européenne",
+     "title": "Une perspective européenne",
+     "children": []
+    },
+    {
+     "id": "questions-ouvertes",
+     "title": "Questions ouvertes",
+     "children": []
+    }
+   ],
+   "number": 10
+  },
+  {
+   "href": "glossary.html",
+   "title": "Glossaire et notations",
+   "sections": [
+    {
+     "id": "sec-notation",
+     "title": "Notations",
+     "children": []
+    },
+    {
+     "id": "sec-terms",
+     "title": "Termes",
+     "children": []
+    }
+   ]
+  },
+  {
+   "href": "references.html",
+   "title": "Références et ressources",
+   "sections": [
+    {
+     "id": "présentations",
+     "title": "Présentations",
+     "children": []
+    },
+    {
+     "id": "articles",
+     "title": "Articles",
+     "children": []
+    },
+    {
+     "id": "code",
+     "title": "Code",
+     "children": []
+    },
+    {
+     "id": "bibliographie",
+     "title": "Bibliographie",
+     "children": []
+    }
+   ]
+  }
+ ]
+}

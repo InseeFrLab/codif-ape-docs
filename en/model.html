@@ -6,7 +6,8 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="author" content="SSP Lab">
+<meta name="author" content="Meilame Tayebjee">
+<meta name="author" content="Cédric Couralet">
 <meta name="description" content="A small, calibrated PyTorch text classifier with categorical variables, trained reproducibly and evaluated at every level of the classification.">
 
 <title>Model – APE coding · MLOps</title>
@@ -57,7 +58,7 @@ div.csl-indent {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../en/serving.html" rel="next">
+<link href="../en/evaluation.html" rel="next">
 <link href="../en/data.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -68,7 +69,7 @@ div.csl-indent {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-fc581236a46ad31b3ea501458e50ff32.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-7ac3c55ca58f93c4c6c73bcc24e20e69.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -217,6 +218,12 @@ window.Quarto = {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../en/evaluation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Evaluation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../en/serving.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Serving and deployment</span></a>
   </div>
@@ -235,14 +242,20 @@ window.Quarto = {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../en/companion-projects.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Companion projects: TTC and GRAAL</span></a>
+  <a href="../en/organisation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Organisational and infrastructural challenges</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../en/lessons.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Lessons learned</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/glossary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glossary and notation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -263,13 +276,24 @@ window.Quarto = {
   <ul>
   <li><a href="#why-a-small-model" id="toc-why-a-small-model" class="nav-link active" data-scroll-target="#why-a-small-model"><span class="header-section-number">1</span> Why a small model</a></li>
   <li><a href="#architecture" id="toc-architecture" class="nav-link" data-scroll-target="#architecture"><span class="header-section-number">2</span> Architecture</a></li>
-  <li><a href="#training" id="toc-training" class="nav-link" data-scroll-target="#training"><span class="header-section-number">3</span> Training</a></li>
-  <li><a href="#confidence-index-and-calibration" id="toc-confidence-index-and-calibration" class="nav-link" data-scroll-target="#confidence-index-and-calibration"><span class="header-section-number">4</span> Confidence index and calibration</a></li>
-  <li><a href="#evaluation" id="toc-evaluation" class="nav-link" data-scroll-target="#evaluation"><span class="header-section-number">5</span> Evaluation</a></li>
-  <li><a href="#sec-results" id="toc-sec-results" class="nav-link" data-scroll-target="#sec-results"><span class="header-section-number">6</span> Results</a>
+  <li><a href="#sec-ttc" id="toc-sec-ttc" class="nav-link" data-scroll-target="#sec-ttc"><span class="header-section-number">3</span> torchTextClassifiers</a>
   <ul class="collapse">
-  <li><a href="#fasttext-vs.-pytorch" id="toc-fasttext-vs.-pytorch" class="nav-link" data-scroll-target="#fasttext-vs.-pytorch"><span class="header-section-number">6.1</span> fastText vs.&nbsp;PyTorch</a></li>
-  <li><a href="#naf-2025" id="toc-naf-2025" class="nav-link" data-scroll-target="#naf-2025"><span class="header-section-number">6.2</span> NAF 2025</a></li>
+  <li><a href="#why-a-dedicated-library" id="toc-why-a-dedicated-library" class="nav-link" data-scroll-target="#why-a-dedicated-library"><span class="header-section-number">3.1</span> Why a dedicated library</a></li>
+  <li><a href="#design" id="toc-design" class="nav-link" data-scroll-target="#design"><span class="header-section-number">3.2</span> Design</a></li>
+  <li><a href="#in-the-ape-pipeline" id="toc-in-the-ape-pipeline" class="nav-link" data-scroll-target="#in-the-ape-pipeline"><span class="header-section-number">3.3</span> In the APE pipeline</a></li>
+  </ul></li>
+  <li><a href="#training" id="toc-training" class="nav-link" data-scroll-target="#training"><span class="header-section-number">4</span> Training</a></li>
+  <li><a href="#sec-calibration" id="toc-sec-calibration" class="nav-link" data-scroll-target="#sec-calibration"><span class="header-section-number">5</span> Confidence index and calibration</a></li>
+  <li><a href="#evaluation" id="toc-evaluation" class="nav-link" data-scroll-target="#evaluation"><span class="header-section-number">6</span> Evaluation</a></li>
+  <li><a href="#sec-results" id="toc-sec-results" class="nav-link" data-scroll-target="#sec-results"><span class="header-section-number">7</span> Results</a>
+  <ul class="collapse">
+  <li><a href="#fasttext-vs.-pytorch" id="toc-fasttext-vs.-pytorch" class="nav-link" data-scroll-target="#fasttext-vs.-pytorch"><span class="header-section-number">7.1</span> fastText vs.&nbsp;PyTorch</a></li>
+  <li><a href="#naf-2025" id="toc-naf-2025" class="nav-link" data-scroll-target="#naf-2025"><span class="header-section-number">7.2</span> NAF 2025</a></li>
+  </ul></li>
+  <li><a href="#sec-future" id="toc-sec-future" class="nav-link" data-scroll-target="#sec-future"><span class="header-section-number">8</span> Future work</a>
+  <ul class="collapse">
+  <li><a href="#sec-internship" id="toc-sec-internship" class="nav-link" data-scroll-target="#sec-internship"><span class="header-section-number">8.1</span> Architecture: Julien Bernardi’s internship</a></li>
+  <li><a href="#sec-conformal" id="toc-sec-conformal" class="nav-link" data-scroll-target="#sec-conformal"><span class="header-section-number">8.2</span> Conformal prediction</a></li>
   </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/InseeFrLab/codif-ape-docs/edit/main/en/model.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/InseeFrLab/codif-ape-docs/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
@@ -289,15 +313,23 @@ window.Quarto = {
 </div>
 
 <div class="quarto-title-meta-author">
-  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Authors</div>
   <div class="quarto-title-meta-heading">Affiliation</div>
   
     <div class="quarto-title-meta-contents">
-    <p class="author">SSP Lab </p>
+    <p class="author"><a href="https://github.com/meilame-tayebjee">Meilame Tayebjee</a> <a href="mailto:meilame.tayebjee@insee.fr" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> </p>
   </div>
   <div class="quarto-title-meta-contents">
         <p class="affiliation">
-            Insee
+            Innovation Lab, Insee
+          </p>
+      </div>
+    <div class="quarto-title-meta-contents">
+    <p class="author"><a href="https://github.com/micedre">Cédric Couralet</a> <a href="mailto:cedric.couralet@insee.fr" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Innovation Lab, Insee
           </p>
       </div>
   </div>
@@ -321,7 +353,7 @@ window.Quarto = {
 Faria, Thomas, Nathan Randriamanana, and Tom Seimandi. 2024. <em>Retraining Strategies for an Economic Activity Classification Model</em>. European Conference on Quality in Official Statistics (Q2024), Estoril. <a href="https://inseefrlab.github.io/codif-ape-prez/slides/estoril-paper/index.pdf">https://inseefrlab.github.io/codif-ape-prez/slides/estoril-paper/index.pdf</a>.
 </div><div id="ref-joulin2016" class="csl-entry" role="listitem">
 Joulin, Armand, Edouard Grave, Piotr Bojanowski, and Tomas Mikolov. 2016. <em>Bag of Tricks for Efficient Text Classification</em>. <a href="https://arxiv.org/abs/1607.01759">https://arxiv.org/abs/1607.01759</a>.
-</div></div><p>The production model is therefore a <strong>shallow neural network</strong> of about <strong>one million parameters</strong>, in the fastText family <span class="citation" data-cites="joulin2016">(<a href="#ref-joulin2016" role="doc-biblioref">Joulin et al. 2016</a>)</span>. It is now implemented in PyTorch with <a href="../en/companion-projects.html#sec-ttc">torchTextClassifiers</a>.</p>
+</div></div><p>The production model is therefore a <strong>shallow neural network</strong> of about <strong>one million parameters</strong>, in the fastText family <span class="citation" data-cites="joulin2016">(<a href="#ref-joulin2016" role="doc-biblioref">Joulin et al. 2016</a>)</span>. It is now implemented in PyTorch with <a href="#sec-ttc">torchTextClassifiers</a>.</p>
 </section>
 <section id="architecture" class="level2" data-number="2">
 <h2 data-number="2" class="anchored" data-anchor-id="architecture"><span class="header-section-number">2</span> Architecture</h2>
@@ -358,8 +390,87 @@ Figure&nbsp;1: Model architecture.
 </ul>
 <p>The same library also supports self-attention layers, label attention and Hugging Face tokenizers. These options are evaluated on the validation set. A richer architecture is adopted only if it fits within the latency budget.</p>
 </section>
-<section id="training" class="level2" data-number="3">
-<h2 data-number="3" class="anchored" data-anchor-id="training"><span class="header-section-number">3</span> Training</h2>
+<section id="sec-ttc" class="level2 page-columns page-full" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="sec-ttc"><span class="header-section-number">3</span> torchTextClassifiers</h2>
+<p><a href="https://github.com/InseeFrLab/torchTextClassifiers">torchTextClassifiers</a> (<a href="https://inseefrlab.github.io/torchTextClassifiers/">documentation</a>, <a href="https://pypi.org/project/torchtextclassifiers/">PyPI</a>) is “a unified, extensible framework for text classification with categorical variables, built on PyTorch and PyTorch Lightning” <span class="citation" data-cites="couralet2025pydata">(<a href="#ref-couralet2025pydata" role="doc-biblioref">Couralet and Tayebjee 2025</a>)</span>. It was born from the needs of APE coding and is developed as a general-purpose, open-source tool. It sits <strong>on the critical path</strong>: every prediction goes through it.</p>
+<div class="no-row-height column-margin column-container"><div id="ref-couralet2025pydata" class="csl-entry" role="listitem">
+Couralet, Cédric, and Meilame Tayebjee. 2025. <em>torchTextClassifiers: A Unified Framework for Text Classification in <span>PyTorch</span></em>. PyData Global. <a href="https://inseefrlab.github.io/codif-ape-prez/slides/pydata-global/">https://inseefrlab.github.io/codif-ape-prez/slides/pydata-global/</a>.
+</div></div><section id="why-a-dedicated-library" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="why-a-dedicated-library"><span class="header-section-number">3.1</span> Why a dedicated library</h3>
+<p>When Meta archived the fastText repository in March 2024, the production model was left depending on a compiled C++ library with no maintenance. fastText had other drawbacks:</p>
+<ul>
+<li>auxiliary variables could only be handled by appending them to the text;</li>
+<li>it offered no explainability;</li>
+<li>its scores were poorly calibrated;</li>
+<li>it could not train on GPU.</li>
+</ul>
+<p>A first PyTorch reimplementation, <em>torchFastText</em>, reproduced the fastText architecture. It then grew into a general framework and was renamed torchTextClassifiers in 2025.</p>
+<p>There is a reason why the model is a <strong>package</strong> rather than code inside the training repository. The same model class has to exist in the training repository, in the API, in production and in batch jobs. A versioned package on PyPI, mirrored in INSEE’s internal repository manager, is the <strong>single source of truth</strong> shared by all of them.</p>
+</section>
+<section id="design" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="design"><span class="header-section-number">3.2</span> Design</h3>
+<p>The library splits a text classifier into interchangeable components:</p>
+<div id="tbl-ttc" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-ttc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: torchTextClassifiers building blocks.
+</figcaption>
+<div aria-describedby="tbl-ttc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Component</th>
+<th>Options</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Tokenizer</td>
+<td>fastText-style character n-grams, WordPiece, or any Hugging Face tokenizer</td>
+</tr>
+<tr class="even">
+<td>Token embedder</td>
+<td>Embedding bag, optionally with self-attention layers (“make your own small BERT”)</td>
+</tr>
+<tr class="odd">
+<td>Sentence embedder</td>
+<td>Mean, first or last token, or <strong>label attention</strong> (one representation per class)</td>
+</tr>
+<tr class="even">
+<td>Categorical variables</td>
+<td>One embedding per variable, combined with the text by sum, average-and-concatenate, or concatenation</td>
+</tr>
+<tr class="odd">
+<td>Head</td>
+<td>Linear classifier, multi-class or multi-label; a multi-level variant exploits the hierarchy</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>A high-level wrapper takes care of encoding the raw categorical values and the labels, training (with optional sample weights), prediction with top-<em>k</em> outputs, and saving and loading. Two forms of explainability are built in:</p>
+<ul>
+<li>token-level attributions with <strong>integrated gradients</strong> (Captum);</li>
+<li><strong>label attention</strong>, which shows which words drive each candidate class.</li>
+</ul>
+<p>The intended users are teams that need accurate text classification but <strong>cannot deploy large models</strong>: small CPU budgets, unit latency constraints, closed environments. Beyond APE, the library is used for other classifications at INSEE, such as COICOP for product descriptions on receipts. It aims to become a common tool for automatic coding in official statistics.</p>
+</section>
+<section id="in-the-ape-pipeline" class="level3" data-number="3.3">
+<h3 data-number="3.3" class="anchored" data-anchor-id="in-the-ape-pipeline"><span class="header-section-number">3.3</span> In the APE pipeline</h3>
+<ul>
+<li><code>codif-ape-train</code> builds and trains the model with TTC, and wraps it in the MLflow <code>pyfunc</code>.</li>
+<li><code>codif-ape-api</code> installs TTC so that it can load that <code>pyfunc</code>, but does not call it directly.</li>
+<li>Compared with fastText, TTC gives the same automation rate, much better calibration, explainability and GPU training, for an inference time that remains within budget (see <a href="#tbl-ft-vs-ttc" class="quarto-xref">Table&nbsp;2</a>).</li>
+</ul>
+</section>
+</section>
+<section id="training" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="training"><span class="header-section-number">4</span> Training</h2>
 <p>Training is run by <a href="https://github.com/InseeFrLab/codif-ape-train">codif-ape-train</a>, with these settings:</p>
 <ul>
 <li><strong>Configuration:</strong> Hydra, which handles the choice of classification (NAF rev. 2 or NAF 2025), the model, the tokenizer and the optimisation.</li>
@@ -382,46 +493,28 @@ Figure&nbsp;1: Model architecture.
 </ul></li>
 </ul>
 </section>
-<section id="confidence-index-and-calibration" class="level2 page-columns page-full" data-number="4">
-<h2 data-number="4" class="anchored" data-anchor-id="confidence-index-and-calibration"><span class="header-section-number">4</span> Confidence index and calibration</h2>
+<section id="sec-calibration" class="level2 page-columns page-full" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="sec-calibration"><span class="header-section-number">5</span> Confidence index and calibration</h2>
 <p>For each declaration, the model returns its five most likely codes and their probabilities. The decision to code automatically relies on a <strong>confidence index (CI)</strong>: the gap between the two highest probabilities, <span class="math inline">\(\text{CI} = p_{(1)} - p_{(2)}\)</span>.</p>
 <ul>
 <li>If the CI is at or above a threshold <span class="math inline">\(\tau\)</span>, the first code is assigned automatically.</li>
 <li>Otherwise, the declaration goes to a human coder, who sees the five suggestions.</li>
 </ul>
 <p>The threshold sets the trade-off between <strong>automation rate</strong> and <strong>accuracy of automatic coding</strong>. With fastText, a threshold of about 0.75 sent roughly 20 % of declarations to manual coding <span class="citation" data-cites="randriamanana2025jms">(<a href="#ref-randriamanana2025jms" role="doc-biblioref">Randriamanana and Faria 2025</a>)</span>. Since the score distribution changes from one model to the next, the threshold must be <strong>recalibrated for every new model</strong> on a representative sample. Reusing the previous threshold would shift the manual coding workload in an uncontrolled way.</p>
-<div class="no-row-height column-margin column-container"></div><p>This is why <strong>calibration</strong> matters. A probability of 0.9 should be right about 90 % of the time. fastText’s one-versus-all scores were poorly calibrated. The PyTorch model, trained with a softmax cross-entropy loss, is well calibrated out of the box, as measured on a test sample of 300,000 descriptions <span class="citation" data-cites="tayebjee2025jms">(<a href="#ref-tayebjee2025jms" role="doc-biblioref">Tayebjee et al. 2025</a>)</span>. Calibration is measured at every run with the expected calibration error (ECE) and the Brier score.</p>
+<div class="no-row-height column-margin column-container"></div><p>This is why <strong>calibration</strong> matters. A probability of 0.9 should be right about 90 % of the time. fastText’s one-versus-all scores were poorly calibrated. The PyTorch model, trained with a softmax cross-entropy loss, is well calibrated out of the box, as measured on a test sample of 300,000 descriptions <span class="citation" data-cites="tayebjee2025jms">(<a href="#ref-tayebjee2025jms" role="doc-biblioref">Tayebjee et al. 2025</a>)</span>. Calibration is measured at every run with the expected calibration error (ECE) and the Brier score. Going beyond a single threshold, conformal prediction is explored under <a href="#sec-conformal">Future work</a>.</p>
 </section>
-<section id="evaluation" class="level2" data-number="5">
-<h2 data-number="5" class="anchored" data-anchor-id="evaluation"><span class="header-section-number">5</span> Evaluation</h2>
-<p>Every run reports, on validation and test data:</p>
-<ul>
-<li><strong>accuracy at each level</strong> of the classification, from section (level 1) to sub-class (level 5), since a mistake that stays within the right division costs less than one across sections;</li>
-<li><strong>calibration</strong>: ECE, Brier score, histogram of confidence;</li>
-<li><strong>the accuracy–automation curve</strong>: accuracy of automatically coded cases as a function of the share of cases coded automatically, as the threshold varies. This is the curve the business uses to choose the operating point.</li>
-</ul>
-<div class="callout callout-style-default callout-important callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Important</span>Evaluating on the right data
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>Metrics computed on a test split drawn from the training data are optimistic, since those labels share the biases of the training labels. They are also not representative of the production flow. The decision to deploy relies on a <strong>golden set</strong>: a random sample of the production flow, annotated by experts who do not see the model’s prediction. See <a href="../en/retraining.html#sec-golden">Retraining protocol</a>.</p>
-</div>
-</div>
+<section id="evaluation" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="evaluation"><span class="header-section-number">6</span> Evaluation</h2>
+<p>Every training run logs accuracy at each level of the classification, calibration metrics and the accuracy–automation curve. What these metrics mean, which data they are computed on, and how a model is judged are covered in the <a href="../en/evaluation.html">Evaluation</a> chapter.</p>
 </section>
-<section id="sec-results" class="level2 page-columns page-full" data-number="6">
-<h2 data-number="6" class="anchored" data-anchor-id="sec-results"><span class="header-section-number">6</span> Results</h2>
-<section id="fasttext-vs.-pytorch" class="level3 page-columns page-full" data-number="6.1">
-<h3 data-number="6.1" class="anchored" data-anchor-id="fasttext-vs.-pytorch"><span class="header-section-number">6.1</span> fastText vs.&nbsp;PyTorch</h3>
+<section id="sec-results" class="level2 page-columns page-full" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="sec-results"><span class="header-section-number">7</span> Results</h2>
+<section id="fasttext-vs.-pytorch" class="level3 page-columns page-full" data-number="7.1">
+<h3 data-number="7.1" class="anchored" data-anchor-id="fasttext-vs.-pytorch"><span class="header-section-number">7.1</span> fastText vs.&nbsp;PyTorch</h3>
 <div id="tbl-ft-vs-ttc" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
 <figure class="quarto-float quarto-float-tbl figure page-columns page-full">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-ft-vs-ttc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;1: Comparison of the two model generations <span class="citation" data-cites="tayebjee2025jms">(<a href="#ref-tayebjee2025jms" role="doc-biblioref">Tayebjee et al. 2025</a>)</span>.
+Table&nbsp;2: Comparison of the two model generations <span class="citation" data-cites="tayebjee2025jms">(<a href="#ref-tayebjee2025jms" role="doc-biblioref">Tayebjee et al. 2025</a>)</span>.
 </figcaption>
 <div class="no-row-height column-margin column-container"><div id="ref-tayebjee2025jms" class="csl-entry" role="listitem">
 Tayebjee, Meilame, Cédric Couralet, Nathan Randriamanana, and Julien Pramil. 2025. <em><span class="nocase">fastText</span>, Tout Juste En Production Et Déjà Obsolète ? Présentation Du Package torchTextClassifiers Pour La Modernisation de La Codification Automatique via l’exemple de l’<span>APE</span></em>. Journées de méthodologie statistique (JMS). <a href="https://inseefrlab.github.io/codif-ape-prez/papers/jms-torchft/index.pdf">https://inseefrlab.github.io/codif-ape-prez/papers/jms-torchft/index.pdf</a>.
@@ -482,15 +575,15 @@ Tayebjee, Meilame, Cédric Couralet, Nathan Randriamanana, and Julien Pramil. 20
 </div>
 <p>The PyTorch model trades some latency for maintainability, calibration and the ability to evolve. The latency remains within the production budget.</p>
 </section>
-<section id="naf-2025" class="level3 page-columns page-full" data-number="6.2">
-<h3 data-number="6.2" class="anchored" data-anchor-id="naf-2025"><span class="header-section-number">6.2</span> NAF 2025</h3>
+<section id="naf-2025" class="level3 page-columns page-full" data-number="7.2">
+<h3 data-number="7.2" class="anchored" data-anchor-id="naf-2025"><span class="header-section-number">7.2</span> NAF 2025</h3>
 <p>Accuracy on the test set of the NAF 2025 retraining, by level <span class="citation" data-cites="randriamanana2025jms">(<a href="#ref-randriamanana2025jms" role="doc-biblioref">Randriamanana and Faria 2025</a>)</span>:</p>
 <div class="no-row-height column-margin column-container"><div id="ref-randriamanana2025jms" class="csl-entry" role="listitem">
 Randriamanana, Nathan, and Thomas Faria. 2025. <em>Changement de Nomenclature Statistique à l’ère Du Machine Learning : Réentraînement Basé Sur Les <span>LLM</span> Pour La Révision de La <span>NAF</span></em>. Journées de méthodologie statistique (JMS). <a href="https://inseefrlab.github.io/codif-ape-prez/papers/jms2025-llm-relabeling/index.pdf">https://inseefrlab.github.io/codif-ape-prez/papers/jms2025-llm-relabeling/index.pdf</a>.
 </div></div><div id="tbl-naf2025" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-naf2025-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;2: Test accuracy of the models retrained on NAF 2025 data, before data editing.
+Table&nbsp;3: Test accuracy of the models retrained on NAF 2025 data, before data editing.
 </figcaption>
 <div aria-describedby="tbl-naf2025-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <table class="caption-top table">
@@ -527,65 +620,464 @@ Table&nbsp;2: Test accuracy of the models retrained on NAF 2025 data, before dat
 </figure>
 </div>
 <p>Applying business rules to the training data (data editing) raised sub-class accuracy to about 0.88–0.90 for both models. The gain is large but must be read with care: rules also change the test labels, so part of the gain reflects closer agreement with the rules rather than better generalisation. The <a href="../en/retraining.html">retraining protocol</a> is designed precisely to separate the two effects.</p>
+</section>
+</section>
+<section id="sec-future" class="level2 page-columns page-full" data-number="8">
+<h2 data-number="8" class="anchored" data-anchor-id="sec-future"><span class="header-section-number">8</span> Future work</h2>
+<p>The production model is deliberately simple. Two lines of work look at how to go further without breaking the <a href="../en/context.html#production-constraints">production constraints</a>: a richer architecture, and a better use of the model’s uncertainty.</p>
+<section id="sec-internship" class="level3" data-number="8.1">
+<h3 data-number="8.1" class="anchored" data-anchor-id="sec-internship"><span class="header-section-number">8.1</span> Architecture: Julien Bernardi’s internship</h3>
+<p>Julien Bernardi’s internship (Innovation Lab, 2026) benchmarked lightweight architectures built with torchTextClassifiers. The report is online at <a href="https://julber95.github.io/interpretable-text-classification/">julber95.github.io/interpretable-text-classification</a>. This is exploratory work.</p>
+<p><strong>Validating torchTextClassifiers.</strong> Before NAF, the architectures were trained on two public benchmarks with known reference results: Amazon reviews (5 classes) and CLINC150 (150 intents). On Amazon reviews, the deeper models reach about 62–63 % accuracy, close to the 63.3 % of multilingual BERT, against about 59 % for the fastText-style model. These results validated the library’s implementation.</p>
+<p><strong>Architecture innovations.</strong> The internship compared three extensions of the production fastText-style model:</p>
+<ul>
+<li><strong>FATE</strong> (<em>FastText Attentive Transformer Encoder</em>): self-attention layers on top of the token embeddings, before pooling. It lowers the loss on Amazon reviews, but brings nothing on CLINC150;</li>
+<li><strong>label attention</strong>: one learned query per class replaces mean pooling, so the model looks at the words that matter for each candidate code;</li>
+<li><strong>multi-level classification</strong>: one head per level of the classification, trained jointly.</li>
+</ul>
+<p>On NAF 2025, the main findings are:</p>
+<ul>
+<li><strong>Label attention needs data.</strong> With 160,000 training descriptions it is clearly behind the fastText-style model. On the full training set (1.2 million descriptions) it catches up, or slightly overtakes it, but takes 3 to 6 times longer to train.</li>
+<li><strong>Its attention weights explain the prediction well.</strong> Deleting the words it attends to lowers the predicted probability faster than deleting the words chosen by integrated gradients.</li>
+<li><strong>Multi-level heads help when the sub-class is wrong.</strong> At coarse levels, they beat simply truncating the predicted sub-class. Among wrong sub-class predictions, the share that is wrong at every level falls from about 47 % to 29–34 %. At the sub-class level, both approaches tie.</li>
+<li><strong>Data matters more than architecture for rare codes.</strong> The accuracy of a sub-class depends mainly on how many training examples it has.</li>
+</ul>
+<p>As for the options already in the library (<a href="#architecture">above</a>), an innovation is adopted only if it fits within the CPU latency budget, which the internship did not measure, and passes the <a href="../en/retraining.html#sec-gates">quality gates</a> of the retraining protocol. Multi-level heads suggest an untested use: when the sub-class is uncertain, show the manual coder a reliable division or class.</p>
+</section>
+<section id="sec-conformal" class="level3 page-columns page-full" data-number="8.2">
+<h3 data-number="8.2" class="anchored" data-anchor-id="sec-conformal"><span class="header-section-number">8.2</span> Conformal prediction</h3>
+<p>The <a href="#sec-calibration">confidence index</a> answers one question: can this declaration be coded automatically? It says little about the cases sent to manual coding. The coder always sees the same five suggestions, whether the model hesitates between two codes or has no idea.</p>
+<p><strong>Conformal prediction</strong> <span class="citation" data-cites="angelopoulos2023gentle">(<a href="#ref-angelopoulos2023gentle" role="doc-biblioref">Angelopoulos and Bates 2023</a>)</span> replaces this fixed list with a statistical guarantee. A threshold is computed on a calibration set held out from training. For a new description, the model then returns a <strong>set of codes</strong> that contains the right one with probability at least <span class="math inline">\(1 - \alpha\)</span>, for example 95 %. The guarantee holds for any model, provided the calibration data and the production data are exchangeable. The size of the set carries the uncertainty: one or two codes when the model is sure, many more when it is not.</p>
+<div class="no-row-height column-margin column-container"><div id="ref-angelopoulos2023gentle" class="csl-entry" role="listitem">
+Angelopoulos, Anastasios N., and Stephen Bates. 2023. <span>“Conformal Prediction: A Gentle Introduction.”</span> <em>Foundations and Trends in Machine Learning</em> 16 (4): 494–591. <a href="https://doi.org/10.1561/2200000101">https://doi.org/10.1561/2200000101</a>.
+</div></div><p>Exploratory work in codif-ape-train (<a href="https://github.com/InseeFrLab/codif-ape-train/tree/main/src/conformal_pred"><code>src/conformal_pred</code></a>) applies split conformal prediction to the trained model:</p>
+<ul>
+<li><strong>Calibration on manual cases only.</strong> Only validation declarations whose CI is below the threshold, those that would go to manual coding, are used. This selection depends only on the model’s output, so the guarantee still holds within the subset. It therefore applies exactly to the declarations that human coders see.</li>
+<li><strong>Three scores</strong> are compared:
+<ul>
+<li><span class="math inline">\(1 - \hat{p}(y \mid x)\)</span>, which tends to give the smallest sets;</li>
+<li>the cumulative probability of the codes ranked up to the true one (<em>adaptive prediction sets</em>, <span class="citation" data-cites="romano2020classification">Romano et al. (<a href="#ref-romano2020classification" role="doc-biblioref">2020</a>)</span>), which adapts the size of the set to the difficulty of each case;</li>
+<li>the rank of the true code, which amounts to choosing the length <span class="math inline">\(k\)</span> of a top-<span class="math inline">\(k\)</span> list with a guarantee.</li>
+</ul></li>
+<li><strong>Evaluation</strong> on the test set, by empirical coverage and mean set size.</li>
+</ul>
+<div class="no-row-height column-margin column-container"><div id="ref-romano2020classification" class="csl-entry" role="listitem">
+Romano, Yaniv, Matteo Sesia, and Emmanuel J. Candès. 2020. <span>“Classification with Valid and Adaptive Coverage.”</span> <em>Advances in Neural Information Processing Systems (NeurIPS)</em>. <a href="https://arxiv.org/abs/2006.02544">https://arxiv.org/abs/2006.02544</a>.
+</div></div><p>Several questions remain open before any production use:</p>
+<ul>
+<li><strong>Conditional coverage.</strong> The guarantee is marginal: 95 % on average over all declarations, possibly much less for some sections. Calibrating separately by section (Mondrian conformal prediction) would fix this, at the cost of more calibration data.</li>
+<li><strong>Drift.</strong> The way declarants describe their activity changes over time (<a href="../en/monitoring.html">Monitoring</a>), which weakens exchangeability. Like <span class="math inline">\(\tau\)</span>, the conformal threshold must be recomputed for every new model on recent data, and its coverage must be monitored.</li>
+<li><strong>Interface.</strong> A set of variable size changes the API contract, which currently returns a fixed top 5 (<a href="../en/serving.html#the-api">Serving</a>), and the manual coding interface.</li>
+<li><strong>Choosing <span class="math inline">\(\tau\)</span>.</strong> The same tools could set the threshold <span class="math inline">\(\tau\)</span> itself, with a guarantee on the error rate of automatic coding (conformal risk control, <span class="citation" data-cites="angelopoulos2024crc">Angelopoulos et al. (<a href="#ref-angelopoulos2024crc" role="doc-biblioref">2024</a>)</span>).</li>
+</ul>
 
 
-
+<div class="no-row-height column-margin column-container"><div id="ref-angelopoulos2024crc" class="csl-entry" role="listitem">
+Angelopoulos, Anastasios N., Stephen Bates, Adam Fisch, Lihua Lei, and Tal Schuster. 2024. <span>“Conformal Risk Control.”</span> <em>International Conference on Learning Representations (ICLR)</em>. <a href="https://arxiv.org/abs/2208.02814">https://arxiv.org/abs/2208.02814</a>.
+</div></div>
 </section>
 </section>
 
 <a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
 <!--
-  EN | FR switch in the navbar. en/ and fr/ use the same file names and the
-  same anchors, so the switch links to the same page and section in the other
-  language. The choice is remembered for the root page redirect (index.qmd).
+  Site navigation, added at the end of every page.
+
+  1. Table of contents. The left sidebar becomes a single, collapsible table
+     of contents for the whole note: chapters, then their sections and
+     sub-sections, read from outline.json (written by scripts/outline.py).
+     The section being read is highlighted as the reader scrolls.
+
+  2. EN | FR switch. en/ and fr/ use the same file names and the same
+     anchors, so switching language swaps the page content in place: same
+     page, same section, no reload. The choice is remembered for the root
+     page redirect (index.qmd).
 -->
 <script>
 (function () {
+  "use strict";
+
   var KEY = "codif-ape-lang";
   var LANGS = ["en", "fr"];
-  var TITLES = {
-    en: { label: "EN", hint: "Read this page in English", brand: "APE coding · MLOps" },
-    fr: { label: "FR", hint: "Lire cette page en français", brand: "Codification APE · MLOps" }
+  var STRINGS = {
+    en: {
+      label: "EN", hint: "Read this page in English", brand: "APE coding · MLOps",
+      group: "Language", toc: "Table of contents", expand: "Expand", collapse: "Collapse"
+    },
+    fr: {
+      label: "FR", hint: "Lire cette page en français", brand: "Codification APE · MLOps",
+      group: "Langue", toc: "Sommaire", expand: "Déplier", collapse: "Replier"
+    }
   };
+  // Parts of the page that differ between languages, swapped on a switch.
+  var SWAPPED = [
+    "main#quarto-document-content",
+    "#quarto-margin-sidebar",
+    "nav.page-navigation",
+    ".nav-footer-center",
+    ".quarto-secondary-nav-title"
+  ];
+  var PATH = /^(.*\/)(en|fr)(\/.*)?$/;
 
-  var m = window.location.pathname.match(/^(.*\/)(en|fr)(\/.*)?$/);
+  var m = window.location.pathname.match(PATH);
   if (!m) return;
-  var base = m[1], current = m[2], rest = m[3] || "/";
+  var base = m[1];
+  var state = { lang: m[2], page: pageOf(m[3]) };
 
-  try { localStorage.setItem(KEY, current); } catch (e) {}
+  // "/data.html", "/data" and "/" all name a page; compare them without ".html".
+  function pageOf(rest) {
+    var page = (rest || "/").replace(/^\//, "").replace(/\.html$/, "");
+    return page === "" ? "index" : page;
+  }
 
-  var brand = document.querySelector(".navbar-brand");
-  if (brand) brand.setAttribute("href", base + current + "/index.html");
-  var brandTitle = document.querySelector(".navbar-title");
-  if (brandTitle) brandTitle.textContent = TITLES[current].brand;
+  function urlFor(lang, page) {
+    return base + lang + "/" + page + ".html";
+  }
 
-  var group = document.createElement("div");
-  group.className = "lang-switch";
-  group.setAttribute("role", "group");
-  group.setAttribute("aria-label", current === "fr" ? "Langue" : "Language");
+  function el(tag, className, attrs) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    Object.keys(attrs || {}).forEach(function (k) { node.setAttribute(k, attrs[k]); });
+    return node;
+  }
+
+  // ---------------------------------------------------------------- MathJax
+
+  // Section titles can hold math; MathJax loads after this script.
+  function typeset(nodes) {
+    var mj = window.MathJax;
+    if (mj && mj.startup && mj.startup.promise) {
+      return mj.startup.promise.then(function () { return mj.typesetPromise(nodes); });
+    }
+    if (document.readyState !== "complete") {
+      return new Promise(function (resolve) {
+        window.addEventListener("load", function () { typeset(nodes).then(resolve); }, { once: true });
+      });
+    }
+    return Promise.resolve();
+  }
+
+  // ----------------------------------------------------- Table of contents
+
+  var outline = fetch(base + "outline.json")
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .catch(function () { return null; });
+
+  var links = {};       // section id -> link, for the current page
+  var activeLink = null;
+
+  function setOpen(li, open) {
+    li.classList.toggle("is-open", open);
+    var button = li.querySelector(":scope > .toc-row > .toc-toggle");
+    if (button) {
+      button.setAttribute("aria-expanded", String(open));
+      button.setAttribute("aria-label", STRINGS[state.lang][open ? "collapse" : "expand"]);
+    }
+  }
+
+  function tocItem(node, depth, page, isCurrentPage) {
+    var li = el("li", "toc-item toc-depth-" + depth);
+    var row = el("div", "toc-row");
+    var children = depth === 0 ? node.sections : node.children;
+
+    if (children && children.length) {
+      var button = el("button", "toc-toggle", { type: "button" });
+      button.addEventListener("click", function () {
+        li.dataset.pinned = "1";
+        setOpen(li, !li.classList.contains("is-open"));
+      });
+      row.appendChild(button);
+    } else {
+      row.appendChild(el("span", "toc-spacer"));
+    }
+
+    var a = el("a", "toc-link no-external");
+    if (depth === 0) {
+      a.href = urlFor(state.lang, page);
+      if (node.number) {
+        var num = el("span", "toc-number");
+        num.textContent = node.number + ".";
+        a.appendChild(num);
+      }
+      a.insertAdjacentHTML("beforeend", node.title);
+      if (isCurrentPage) {
+        a.classList.add("is-current");
+        a.setAttribute("aria-current", "page");
+        a.addEventListener("click", function (e) {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      }
+    } else {
+      a.href = (isCurrentPage ? "" : urlFor(state.lang, page)) + "#" + node.id;
+      a.innerHTML = node.title;
+      if (isCurrentPage) links[node.id] = a;
+    }
+    row.appendChild(a);
+    li.appendChild(row);
+
+    if (children && children.length) {
+      var ul = el("ul", "toc-children");
+      children.forEach(function (child) {
+        ul.appendChild(tocItem(child, depth + 1, page, isCurrentPage));
+      });
+      li.appendChild(ul);
+      setOpen(li, false);
+    }
+    return li;
+  }
+
+  function buildToc(data) {
+    var container = document.querySelector("#quarto-sidebar .sidebar-menu-container");
+    if (!container || !data || !data[state.lang]) return;
+
+    links = {};
+    activeLink = null;
+    var nav = el("nav", "site-toc", { "aria-label": STRINGS[state.lang].toc });
+    var ul = el("ul", "toc-children toc-chapters");
+    data[state.lang].forEach(function (chapter) {
+      var page = pageOf(chapter.href);
+      var isCurrent = page === state.page;
+      var li = tocItem(chapter, 0, page, isCurrent);
+      if (isCurrent) {
+        li.classList.add("is-current");
+        setOpen(li, true);
+      }
+      ul.appendChild(li);
+    });
+    nav.appendChild(ul);
+    container.replaceChildren(nav);
+    document.body.classList.add("has-site-toc");
+
+    typeset([nav]);
+    updateActive();
+    var current = nav.querySelector(".toc-link.is-current");
+    if (current) revealInSidebar(current);
+  }
+
+  function revealInSidebar(link) {
+    var sidebar = document.getElementById("quarto-sidebar");
+    if (!sidebar) return;
+    var r = link.getBoundingClientRect();
+    var s = sidebar.getBoundingClientRect();
+    if (r.top < s.top || r.bottom > s.bottom) {
+      sidebar.scrollTop += r.top - s.top - s.height / 3;
+    }
+  }
+
+  function sectionList() {
+    return Array.prototype.slice.call(document.querySelectorAll(
+      "main#quarto-document-content section.level2[id], main#quarto-document-content section.level3[id]"
+    ));
+  }
+
+  // The section being read: the last one whose top has scrolled past the
+  // navbar.
+  function currentSection() {
+    var sections = sectionList();
+    if (!sections.length) return null;
+    var atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    if (atBottom) return sections[sections.length - 1];
+    var current = null;
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].getBoundingClientRect().top > 100) break;
+      current = sections[i];
+    }
+    return current;
+  }
+
+  function updateActive() {
+    var section = currentSection();
+    var link = (section && links[section.id]) || null;
+    if (link === activeLink) return;
+    if (activeLink) activeLink.classList.remove("active");
+    activeLink = link;
+    if (!link) return;
+    link.classList.add("active");
+
+    // Open the branch that holds the active section, and close the branches
+    // opened automatically before, unless the reader opened them by hand.
+    var branch = [];
+    for (var li = link.closest(".toc-item"); li; li = li.parentElement.closest(".toc-item")) {
+      branch.push(li);
+    }
+    document.querySelectorAll(".site-toc .toc-item.is-open").forEach(function (li) {
+      if (branch.indexOf(li) === -1 && !li.classList.contains("is-current") && !li.dataset.pinned) {
+        setOpen(li, false);
+      }
+    });
+    branch.forEach(function (li) {
+      if (li.querySelector(":scope > .toc-children")) setOpen(li, true);
+    });
+    revealInSidebar(link);
+  }
+
+  var ticking = false;
+  window.addEventListener("scroll", function () {
+    if (ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(function () { ticking = false; updateActive(); });
+  }, { passive: true });
+
+  // -------------------------------------------------------- Language switch
+
+  var switchGroup = el("div", "lang-switch", { role: "group" });
+
+  function updateChrome() {
+    var s = STRINGS[state.lang];
+    var brand = document.querySelector(".navbar-brand");
+    if (brand) brand.setAttribute("href", urlFor(state.lang, "index"));
+    var brandTitle = document.querySelector(".navbar-title");
+    if (brandTitle) brandTitle.textContent = s.brand;
+    switchGroup.setAttribute("aria-label", s.group);
+    Array.prototype.forEach.call(switchGroup.children, function (a) {
+      var lang = a.getAttribute("lang");
+      var active = lang === state.lang;
+      a.classList.toggle("active", active);
+      if (active) a.setAttribute("aria-current", "true");
+      else a.removeAttribute("aria-current");
+      a.href = urlFor(lang, state.page) + window.location.hash;
+    });
+  }
 
   LANGS.forEach(function (lang) {
-    var a = document.createElement("a");
-    a.textContent = TITLES[lang].label;
-    a.setAttribute("lang", lang);
-    a.setAttribute("hreflang", lang);
-    a.setAttribute("title", TITLES[lang].hint);
-    if (lang === current) {
-      a.className = "active";
-      a.setAttribute("aria-current", "true");
-    }
-    a.href = base + lang + rest + window.location.hash;
-    a.addEventListener("click", function () {
-      try { localStorage.setItem(KEY, lang); } catch (e) {}
-      // Keep the section the reader is on, even after scrolling.
-      a.href = base + lang + rest + window.location.hash;
+    var a = el("a", "no-external", { lang: lang, hreflang: lang, title: STRINGS[lang].hint });
+    a.textContent = STRINGS[lang].label;
+    a.addEventListener("click", function (e) {
+      // Let modified clicks open the other language in a new tab.
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      switchLang(lang, true);
     });
-    group.appendChild(a);
+    switchGroup.appendChild(a);
   });
 
   var slot = document.querySelector(".quarto-navbar-tools") ||
              document.querySelector(".navbar-container");
-  if (slot) slot.insertBefore(group, slot.firstChild);
+  if (slot) slot.insertBefore(switchGroup, slot.firstChild);
+
+  // Quarto marks external links (icon, new tab) on page load only.
+  function adornExternalLinks(root) {
+    root.querySelectorAll("a[href]:not(.no-external):not([aria-hidden])").forEach(function (a) {
+      if (/^https?:$/.test(a.protocol) && a.origin !== window.location.origin) {
+        a.setAttribute("target", "_blank");
+        if (a.getAttribute("rel") === null) a.setAttribute("rel", "noopener");
+        a.classList.add("external");
+      }
+    });
+  }
+
+  // Same steps as Quarto's mermaid-init.js, which only runs on page load.
+  var mermaidCount = 0;
+  function renderMermaid(root) {
+    var mermaid = window.mermaid;
+    if (!mermaid) return Promise.resolve();
+    var blocks = Array.prototype.slice.call(root.querySelectorAll("pre.mermaid-js"));
+    return blocks.reduce(function (done, pre) {
+      return done.then(function () {
+        var text = pre.textContent.replace(/&nbsp;/g, " ");
+        return mermaid.mermaidAPI.render("mermaid-switch-" + (++mermaidCount), text, pre)
+          .then(function (result) {
+            pre.innerHTML = result.svg;
+            var svg = pre.querySelector("svg");
+            if (pre.dataset.label) {
+              var style = svg.querySelector("style");
+              if (style) style.innerHTML = style.innerHTML.split("#" + svg.id).join("#" + pre.dataset.label + "-mermaid");
+              svg.id = pre.dataset.label + "-mermaid";
+            }
+            pre.parentElement.replaceChild(svg, pre);
+            svg.classList.add("mermaid-js");
+            /* global _quartoMermaid */
+            if (typeof _quartoMermaid !== "undefined") {
+              try { _quartoMermaid.postProcess(svg); } catch (e) {}
+            }
+          });
+      });
+    }, Promise.resolve());
+  }
+
+  var switching = false;
+  function switchLang(lang, push) {
+    if (lang === state.lang || switching) return;
+    switching = true;
+    var url = urlFor(lang, state.page);
+
+    // Remember where the reader is, to land at the same place. Both
+    // languages have the same sections in the same order, but not always the
+    // same ids (those derived from French titles differ), so sections are
+    // matched by position.
+    var before = sectionList();
+    var anchor = currentSection();
+    var anchorIndex = before.indexOf(anchor);
+    var anchorTop = anchor ? anchor.getBoundingClientRect().top : null;
+    var hashIndex = before.findIndex(function (s) { return "#" + s.id === window.location.hash; });
+    var scrollY = window.scrollY;
+
+    document.documentElement.classList.add("lang-switching");
+    fetch(url)
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (html) {
+        var doc = new DOMParser().parseFromString(html, "text/html");
+        var after = doc.querySelectorAll(
+          "main#quarto-document-content section.level2[id], main#quarto-document-content section.level3[id]"
+        );
+        var hash = hashIndex >= 0 && after[hashIndex] ? "#" + after[hashIndex].id : window.location.hash;
+        state.lang = lang;
+        if (push) history.pushState({ lang: lang }, "", url + hash);
+        else if (hash !== window.location.hash) history.replaceState(history.state, "", url + hash);
+        try { localStorage.setItem(KEY, lang); } catch (e) {}
+
+        SWAPPED.forEach(function (selector) {
+          var current = document.querySelector(selector);
+          var next = doc.querySelector(selector);
+          if (!current || !next) return;
+          next.querySelectorAll("script").forEach(function (s) { s.remove(); });
+          current.replaceWith(document.importNode(next, true));
+        });
+        document.title = doc.title;
+        document.documentElement.lang = doc.documentElement.lang || lang;
+        updateChrome();
+
+        var main = document.querySelector("main#quarto-document-content");
+        adornExternalLinks(main);
+        return Promise.all([
+          renderMermaid(main).catch(function () {}),
+          typeset([main]).catch(function () {}),
+          outline.then(buildToc)
+        ]);
+      })
+      .then(function () {
+        var target = anchorIndex >= 0 ? sectionList()[anchorIndex] : null;
+        if (target && anchorTop !== null) {
+          window.scrollTo(0, window.scrollY + target.getBoundingClientRect().top - anchorTop);
+        } else {
+          window.scrollTo(0, scrollY);
+        }
+        updateActive();
+      })
+      .catch(function () {
+        // Fall back to a normal page load.
+        window.location.href = url + window.location.hash;
+      })
+      .then(function () {
+        switching = false;
+        document.documentElement.classList.remove("lang-switching");
+      });
+  }
+
+  // Back and forward between two languages of the same page stay in place.
+  window.addEventListener("popstate", function () {
+    var mm = window.location.pathname.match(PATH);
+    if (!mm) return;
+    if (pageOf(mm[3]) !== state.page) {
+      window.location.reload();
+    } else if (mm[2] !== state.lang) {
+      switchLang(mm[2], false);
+    }
+  });
+
+  try { localStorage.setItem(KEY, state.lang); } catch (e) {}
+  updateChrome();
+  outline.then(buildToc);
 })();
 </script>
 <script id="quarto-html-after-body" type="application/javascript">
@@ -1002,8 +1494,8 @@ Table&nbsp;2: Test accuracy of the models retrained on NAF 2025 data, before dat
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../en/serving.html" class="pagination-link" aria-label="Serving and deployment">
-        <span class="nav-page-text">Serving and deployment</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../en/evaluation.html" class="pagination-link" aria-label="Evaluation">
+        <span class="nav-page-text">Evaluation</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

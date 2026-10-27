@@ -6,10 +6,10 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="author" content="SSP Lab">
-<meta name="description" content="Ce que quatre années d’apprentissage automatique en production pour la codification APE nous ont appris, et les questions qui restent ouvertes.">
+<meta name="author" content="Meilame Tayebjee">
+<meta name="description" content="Ce que quatre ans de machine learning en production pour la codification APE nous ont appris, et les questions qui restent ouvertes.">
 
-<title>Enseignements – APE coding · MLOps</title>
+<title>Retours d’expérience – APE coding · MLOps</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -57,8 +57,8 @@ div.csl-indent {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../fr/references.html" rel="next">
-<link href="../fr/companion-projects.html" rel="prev">
+<link href="../fr/glossary.html" rel="next">
+<link href="../fr/organisation.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
@@ -68,7 +68,7 @@ div.csl-indent {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-fc581236a46ad31b3ea501458e50ff32.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-7ac3c55ca58f93c4c6c73bcc24e20e69.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -127,8 +127,8 @@ window.Quarto = {
 };
 </script>
 
-<meta property="og:title" content="Enseignements – APE coding · MLOps">
-<meta property="og:description" content="Ce que quatre années d’apprentissage automatique en production pour la codification APE nous ont appris, et les questions qui restent ouvertes.">
+<meta property="og:title" content="Retours d’expérience – APE coding · MLOps">
+<meta property="og:description" content="Ce que quatre ans de machine learning en production pour la codification APE nous ont appris, et les questions qui restent ouvertes.">
 <meta property="og:site_name" content="APE coding · MLOps">
 </head>
 
@@ -170,7 +170,7 @@ window.Quarto = {
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
         <a class="flex-grow-1 no-decor" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Basculer la barre latérale" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
-          <h1 class="quarto-secondary-nav-title">Enseignements</h1>
+          <h1 class="quarto-secondary-nav-title">Retours d’expérience</h1>
         </a>     
     </div>
   </nav>
@@ -213,14 +213,20 @@ window.Quarto = {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../fr/evaluation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Évaluation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../fr/serving.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Mise à disposition du modèle et déploiement</span></a>
+ <span class="menu-text">Mise en production</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../fr/monitoring.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Suivi et annotation</span></a>
+ <span class="menu-text">Monitoring et annotation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -231,14 +237,20 @@ window.Quarto = {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../fr/companion-projects.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Projets associés&nbsp;: TTC et GRAAL</span></a>
+  <a href="../fr/organisation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Défis organisationnels et d’infrastructure</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../fr/lessons.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text">Enseignements</span></a>
+ <span class="menu-text">Retours d’expérience</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/glossary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glossaire et notations</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -257,9 +269,9 @@ window.Quarto = {
     <h2 id="toc-title">Sur cette page</h2>
    
   <ul>
-  <li><a href="#enseignements-techniques" id="toc-enseignements-techniques" class="nav-link active" data-scroll-target="#enseignements-techniques"><span class="header-section-number">1</span> Enseignements techniques</a></li>
-  <li><a href="#enseignements-sur-les-données" id="toc-enseignements-sur-les-données" class="nav-link" data-scroll-target="#enseignements-sur-les-données"><span class="header-section-number">2</span> Enseignements sur les données</a></li>
-  <li><a href="#enseignements-organisationnels" id="toc-enseignements-organisationnels" class="nav-link" data-scroll-target="#enseignements-organisationnels"><span class="header-section-number">3</span> Enseignements organisationnels</a></li>
+  <li><a href="#côté-technique" id="toc-côté-technique" class="nav-link active" data-scroll-target="#côté-technique"><span class="header-section-number">1</span> Côté technique</a></li>
+  <li><a href="#côté-données" id="toc-côté-données" class="nav-link" data-scroll-target="#côté-données"><span class="header-section-number">2</span> Côté données</a></li>
+  <li><a href="#côté-organisation" id="toc-côté-organisation" class="nav-link" data-scroll-target="#côté-organisation"><span class="header-section-number">3</span> Côté organisation</a></li>
   <li><a href="#une-perspective-européenne" id="toc-une-perspective-européenne" class="nav-link" data-scroll-target="#une-perspective-européenne"><span class="header-section-number">4</span> Une perspective européenne</a></li>
   <li><a href="#questions-ouvertes" id="toc-questions-ouvertes" class="nav-link" data-scroll-target="#questions-ouvertes"><span class="header-section-number">5</span> Questions ouvertes</a></li>
   </ul>
@@ -270,12 +282,12 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title d-none d-lg-block">Enseignements</h1>
+<h1 class="title d-none d-lg-block">Retours d’expérience</h1>
 </div>
 
 <div>
   <div class="description">
-    Ce que quatre années d’apprentissage automatique en production pour la codification APE nous ont appris, et les questions qui restent ouvertes.
+    Ce que quatre ans de machine learning en production pour la codification APE nous ont appris, et les questions qui restent ouvertes.
   </div>
 </div>
 
@@ -284,11 +296,11 @@ window.Quarto = {
   <div class="quarto-title-meta-heading">Affiliation</div>
   
     <div class="quarto-title-meta-contents">
-    <p class="author">SSP Lab </p>
+    <p class="author"><a href="https://github.com/meilame-tayebjee">Meilame Tayebjee</a> <a href="mailto:meilame.tayebjee@insee.fr" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> </p>
   </div>
   <div class="quarto-title-meta-contents">
         <p class="affiliation">
-            Insee
+            SSP Lab, Insee
           </p>
       </div>
   </div>
@@ -305,54 +317,54 @@ window.Quarto = {
 </header>
 
 
-<section id="enseignements-techniques" class="level2" data-number="1">
-<h2 data-number="1" class="anchored" data-anchor-id="enseignements-techniques"><span class="header-section-number">1</span> Enseignements techniques</h2>
-<p><strong>Un petit modèle bien intégré vaut mieux qu’un grand modèle impossible à déployer.</strong> Les transformers pré-entraînés n’apportaient qu’un gain marginal par rapport à un modèle de type fastText, et ils ne tenaient pas dans le budget de latence et de CPU. L’effort a porté là où il était rentable&nbsp;: qualité des données, calibration et chaîne de déploiement.</p>
-<p><strong>Les dépendances sont un risque à gérer.</strong> Le dépôt de fastText a été archivé par ses auteurs à peine plus d’un an après la mise en production. Le passage à PyTorch a demandé du temps et du soin, «&nbsp;mais le jeu en vaut la chandelle&nbsp;»&nbsp;: le modèle est désormais maintenu en interne, il est calibré et explicable, et il peut évoluer. En contrepartie, PyTorch impose une politique de versions stricte entre l’entraînement, la mise à disposition et la production.</p>
-<p><strong>Livrer le prétraitement avec le modèle.</strong> Au début, l’équipe informatique métier avait recodé en Java le prétraitement du texte. Cette duplication était source d’erreurs. Empaqueter le modèle avec son prétraitement et son contrat (<code>pyfunc</code> MLflow, modèles Pydantic), et le servir au moyen d’une API Python, l’a fait disparaître.</p>
-<p><strong>Le <em>GitOps</em> rend le déploiement banal, et c’est le but.</strong> Quand déployer un modèle se résume à un commit d’une ligne, relu, et qu’un retour arrière n’est qu’une annulation de ce commit, les déploiements cessent d’être des événements.</p>
-<p><strong>La calibration est une fonctionnalité métier.</strong> Le seuil sur l’indice de confiance détermine la charge de reprise manuelle. C’est une décision méthodologique, pas un réglage d’exploitation. Il ne peut être fixé que sur un modèle calibré et un échantillon représentatif, et doit être revu pour chaque nouveau modèle.</p>
+<section id="côté-technique" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="côté-technique"><span class="header-section-number">1</span> Côté technique</h2>
+<p><strong>Mieux vaut un petit modèle bien intégré qu’un gros modèle impossible à déployer.</strong> Les transformers pré-entraînés ne faisaient guère mieux qu’un modèle de type fastText, et ils ne tenaient pas dans le budget de latence et de CPU. On a mis l’effort là où il payait&nbsp;: qualité des données, calibration et pipeline de déploiement.</p>
+<p><strong>Les dépendances sont un risque à gérer.</strong> Le dépôt de fastText a été archivé par ses auteurs à peine plus d’un an après la mise en production. Le passage à PyTorch a demandé du temps et du soin, «&nbsp;mais le jeu en vaut la chandelle&nbsp;»&nbsp;: le modèle est désormais maintenu en interne, calibré, explicable, et il peut évoluer. En contrepartie, PyTorch impose une gestion stricte des versions entre l’entraînement, le serving et la production.</p>
+<p><strong>Livrer le prétraitement avec le modèle.</strong> Au début, l’équipe informatique métier avait recodé en Java le prétraitement du texte, et cette duplication causait des erreurs. Packager le modèle avec son prétraitement et son contrat (<code>pyfunc</code> MLflow, modèles Pydantic), et le servir via une API Python, a réglé le problème.</p>
+<p><strong>Le GitOps rend le déploiement banal, et c’est le but.</strong> Quand déployer un modèle se résume à un commit d’une ligne, relu, et qu’un rollback se résume à un revert, un déploiement n’est plus un événement.</p>
+<p><strong>La calibration est un sujet métier.</strong> Le seuil sur l’indice de confiance fixe la charge de reprise manuelle&nbsp;: c’est une décision méthodologique, pas un réglage d’exploitation. On ne peut le fixer que sur un modèle calibré et un échantillon représentatif, et il faut le revoir à chaque nouveau modèle.</p>
 </section>
-<section id="enseignements-sur-les-données" class="level2" data-number="2">
-<h2 data-number="2" class="anchored" data-anchor-id="enseignements-sur-les-données"><span class="header-section-number">2</span> Enseignements sur les données</h2>
-<p><strong>La qualité des annotations est le principal levier.</strong> Les codes historiques mêlent des sorties d’un moteur de règles, de modèles antérieurs et d’une codification humaine faite dans l’urgence. Un moteur de règles auditable, où chaque recodification est journalisée, a fait davantage pour l’exactitude que la plupart des changements d’architecture. Les règles ont toutefois des effets de bord sur les codes voisins&nbsp;: elles doivent rester ciblées.</p>
-<p><strong>L’évaluation exige un golden set aléatoire et annoté à l’aveugle.</strong> Les corrections manuelles sont sélectionnées sur les échecs du modèle, et les annotateurs qui voient la prédiction s’y ancrent. Sans échantillon aléatoire, alimenté en continu et annoté à l’aveugle, on ne peut ni mesurer l’exactitude de la codification automatique, ni fixer le seuil, ni comparer deux modèles. Le suivi doit être un processus courant, et non une suite de campagnes ponctuelles.</p>
-<p><strong>Les experts métier comme référence, les LLM pour le passage à l’échelle.</strong> Pour la révision NAF 2025, quelques dizaines de milliers d’annotations d’experts ont suffi pour choisir et valider la recodification par LLM de millions d’observations. La confiance déclarée par les LLM eux-mêmes n’était pas un filtre utilisable, contrairement à l’accord entre modèles.</p>
-<p><strong>Connaître le plafond.</strong> Même des annotateurs expérimentés sont souvent en désaccord au niveau le plus fin de la nomenclature. L’accord inter-annotateurs donne une borne supérieure réaliste de ce qu’un modèle peut atteindre, et doit servir à cadrer les attentes.</p>
+<section id="côté-données" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="côté-données"><span class="header-section-number">2</span> Côté données</h2>
+<p><strong>La qualité des labels est le principal levier.</strong> Les codes historiques mélangent les sorties d’un moteur de règles, de modèles précédents et d’une codification humaine faite dans l’urgence. Un moteur de règles auditable, où chaque recodage est loggé, a fait plus pour l’accuracy que la plupart des changements d’architecture. Mais les règles ont des effets de bord sur les codes voisins&nbsp;: elles doivent rester ciblées.</p>
+<p><strong>Pas d’évaluation sans golden set aléatoire annoté à l’aveugle.</strong> Les corrections manuelles sont sélectionnées sur les échecs du modèle, et les annotateurs qui voient la prédiction se laissent influencer. Sans échantillon aléatoire, alimenté en continu et annoté à l’aveugle, on ne peut ni mesurer l’accuracy de la codification automatique, ni fixer le seuil, ni comparer deux modèles. Le monitoring doit être un processus continu, pas une suite de campagnes ponctuelles.</p>
+<p><strong>Les experts comme référence, les LLM pour le volume.</strong> Pour la révision NAF 2025, quelques dizaines de milliers d’annotations d’experts ont suffi pour choisir et valider le recodage par LLM de millions d’observations. La confiance déclarée par les LLM eux-mêmes n’était pas un filtre exploitable&nbsp;; l’accord entre modèles, si.</p>
+<p><strong>Connaître le plafond.</strong> Même des annotateurs expérimentés sont souvent en désaccord au niveau le plus fin de la nomenclature. L’accord inter-annotateurs donne une borne supérieure réaliste de ce qu’un modèle peut atteindre, et permet de cadrer les attentes.</p>
 </section>
-<section id="enseignements-organisationnels" class="level2 page-columns page-full" data-number="3">
-<h2 data-number="3" class="anchored" data-anchor-id="enseignements-organisationnels"><span class="header-section-number">3</span> Enseignements organisationnels</h2>
-<p><strong>Le <em>MLOps</em> est une organisation autant qu’une pile technique.</strong> Le projet associe&nbsp;:</p>
+<section id="côté-organisation" class="level2 page-columns page-full" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="côté-organisation"><span class="header-section-number">3</span> Côté organisation</h2>
+<p><strong>Le MLOps, c’est une organisation autant qu’une stack technique.</strong> Le projet associe&nbsp;:</p>
 <ul>
 <li>l’équipe métier, responsable du répertoire et de la nomenclature&nbsp;;</li>
 <li>les équipes informatiques qui exploitent la production&nbsp;;</li>
 <li>l’équipe de data science (SSP Lab).</li>
 </ul>
-<p>L’étape décisive a été de désigner, au sein de l’équipe métier, un <strong>responsable du modèle</strong>, chargé du réentraînement, de la qualification et de l’exploitation, distinct de l’équipe d’innovation. Cela rejoint la recommandation d’AIML4OS selon laquelle tout modèle en production doit avoir un responsable nommément désigné <span class="citation" data-cites="aiml4os2025">(<a href="#ref-aiml4os2025" role="doc-biblioref">Tayebjee et al. 2025</a>, ch.&nbsp;3)</span>.</p>
-<div class="no-row-height column-margin column-container"></div><p><strong>La confiance se construit avec des outils.</strong> Les experts métier font confiance au modèle lorsqu’ils peuvent voir pourquoi il a décidé (explicabilité), vérifier ce qui a changé entre deux versions (rapports de comparaison, journaux des modifications) et transformer leurs retours en corrections durables (règles).</p>
-<p><strong>L’ouverture du code est payante.</strong> Tout le code est public. Cela a permis des échanges avec d’autres instituts statistiques&nbsp;: Statistique Canada, le Statec, Statistics Austria, Destatis, les instituts nationaux de statistique d’Afrique subsaharienne et l’OCDE. Les outils ont aussi pu être réutilisés pour d’autres nomenclatures.</p>
+<p>Le tournant a été de nommer, dans l’équipe métier, un <strong>responsable du modèle</strong>, chargé du réentraînement, de la qualification et de l’exploitation, distinct de l’équipe d’innovation. Cela rejoint la recommandation d’AIML4OS&nbsp;: tout modèle en production doit avoir un responsable clairement identifié <span class="citation" data-cites="aiml4os2025">(<a href="#ref-aiml4os2025" role="doc-biblioref">Tayebjee et al. 2025</a>, ch.&nbsp;3)</span>. Ce rôle est décrit dans <a href="../fr/organisation.html#sec-business-ds">Défis organisationnels et d’infrastructure</a>.</p>
+<div class="no-row-height column-margin column-container"></div><p><strong>La confiance se construit avec des outils.</strong> Les experts métier font confiance au modèle quand ils peuvent voir pourquoi il a décidé (explicabilité), vérifier ce qui a changé entre deux versions (rapports de comparaison, changelogs) et transformer leurs retours en corrections durables (règles).</p>
+<p><strong>L’open source, ça paie.</strong> Tout le code est public, ce qui a permis des échanges avec d’autres instituts statistiques&nbsp;: Statistique Canada, le Statec, Statistics Austria, Destatis, les instituts nationaux de statistique d’Afrique subsaharienne et l’OCDE. Les outils ont aussi été réutilisés pour d’autres nomenclatures.</p>
 </section>
 <section id="une-perspective-européenne" class="level2 page-columns page-full" data-number="4">
 <h2 data-number="4" class="anchored" data-anchor-id="une-perspective-européenne"><span class="header-section-number">4</span> Une perspective européenne</h2>
-<p>La chaîne a servi d’implémentation de référence, aux côtés de Statistics Austria et de Destatis, pour le tutoriel <em>MLOps</em> rédigé dans le cadre du projet européen <strong>AIML4OS</strong> (Work Package 10, cluster 4 «&nbsp;From text to code&nbsp;») <span class="citation" data-cites="aiml4os2025">(<a href="#ref-aiml4os2025" role="doc-biblioref">Tayebjee et al. 2025</a>)</span>. Le tutoriel organise le cycle de vie en quatre étapes, chacune assortie d’une liste de contrôle&nbsp;:</p>
+<p>Le pipeline a servi d’implémentation de référence, avec ceux de Statistics Austria et de Destatis, pour le tutoriel MLOps rédigé dans le cadre du projet européen <strong>AIML4OS</strong> (Work Package 10, cluster 4 «&nbsp;From text to code&nbsp;») <span class="citation" data-cites="aiml4os2025">(<a href="#ref-aiml4os2025" role="doc-biblioref">Tayebjee et al. 2025</a>)</span>. Le tutoriel découpe le cycle de vie en quatre étapes, chacune avec sa checklist&nbsp;:</p>
 <div class="no-row-height column-margin column-container"><div id="ref-aiml4os2025" class="csl-entry" role="listitem">
 Tayebjee, Meilame, Nina Niederhametner, Bogdan Levagin, et Ariane Lestrade. 2025. <em>From text to code (<span>WP10.4</span>) – <span>MLOps</span> tutorial</em>. AIML4OS project, Work Package 10. <a href="https://aiml4os.github.io/WP10_Cluster4_MLOps/">https://aiml4os.github.io/WP10_Cluster4_MLOps/</a>.
 </div></div><ol type="1">
 <li><a href="https://aiml4os.github.io/WP10_Cluster4_MLOps/chapters/chapter1.html">Données</a>&nbsp;: stockage, validation, versionnage&nbsp;;</li>
-<li><a href="https://aiml4os.github.io/WP10_Cluster4_MLOps/chapters/chapter2.html">Modèle</a>&nbsp;: entraînement reproductible, validation au-delà de l’exactitude, empaquetage, registre&nbsp;;</li>
-<li><a href="https://aiml4os.github.io/WP10_Cluster4_MLOps/chapters/chapter3.html">Mise à disposition</a>&nbsp;: API, conteneurs, <em>GitOps</em>, passerelle entre développement et production&nbsp;;</li>
-<li><a href="https://aiml4os.github.io/WP10_Cluster4_MLOps/chapters/chapter4.html">Suivi</a>&nbsp;: typologie des dérives, niveaux de suivi, réentraînement et promotion.</li>
+<li><a href="https://aiml4os.github.io/WP10_Cluster4_MLOps/chapters/chapter2.html">Modèle</a>&nbsp;: entraînement reproductible, validation au-delà de l’accuracy, packaging, model registry&nbsp;;</li>
+<li><a href="https://aiml4os.github.io/WP10_Cluster4_MLOps/chapters/chapter3.html">Serving</a>&nbsp;: API, conteneurs, GitOps, passage du développement à la production&nbsp;;</li>
+<li><a href="https://aiml4os.github.io/WP10_Cluster4_MLOps/chapters/chapter4.html">Monitoring</a>&nbsp;: types de drift, niveaux de monitoring, réentraînement et mise en production.</li>
 </ol>
 <p>Cette note peut se lire comme une étude de cas détaillée de ce cadre.</p>
 </section>
 <section id="questions-ouvertes" class="level2" data-number="5">
 <h2 data-number="5" class="anchored" data-anchor-id="questions-ouvertes"><span class="header-section-number">5</span> Questions ouvertes</h2>
-<p>Certaines questions méthodologiques restent ouvertes. Elles sont probablement communes à toutes les chaînes de codification&nbsp;:</p>
+<p>Certaines questions méthodologiques restent ouvertes, et se posent sans doute pour tous les pipelines de codification&nbsp;:</p>
 <ul>
-<li><strong>Ancrage.</strong> Si les gestionnaires voient la proposition du modèle, leurs codes ne sont plus indépendants du modèle. Comment en tenir compte lorsque ces codes servent à l’entraînement&nbsp;?</li>
-<li><strong>Taille du golden set.</strong> Avec environ 750 classes, les métriques par classe sur un seul trimestre sont hors de portée. Sur quelle fenêtre faut-il cumuler le golden set&nbsp;?</li>
-<li><strong>Exactitude cible.</strong> Qui fixe <span class="math inline">\(p^*\)</span>&nbsp;? C’est un arbitrage métier entre exactitude et charge de reprise manuelle.</li>
-<li><strong>Historique.</strong> À quel rythme les anciens codes doivent-ils perdre du poids&nbsp;? Comment traiter les observations historiques dont le code NAF 2025 est ambigu&nbsp;: nouvelle annotation, exclusion, ou codes issus des moteurs avec un faible poids&nbsp;?</li>
+<li><strong>Biais d’ancrage.</strong> Si les gestionnaires voient la proposition du modèle, leurs codes ne sont plus indépendants du modèle. Comment en tenir compte quand ces codes servent à l’entraînement&nbsp;?</li>
+<li><strong>Taille du golden set.</strong> Avec environ 750 classes, impossible d’avoir des métriques par classe sur un seul trimestre. Sur quelle fenêtre cumuler le golden set&nbsp;?</li>
+<li><strong>Accuracy cible.</strong> Qui fixe <span class="math inline">\(p^*\)</span>&nbsp;? C’est un arbitrage métier entre accuracy et charge de reprise manuelle.</li>
+<li><strong>Historique.</strong> À quel rythme faire perdre du poids aux anciens codes&nbsp;? Que faire des observations historiques dont le code NAF 2025 est ambigu&nbsp;: les réannoter, les exclure, ou garder les codes des moteurs avec un faible poids&nbsp;?</li>
 </ul>
 
 
@@ -361,57 +373,404 @@ Tayebjee, Meilame, Nina Niederhametner, Bogdan Levagin, et Ariane Lestrade. 2025
 
 <a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Retour au sommet</a></main> <!-- /main -->
 <!--
-  EN | FR switch in the navbar. en/ and fr/ use the same file names and the
-  same anchors, so the switch links to the same page and section in the other
-  language. The choice is remembered for the root page redirect (index.qmd).
+  Site navigation, added at the end of every page.
+
+  1. Table of contents. The left sidebar becomes a single, collapsible table
+     of contents for the whole note: chapters, then their sections and
+     sub-sections, read from outline.json (written by scripts/outline.py).
+     The section being read is highlighted as the reader scrolls.
+
+  2. EN | FR switch. en/ and fr/ use the same file names and the same
+     anchors, so switching language swaps the page content in place: same
+     page, same section, no reload. The choice is remembered for the root
+     page redirect (index.qmd).
 -->
 <script>
 (function () {
+  "use strict";
+
   var KEY = "codif-ape-lang";
   var LANGS = ["en", "fr"];
-  var TITLES = {
-    en: { label: "EN", hint: "Read this page in English", brand: "APE coding · MLOps" },
-    fr: { label: "FR", hint: "Lire cette page en français", brand: "Codification APE · MLOps" }
+  var STRINGS = {
+    en: {
+      label: "EN", hint: "Read this page in English", brand: "APE coding · MLOps",
+      group: "Language", toc: "Table of contents", expand: "Expand", collapse: "Collapse"
+    },
+    fr: {
+      label: "FR", hint: "Lire cette page en français", brand: "Codification APE · MLOps",
+      group: "Langue", toc: "Sommaire", expand: "Déplier", collapse: "Replier"
+    }
   };
+  // Parts of the page that differ between languages, swapped on a switch.
+  var SWAPPED = [
+    "main#quarto-document-content",
+    "#quarto-margin-sidebar",
+    "nav.page-navigation",
+    ".nav-footer-center",
+    ".quarto-secondary-nav-title"
+  ];
+  var PATH = /^(.*\/)(en|fr)(\/.*)?$/;
 
-  var m = window.location.pathname.match(/^(.*\/)(en|fr)(\/.*)?$/);
+  var m = window.location.pathname.match(PATH);
   if (!m) return;
-  var base = m[1], current = m[2], rest = m[3] || "/";
+  var base = m[1];
+  var state = { lang: m[2], page: pageOf(m[3]) };
 
-  try { localStorage.setItem(KEY, current); } catch (e) {}
+  // "/data.html", "/data" and "/" all name a page; compare them without ".html".
+  function pageOf(rest) {
+    var page = (rest || "/").replace(/^\//, "").replace(/\.html$/, "");
+    return page === "" ? "index" : page;
+  }
 
-  var brand = document.querySelector(".navbar-brand");
-  if (brand) brand.setAttribute("href", base + current + "/index.html");
-  var brandTitle = document.querySelector(".navbar-title");
-  if (brandTitle) brandTitle.textContent = TITLES[current].brand;
+  function urlFor(lang, page) {
+    return base + lang + "/" + page + ".html";
+  }
 
-  var group = document.createElement("div");
-  group.className = "lang-switch";
-  group.setAttribute("role", "group");
-  group.setAttribute("aria-label", current === "fr" ? "Langue" : "Language");
+  function el(tag, className, attrs) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    Object.keys(attrs || {}).forEach(function (k) { node.setAttribute(k, attrs[k]); });
+    return node;
+  }
+
+  // ---------------------------------------------------------------- MathJax
+
+  // Section titles can hold math; MathJax loads after this script.
+  function typeset(nodes) {
+    var mj = window.MathJax;
+    if (mj && mj.startup && mj.startup.promise) {
+      return mj.startup.promise.then(function () { return mj.typesetPromise(nodes); });
+    }
+    if (document.readyState !== "complete") {
+      return new Promise(function (resolve) {
+        window.addEventListener("load", function () { typeset(nodes).then(resolve); }, { once: true });
+      });
+    }
+    return Promise.resolve();
+  }
+
+  // ----------------------------------------------------- Table of contents
+
+  var outline = fetch(base + "outline.json")
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .catch(function () { return null; });
+
+  var links = {};       // section id -> link, for the current page
+  var activeLink = null;
+
+  function setOpen(li, open) {
+    li.classList.toggle("is-open", open);
+    var button = li.querySelector(":scope > .toc-row > .toc-toggle");
+    if (button) {
+      button.setAttribute("aria-expanded", String(open));
+      button.setAttribute("aria-label", STRINGS[state.lang][open ? "collapse" : "expand"]);
+    }
+  }
+
+  function tocItem(node, depth, page, isCurrentPage) {
+    var li = el("li", "toc-item toc-depth-" + depth);
+    var row = el("div", "toc-row");
+    var children = depth === 0 ? node.sections : node.children;
+
+    if (children && children.length) {
+      var button = el("button", "toc-toggle", { type: "button" });
+      button.addEventListener("click", function () {
+        li.dataset.pinned = "1";
+        setOpen(li, !li.classList.contains("is-open"));
+      });
+      row.appendChild(button);
+    } else {
+      row.appendChild(el("span", "toc-spacer"));
+    }
+
+    var a = el("a", "toc-link no-external");
+    if (depth === 0) {
+      a.href = urlFor(state.lang, page);
+      if (node.number) {
+        var num = el("span", "toc-number");
+        num.textContent = node.number + ".";
+        a.appendChild(num);
+      }
+      a.insertAdjacentHTML("beforeend", node.title);
+      if (isCurrentPage) {
+        a.classList.add("is-current");
+        a.setAttribute("aria-current", "page");
+        a.addEventListener("click", function (e) {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      }
+    } else {
+      a.href = (isCurrentPage ? "" : urlFor(state.lang, page)) + "#" + node.id;
+      a.innerHTML = node.title;
+      if (isCurrentPage) links[node.id] = a;
+    }
+    row.appendChild(a);
+    li.appendChild(row);
+
+    if (children && children.length) {
+      var ul = el("ul", "toc-children");
+      children.forEach(function (child) {
+        ul.appendChild(tocItem(child, depth + 1, page, isCurrentPage));
+      });
+      li.appendChild(ul);
+      setOpen(li, false);
+    }
+    return li;
+  }
+
+  function buildToc(data) {
+    var container = document.querySelector("#quarto-sidebar .sidebar-menu-container");
+    if (!container || !data || !data[state.lang]) return;
+
+    links = {};
+    activeLink = null;
+    var nav = el("nav", "site-toc", { "aria-label": STRINGS[state.lang].toc });
+    var ul = el("ul", "toc-children toc-chapters");
+    data[state.lang].forEach(function (chapter) {
+      var page = pageOf(chapter.href);
+      var isCurrent = page === state.page;
+      var li = tocItem(chapter, 0, page, isCurrent);
+      if (isCurrent) {
+        li.classList.add("is-current");
+        setOpen(li, true);
+      }
+      ul.appendChild(li);
+    });
+    nav.appendChild(ul);
+    container.replaceChildren(nav);
+    document.body.classList.add("has-site-toc");
+
+    typeset([nav]);
+    updateActive();
+    var current = nav.querySelector(".toc-link.is-current");
+    if (current) revealInSidebar(current);
+  }
+
+  function revealInSidebar(link) {
+    var sidebar = document.getElementById("quarto-sidebar");
+    if (!sidebar) return;
+    var r = link.getBoundingClientRect();
+    var s = sidebar.getBoundingClientRect();
+    if (r.top < s.top || r.bottom > s.bottom) {
+      sidebar.scrollTop += r.top - s.top - s.height / 3;
+    }
+  }
+
+  function sectionList() {
+    return Array.prototype.slice.call(document.querySelectorAll(
+      "main#quarto-document-content section.level2[id], main#quarto-document-content section.level3[id]"
+    ));
+  }
+
+  // The section being read: the last one whose top has scrolled past the
+  // navbar.
+  function currentSection() {
+    var sections = sectionList();
+    if (!sections.length) return null;
+    var atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    if (atBottom) return sections[sections.length - 1];
+    var current = null;
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].getBoundingClientRect().top > 100) break;
+      current = sections[i];
+    }
+    return current;
+  }
+
+  function updateActive() {
+    var section = currentSection();
+    var link = (section && links[section.id]) || null;
+    if (link === activeLink) return;
+    if (activeLink) activeLink.classList.remove("active");
+    activeLink = link;
+    if (!link) return;
+    link.classList.add("active");
+
+    // Open the branch that holds the active section, and close the branches
+    // opened automatically before, unless the reader opened them by hand.
+    var branch = [];
+    for (var li = link.closest(".toc-item"); li; li = li.parentElement.closest(".toc-item")) {
+      branch.push(li);
+    }
+    document.querySelectorAll(".site-toc .toc-item.is-open").forEach(function (li) {
+      if (branch.indexOf(li) === -1 && !li.classList.contains("is-current") && !li.dataset.pinned) {
+        setOpen(li, false);
+      }
+    });
+    branch.forEach(function (li) {
+      if (li.querySelector(":scope > .toc-children")) setOpen(li, true);
+    });
+    revealInSidebar(link);
+  }
+
+  var ticking = false;
+  window.addEventListener("scroll", function () {
+    if (ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(function () { ticking = false; updateActive(); });
+  }, { passive: true });
+
+  // -------------------------------------------------------- Language switch
+
+  var switchGroup = el("div", "lang-switch", { role: "group" });
+
+  function updateChrome() {
+    var s = STRINGS[state.lang];
+    var brand = document.querySelector(".navbar-brand");
+    if (brand) brand.setAttribute("href", urlFor(state.lang, "index"));
+    var brandTitle = document.querySelector(".navbar-title");
+    if (brandTitle) brandTitle.textContent = s.brand;
+    switchGroup.setAttribute("aria-label", s.group);
+    Array.prototype.forEach.call(switchGroup.children, function (a) {
+      var lang = a.getAttribute("lang");
+      var active = lang === state.lang;
+      a.classList.toggle("active", active);
+      if (active) a.setAttribute("aria-current", "true");
+      else a.removeAttribute("aria-current");
+      a.href = urlFor(lang, state.page) + window.location.hash;
+    });
+  }
 
   LANGS.forEach(function (lang) {
-    var a = document.createElement("a");
-    a.textContent = TITLES[lang].label;
-    a.setAttribute("lang", lang);
-    a.setAttribute("hreflang", lang);
-    a.setAttribute("title", TITLES[lang].hint);
-    if (lang === current) {
-      a.className = "active";
-      a.setAttribute("aria-current", "true");
-    }
-    a.href = base + lang + rest + window.location.hash;
-    a.addEventListener("click", function () {
-      try { localStorage.setItem(KEY, lang); } catch (e) {}
-      // Keep the section the reader is on, even after scrolling.
-      a.href = base + lang + rest + window.location.hash;
+    var a = el("a", "no-external", { lang: lang, hreflang: lang, title: STRINGS[lang].hint });
+    a.textContent = STRINGS[lang].label;
+    a.addEventListener("click", function (e) {
+      // Let modified clicks open the other language in a new tab.
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      switchLang(lang, true);
     });
-    group.appendChild(a);
+    switchGroup.appendChild(a);
   });
 
   var slot = document.querySelector(".quarto-navbar-tools") ||
              document.querySelector(".navbar-container");
-  if (slot) slot.insertBefore(group, slot.firstChild);
+  if (slot) slot.insertBefore(switchGroup, slot.firstChild);
+
+  // Quarto marks external links (icon, new tab) on page load only.
+  function adornExternalLinks(root) {
+    root.querySelectorAll("a[href]:not(.no-external):not([aria-hidden])").forEach(function (a) {
+      if (/^https?:$/.test(a.protocol) && a.origin !== window.location.origin) {
+        a.setAttribute("target", "_blank");
+        if (a.getAttribute("rel") === null) a.setAttribute("rel", "noopener");
+        a.classList.add("external");
+      }
+    });
+  }
+
+  // Same steps as Quarto's mermaid-init.js, which only runs on page load.
+  var mermaidCount = 0;
+  function renderMermaid(root) {
+    var mermaid = window.mermaid;
+    if (!mermaid) return Promise.resolve();
+    var blocks = Array.prototype.slice.call(root.querySelectorAll("pre.mermaid-js"));
+    return blocks.reduce(function (done, pre) {
+      return done.then(function () {
+        var text = pre.textContent.replace(/&nbsp;/g, " ");
+        return mermaid.mermaidAPI.render("mermaid-switch-" + (++mermaidCount), text, pre)
+          .then(function (result) {
+            pre.innerHTML = result.svg;
+            var svg = pre.querySelector("svg");
+            if (pre.dataset.label) {
+              var style = svg.querySelector("style");
+              if (style) style.innerHTML = style.innerHTML.split("#" + svg.id).join("#" + pre.dataset.label + "-mermaid");
+              svg.id = pre.dataset.label + "-mermaid";
+            }
+            pre.parentElement.replaceChild(svg, pre);
+            svg.classList.add("mermaid-js");
+            /* global _quartoMermaid */
+            if (typeof _quartoMermaid !== "undefined") {
+              try { _quartoMermaid.postProcess(svg); } catch (e) {}
+            }
+          });
+      });
+    }, Promise.resolve());
+  }
+
+  var switching = false;
+  function switchLang(lang, push) {
+    if (lang === state.lang || switching) return;
+    switching = true;
+    var url = urlFor(lang, state.page);
+
+    // Remember where the reader is, to land at the same place. Both
+    // languages have the same sections in the same order, but not always the
+    // same ids (those derived from French titles differ), so sections are
+    // matched by position.
+    var before = sectionList();
+    var anchor = currentSection();
+    var anchorIndex = before.indexOf(anchor);
+    var anchorTop = anchor ? anchor.getBoundingClientRect().top : null;
+    var hashIndex = before.findIndex(function (s) { return "#" + s.id === window.location.hash; });
+    var scrollY = window.scrollY;
+
+    document.documentElement.classList.add("lang-switching");
+    fetch(url)
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (html) {
+        var doc = new DOMParser().parseFromString(html, "text/html");
+        var after = doc.querySelectorAll(
+          "main#quarto-document-content section.level2[id], main#quarto-document-content section.level3[id]"
+        );
+        var hash = hashIndex >= 0 && after[hashIndex] ? "#" + after[hashIndex].id : window.location.hash;
+        state.lang = lang;
+        if (push) history.pushState({ lang: lang }, "", url + hash);
+        else if (hash !== window.location.hash) history.replaceState(history.state, "", url + hash);
+        try { localStorage.setItem(KEY, lang); } catch (e) {}
+
+        SWAPPED.forEach(function (selector) {
+          var current = document.querySelector(selector);
+          var next = doc.querySelector(selector);
+          if (!current || !next) return;
+          next.querySelectorAll("script").forEach(function (s) { s.remove(); });
+          current.replaceWith(document.importNode(next, true));
+        });
+        document.title = doc.title;
+        document.documentElement.lang = doc.documentElement.lang || lang;
+        updateChrome();
+
+        var main = document.querySelector("main#quarto-document-content");
+        adornExternalLinks(main);
+        return Promise.all([
+          renderMermaid(main).catch(function () {}),
+          typeset([main]).catch(function () {}),
+          outline.then(buildToc)
+        ]);
+      })
+      .then(function () {
+        var target = anchorIndex >= 0 ? sectionList()[anchorIndex] : null;
+        if (target && anchorTop !== null) {
+          window.scrollTo(0, window.scrollY + target.getBoundingClientRect().top - anchorTop);
+        } else {
+          window.scrollTo(0, scrollY);
+        }
+        updateActive();
+      })
+      .catch(function () {
+        // Fall back to a normal page load.
+        window.location.href = url + window.location.hash;
+      })
+      .then(function () {
+        switching = false;
+        document.documentElement.classList.remove("lang-switching");
+      });
+  }
+
+  // Back and forward between two languages of the same page stay in place.
+  window.addEventListener("popstate", function () {
+    var mm = window.location.pathname.match(PATH);
+    if (!mm) return;
+    if (pageOf(mm[3]) !== state.page) {
+      window.location.reload();
+    } else if (mm[2] !== state.lang) {
+      switchLang(mm[2], false);
+    }
+  });
+
+  try { localStorage.setItem(KEY, state.lang); } catch (e) {}
+  updateChrome();
+  outline.then(buildToc);
 })();
 </script>
 <script id="quarto-html-after-body" type="application/javascript">
@@ -823,13 +1182,13 @@ Tayebjee, Meilame, Nina Niederhametner, Bogdan Levagin, et Ariane Lestrade. 2025
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../fr/companion-projects.html" class="pagination-link" aria-label="Projets associés&nbsp;: TTC et GRAAL">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Projets associés&nbsp;: TTC et GRAAL</span>
+      <a href="../fr/organisation.html" class="pagination-link" aria-label="Défis organisationnels et d'infrastructure">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Défis organisationnels et d’infrastructure</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../fr/references.html" class="pagination-link" aria-label="Références et ressources">
-        <span class="nav-page-text">Références et ressources</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../fr/glossary.html" class="pagination-link" aria-label="Glossaire et notations">
+        <span class="nav-page-text">Glossaire et notations</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

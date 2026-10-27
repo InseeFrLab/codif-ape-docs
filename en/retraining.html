@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="author" content="SSP Lab">
+<meta name="author" content="Meilame Tayebjee">
 <meta name="description" content="How each quarter’s production flow becomes a better model, without fooling ourselves: golden set, data curation, business rules, quality gates and qualification.">
 
 <title>Retraining protocol – APE coding · MLOps</title>
@@ -38,7 +38,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../en/companion-projects.html" rel="next">
+<link href="../en/organisation.html" rel="next">
 <link href="../en/monitoring.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -49,7 +49,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-fc581236a46ad31b3ea501458e50ff32.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-7ac3c55ca58f93c4c6c73bcc24e20e69.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -198,6 +198,12 @@ window.Quarto = {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../en/evaluation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Evaluation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../en/serving.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Serving and deployment</span></a>
   </div>
@@ -216,14 +222,20 @@ window.Quarto = {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../en/companion-projects.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Companion projects: TTC and GRAAL</span></a>
+  <a href="../en/organisation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Organisational and infrastructural challenges</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../en/lessons.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Lessons learned</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../en/glossary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glossary and notation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -242,18 +254,19 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#sec-golden" id="toc-sec-golden" class="nav-link active" data-scroll-target="#sec-golden"><span class="header-section-number">1</span> What the production flow gives us</a></li>
-  <li><a href="#building-the-next-training-set" id="toc-building-the-next-training-set" class="nav-link" data-scroll-target="#building-the-next-training-set"><span class="header-section-number">2</span> Building the next training set</a>
+  <li><a href="#sec-status" id="toc-sec-status" class="nav-link active" data-scroll-target="#sec-status"><span class="header-section-number">1</span> Where we stand</a></li>
+  <li><a href="#sec-golden" id="toc-sec-golden" class="nav-link" data-scroll-target="#sec-golden"><span class="header-section-number">2</span> What the production flow gives us</a></li>
+  <li><a href="#sec-next-training-set" id="toc-sec-next-training-set" class="nav-link" data-scroll-target="#sec-next-training-set"><span class="header-section-number">3</span> Building the next training set</a>
   <ul class="collapse">
-  <li><a href="#the-accuracy-of-automatic-coding-can-be-estimated" id="toc-the-accuracy-of-automatic-coding-can-be-estimated" class="nav-link" data-scroll-target="#the-accuracy-of-automatic-coding-can-be-estimated"><span class="header-section-number">2.1</span> The accuracy of automatic coding can be estimated</a></li>
-  <li><a href="#curating-the-automatic-set-focus-on-disagreements" id="toc-curating-the-automatic-set-focus-on-disagreements" class="nav-link" data-scroll-target="#curating-the-automatic-set-focus-on-disagreements"><span class="header-section-number">2.2</span> Curating the automatic set: focus on disagreements</a></li>
-  <li><a href="#sec-known-cases" id="toc-sec-known-cases" class="nav-link" data-scroll-target="#sec-known-cases"><span class="header-section-number">2.3</span> Known cases: propagate rather than overweight</a></li>
-  <li><a href="#sec-assembly" id="toc-sec-assembly" class="nav-link" data-scroll-target="#sec-assembly"><span class="header-section-number">2.4</span> Assembly</a></li>
+  <li><a href="#the-accuracy-of-automatic-coding-can-be-estimated" id="toc-the-accuracy-of-automatic-coding-can-be-estimated" class="nav-link" data-scroll-target="#the-accuracy-of-automatic-coding-can-be-estimated"><span class="header-section-number">3.1</span> The accuracy of automatic coding can be estimated</a></li>
+  <li><a href="#sec-curation" id="toc-sec-curation" class="nav-link" data-scroll-target="#sec-curation"><span class="header-section-number">3.2</span> Curating the automatic set: focus on disagreements</a></li>
+  <li><a href="#sec-known-cases" id="toc-sec-known-cases" class="nav-link" data-scroll-target="#sec-known-cases"><span class="header-section-number">3.3</span> Known cases: propagate rather than overweight</a></li>
+  <li><a href="#sec-assembly" id="toc-sec-assembly" class="nav-link" data-scroll-target="#sec-assembly"><span class="header-section-number">3.4</span> Assembly</a></li>
   </ul></li>
-  <li><a href="#quality-gates-f_n1-against-f_n" id="toc-quality-gates-f_n1-against-f_n" class="nav-link" data-scroll-target="#quality-gates-f_n1-against-f_n"><span class="header-section-number">3</span> Quality gates: <span class="math inline">\(f_{n+1}\)</span> against <span class="math inline">\(f_n\)</span></a></li>
-  <li><a href="#sec-preprod" id="toc-sec-preprod" class="nav-link" data-scroll-target="#sec-preprod"><span class="header-section-number">4</span> Qualification and release</a></li>
-  <li><a href="#comparing-models-over-time" id="toc-comparing-models-over-time" class="nav-link" data-scroll-target="#comparing-models-over-time"><span class="header-section-number">5</span> Comparing models over time</a></li>
-  <li><a href="#overview" id="toc-overview" class="nav-link" data-scroll-target="#overview"><span class="header-section-number">6</span> Overview</a></li>
+  <li><a href="#sec-gates" id="toc-sec-gates" class="nav-link" data-scroll-target="#sec-gates"><span class="header-section-number">4</span> Quality gates: <span class="math inline">\(f_{n+1}\)</span> against <span class="math inline">\(f_n\)</span></a></li>
+  <li><a href="#sec-preprod" id="toc-sec-preprod" class="nav-link" data-scroll-target="#sec-preprod"><span class="header-section-number">5</span> Qualification and release</a></li>
+  <li><a href="#comparing-models-over-time" id="toc-comparing-models-over-time" class="nav-link" data-scroll-target="#comparing-models-over-time"><span class="header-section-number">6</span> Comparing models over time</a></li>
+  <li><a href="#overview" id="toc-overview" class="nav-link" data-scroll-target="#overview"><span class="header-section-number">7</span> Overview</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/InseeFrLab/codif-ape-docs/edit/main/en/retraining.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/InseeFrLab/codif-ape-docs/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -276,11 +289,11 @@ window.Quarto = {
   <div class="quarto-title-meta-heading">Affiliation</div>
   
     <div class="quarto-title-meta-contents">
-    <p class="author">SSP Lab </p>
+    <p class="author"><a href="https://github.com/meilame-tayebjee">Meilame Tayebjee</a> <a href="mailto:meilame.tayebjee@insee.fr" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> </p>
   </div>
   <div class="quarto-title-meta-contents">
         <p class="affiliation">
-            Insee
+            Innovation Lab, Insee
           </p>
       </div>
   </div>
@@ -297,15 +310,117 @@ window.Quarto = {
 </header>
 
 
-<p>Retraining a model is easy. Retraining it so that it is <strong>demonstrably no worse</strong> than the one in production, under labels that are partly produced by that very model, is hard. This chapter describes the protocol we use for that. It is the methodological core of the pipeline.</p>
-<p>The protocol follows a quarterly cycle. During quarter <span class="math inline">\(n\)</span>, the model <span class="math inline">\(f_n\)</span> is in production with a threshold <span class="math inline">\(\tau_n\)</span>, and the cycle produces <span class="math inline">\(f_{n+1}\)</span> and <span class="math inline">\(\tau_{n+1}\)</span>.</p>
-<section id="sec-golden" class="level2" data-number="1">
-<h2 data-number="1" class="anchored" data-anchor-id="sec-golden"><span class="header-section-number">1</span> What the production flow gives us</h2>
+<p>Retraining a model is easy. Retraining it so that it is <strong>demonstrably no worse</strong> than the one in production, under labels that are partly produced by that very model, is hard. This chapter describes the protocol we are putting in place for that. It is the methodological core of the pipeline.</p>
+<p>The protocol follows a quarterly cycle. During quarter <span class="math inline">\(n\)</span>, the model <span class="math inline">\(f_n\)</span> is in production with a threshold <span class="math inline">\(\tau_n\)</span>, and the cycle produces <span class="math inline">\(f_{n+1}\)</span> and <span class="math inline">\(\tau_{n+1}\)</span>. All the notation is gathered in the <a href="../en/glossary.html#sec-notation">glossary</a>.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>A target, partly in place
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This chapter describes the protocol we are putting in place, not only what runs today. The <a href="#sec-status">status table</a> below says, for each part, what is in place, what is partly in place and what is still a target.</p>
+</div>
+</div>
+<section id="sec-status" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="sec-status"><span class="header-section-number">1</span> Where we stand</h2>
+<div id="tbl-status" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-status-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Status of the protocol.
+</figcaption>
+<div aria-describedby="tbl-status-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Component</th>
+<th style="text-align: left;">Status</th>
+<th style="text-align: left;">Today</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Rule engine with audit journals, applied before each training</td>
+<td style="text-align: left;"><span class="status status-done">In place</span></td>
+<td style="text-align: left;">Runs in the preprocessing workflow (<a href="../en/data.html#sec-rules">Data</a>)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Reproducible training, datasets logged with each run</td>
+<td style="text-align: left;"><span class="status status-done">In place</span></td>
+<td style="text-align: left;">Configuration files, locked environments, datasets logged in MLflow (<a href="../en/model.html">Model</a>)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Metrics logged with each run</td>
+<td style="text-align: left;"><span class="status status-partial">Partly</span></td>
+<td style="text-align: left;">Accuracy at each level, ECE, Brier score, confidence histogram and accuracy–automation curve. Reliability diagram, AURC, macro-F1 and metrics by quarter are a target (<a href="../en/evaluation.html">Evaluation</a>)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sample weights</td>
+<td style="text-align: left;"><span class="status status-partial">Partly</span></td>
+<td style="text-align: left;">Used to weigh the rows created by business rules. Weights by source and by age are a target</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Golden set</td>
+<td style="text-align: left;"><span class="status status-partial">Partly</span></td>
+<td style="text-align: left;">Expert annotation campaigns have been run (NAF rev. 2, NAF 2025), but not yet a continuous random sample of the flow, nor the fixed split into <span class="math inline">\(\bar{G}^{\text{val}}\)</span> and <span class="math inline">\(\bar{G}^{\text{test}}\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Curation of the automatic set by disagreement with independent engines</td>
+<td style="text-align: left;"><span class="status status-partial">Partly</span></td>
+<td style="text-align: left;">Prototyped with <a href="../en/data.html#sec-graal">GRAAL</a> on test samples; not yet applied to the automatically coded flow</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Label-free monitoring</td>
+<td style="text-align: left;"><span class="status status-partial">Partly</span></td>
+<td style="text-align: left;">A dashboard exists; collecting production logs and drift tests are a target (<a href="../en/monitoring.html">Monitoring</a>)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Quarterly cycle</td>
+<td style="text-align: left;"><span class="status status-target">Target</span></td>
+<td style="text-align: left;">Models are retrained on demand</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Checks on known cases before training, rule mining from manual corrections</td>
+<td style="text-align: left;"><span class="status status-target">Target</span></td>
+<td style="text-align: left;">Rules are written by hand from expert feedback</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Quality gates blocking a release (known cases, non-inferiority, coverage at <span class="math inline">\(p^*\)</span>)</td>
+<td style="text-align: left;"><span class="status status-target">Target</span></td>
+<td style="text-align: left;">Paired tests and bootstrap intervals exist in GRAAL’s evaluation module, not yet for the production model</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Threshold and calibration inside the model artifact, champion and challenger in the registry</td>
+<td style="text-align: left;"><span class="status status-target">Target</span></td>
+<td style="text-align: left;">Models are pinned by version number in the deployment manifests</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Automated qualification (latency, parity), shadow deployment</td>
+<td style="text-align: left;"><span class="status status-target">Target</span></td>
+<td style="text-align: left;">See <a href="../en/organisation.html#sec-qualification-platform">Organisational and infrastructural challenges</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Multi-level heads, label attention</td>
+<td style="text-align: left;"><span class="status status-target">Target</span></td>
+<td style="text-align: left;">Available in <a href="../en/model.html#sec-ttc">torchTextClassifiers</a>, not used by the production model</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<!-- Status established from the code of the repositories (October 2026). Qualification is run with the production teams, outside these repositories: to be confirmed by the authors of the organisation chapter. -->
+</section>
+<section id="sec-golden" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="sec-golden"><span class="header-section-number">2</span> What the production flow gives us</h2>
 <p>The flow of declarations <span class="math inline">\(F_n\)</span> received during quarter <span class="math inline">\(n\)</span> splits naturally into several sets. Each one has its own value and its own <strong>selection bias</strong>:</p>
 <div id="tbl-sets" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-sets-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;1: The four sources of labels in a production cycle.
+Table&nbsp;2: The four sources of labels in a production cycle.
 </figcaption>
 <div aria-describedby="tbl-sets-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <table class="caption-top table">
@@ -407,24 +522,24 @@ Figure&nbsp;1: How the production flow splits.
 <li><span class="math inline">\(\bar{G}^{\text{test}}\)</span> is used only for the <strong>final verdict</strong>.</li>
 </ul>
 </section>
-<section id="building-the-next-training-set" class="level2" data-number="2">
-<h2 data-number="2" class="anchored" data-anchor-id="building-the-next-training-set"><span class="header-section-number">2</span> Building the next training set</h2>
-<section id="the-accuracy-of-automatic-coding-can-be-estimated" class="level3" data-number="2.1">
-<h3 data-number="2.1" class="anchored" data-anchor-id="the-accuracy-of-automatic-coding-can-be-estimated"><span class="header-section-number">2.1</span> The accuracy of automatic coding can be estimated</h3>
+<section id="sec-next-training-set" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="sec-next-training-set"><span class="header-section-number">3</span> Building the next training set</h2>
+<section id="the-accuracy-of-automatic-coding-can-be-estimated" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="the-accuracy-of-automatic-coding-can-be-estimated"><span class="header-section-number">3.1</span> The accuracy of automatic coding can be estimated</h3>
 <p>We do not know which automatic codes are wrong, but we can estimate <strong>how many</strong> are. The golden set is a random sample of the flow, so its above-threshold part <span class="math inline">\(G_n^A = \{x \in G_n : \text{CI}_n(x) \ge \tau_n\}\)</span> is a random sample of <span class="math inline">\(A_n\)</span>. The accuracy of <span class="math inline">\(f_n\)</span> on <span class="math inline">\(G_n^A\)</span>, with a confidence interval (Wilson or bootstrap), estimates the accuracy of automatic coding. Accumulating over quarters gives enough data for this estimate.</p>
 </section>
-<section id="curating-the-automatic-set-focus-on-disagreements" class="level3" data-number="2.2">
-<h3 data-number="2.2" class="anchored" data-anchor-id="curating-the-automatic-set-focus-on-disagreements"><span class="header-section-number">2.2</span> Curating the automatic set: focus on disagreements</h3>
+<section id="sec-curation" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="sec-curation"><span class="header-section-number">3.2</span> Curating the automatic set: focus on disagreements</h3>
 <p>Feeding <span class="math inline">\(A_n\)</span> back into training with the labels of <span class="math inline">\(f_n\)</span> is <strong>self-training</strong>: the model learns nothing new, and its confident errors get reinforced. To break this loop, we compare <span class="math inline">\(f_n\)</span> with <strong>independent engines</strong> <span class="math inline">\(E\)</span>. None of them is an oracle:</p>
 <ul>
 <li>the <strong>rule engine</strong> of <a href="../en/data.html#sec-rules">codif-ape-preprocess</a> applies deterministic rules, which often abstain, plus a cautious extension to similar descriptions;</li>
-<li>the <strong>LLM agents</strong> of <a href="../en/companion-projects.html#sec-graal">GRAAL</a> navigate the classification and read the explanatory notes. They are slow, but latency does not matter in an offline batch.</li>
+<li>the <strong>LLM agents</strong> of <a href="../en/data.html#sec-graal">GRAAL</a> navigate the classification and read the explanatory notes. They are slow, but latency does not matter in an offline batch.</li>
 </ul>
 <p>The global accuracy of an engine on the golden set is not the right question. What matters is <strong>who is right when <span class="math inline">\(E\)</span> and <span class="math inline">\(f_n\)</span> disagree</strong> on the automatic set:</p>
 <div id="tbl-curation" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-curation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;2: Decision rule for automatically coded cases.
+Table&nbsp;3: Decision rule for automatically coded cases.
 </figcaption>
 <div aria-describedby="tbl-curation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <table class="caption-top table">
@@ -468,8 +583,8 @@ Table&nbsp;2: Decision rule for automatically coded cases.
 </ul>
 <p>To control the cost of LLM engines, they can be restricted to a band of moderate confidence <span class="math inline">\(\tau_n \le \text{CI} &lt; \tau'\)</span>: very confident predictions are rarely wrong.</p>
 </section>
-<section id="sec-known-cases" class="level3" data-number="2.3">
-<h3 data-number="2.3" class="anchored" data-anchor-id="sec-known-cases"><span class="header-section-number">2.3</span> Known cases: propagate rather than overweight</h3>
+<section id="sec-known-cases" class="level3" data-number="3.3">
+<h3 data-number="3.3" class="anchored" data-anchor-id="sec-known-cases"><span class="header-section-number">3.3</span> Known cases: propagate rather than overweight</h3>
 <p>Simply overweighting known cases rarely works. The training set usually contains <strong>the same descriptions with the old code</strong>, so the model sees contradictory labels. The protocol therefore:</p>
 <ol type="1">
 <li>turns each piece of business feedback into a <strong>rule</strong>, and applies it to the <strong>whole</strong> training set through the rule engine;</li>
@@ -495,8 +610,8 @@ Table&nbsp;2: Decision rule for automatically coded cases.
 </ol>
 <p>The rule repository is versioned. Each rule records its origin, its date and who validated it, so that it can be audited or withdrawn.</p>
 </section>
-<section id="sec-assembly" class="level3" data-number="2.4">
-<h3 data-number="2.4" class="anchored" data-anchor-id="sec-assembly"><span class="header-section-number">2.4</span> Assembly</h3>
+<section id="sec-assembly" class="level3" data-number="3.4">
+<h3 data-number="3.4" class="anchored" data-anchor-id="sec-assembly"><span class="header-section-number">3.4</span> Assembly</h3>
 <p>The next training set is</p>
 <p><span class="math display">\[
 \mathcal{D}_{n+1} = \mathcal{D}_n \cup M_n \cup \tilde{A}_n \cup K_n,
@@ -516,12 +631,12 @@ Table&nbsp;2: Decision rule for automatically coded cases.
 <p>A random validation split of the training set is used only for early stopping.</p>
 </section>
 </section>
-<section id="quality-gates-f_n1-against-f_n" class="level2" data-number="3">
-<h2 data-number="3" class="anchored" data-anchor-id="quality-gates-f_n1-against-f_n"><span class="header-section-number">3</span> Quality gates: <span class="math inline">\(f_{n+1}\)</span> against <span class="math inline">\(f_n\)</span></h2>
+<section id="sec-gates" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="sec-gates"><span class="header-section-number">4</span> Quality gates: <span class="math inline">\(f_{n+1}\)</span> against <span class="math inline">\(f_n\)</span></h2>
 <div id="tbl-gates" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-gates-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;3: Gates a candidate model must pass.
+Table&nbsp;4: Gates a candidate model must pass.
 </figcaption>
 <div aria-describedby="tbl-gates-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <table class="caption-top table">
@@ -589,24 +704,24 @@ Table&nbsp;3: Gates a candidate model must pass.
 </ul>
 <p>The registry tracks the <em>champion</em> and the <em>challenger</em>.</p>
 </section>
-<section id="sec-preprod" class="level2" data-number="4">
-<h2 data-number="4" class="anchored" data-anchor-id="sec-preprod"><span class="header-section-number">4</span> Qualification and release</h2>
+<section id="sec-preprod" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="sec-preprod"><span class="header-section-number">5</span> Qualification and release</h2>
 <p>Even with an unchanged architecture, qualification is not a formality:</p>
 <ul>
-<li><strong>Iso-production qualification</strong>: p95 latency and memory, on CPU, on the pre-production platform.</li>
+<li><strong>Iso-production qualification</strong>: p95 latency and memory, on CPU, on the <a href="../en/organisation.html#sec-qualification-platform">qualification platform</a>.</li>
 <li><strong>Online/offline parity</strong>: the served model must reproduce the offline predictions on <span class="math inline">\(\bar{G}^{\text{test}}\)</span> exactly. This is a cheap test that catches preprocessing or library-version mismatches.</li>
 <li><strong>The threshold and the calibration ship inside the model</strong> artifact, not in a separate configuration.</li>
 <li><strong>Shadow deployment</strong> for a few weeks: <span class="math inline">\(f_{n+1}\)</span> scores the real flow next to <span class="math inline">\(f_n\)</span>. We monitor the effective automation rate, the agreement with <span class="math inline">\(f_n\)</span> and the score distribution. Disagreements feed annotation.</li>
 <li><strong>Rollback</strong> means pointing production back at <span class="math inline">\(f_n\)</span>.</li>
 </ul>
 </section>
-<section id="comparing-models-over-time" class="level2" data-number="5">
-<h2 data-number="5" class="anchored" data-anchor-id="comparing-models-over-time"><span class="header-section-number">5</span> Comparing models over time</h2>
+<section id="comparing-models-over-time" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="comparing-models-over-time"><span class="header-section-number">6</span> Comparing models over time</h2>
 <p>Scores obtained on different golden sets cannot be compared. The model history is therefore built by <strong>re-evaluating all past models</strong> on the latest <span class="math inline">\(\bar{G}^{\text{test}}\)</span>.</p>
 <p>Until the golden set is fed continuously, label-free indicators (automation rate, distribution of the confidence index, new vocabulary, agreement with the auxiliary engines) are the only drift signals, and alert thresholds on them can trigger an out-of-cycle retraining.</p>
 </section>
-<section id="overview" class="level2" data-number="6">
-<h2 data-number="6" class="anchored" data-anchor-id="overview"><span class="header-section-number">6</span> Overview</h2>
+<section id="overview" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="overview"><span class="header-section-number">7</span> Overview</h2>
 <div class="cell" data-layout-align="default">
 <div class="cell-output-display">
 <div id="fig-cycle" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -650,57 +765,404 @@ Figure&nbsp;2: One retraining cycle.
 
 <a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
 <!--
-  EN | FR switch in the navbar. en/ and fr/ use the same file names and the
-  same anchors, so the switch links to the same page and section in the other
-  language. The choice is remembered for the root page redirect (index.qmd).
+  Site navigation, added at the end of every page.
+
+  1. Table of contents. The left sidebar becomes a single, collapsible table
+     of contents for the whole note: chapters, then their sections and
+     sub-sections, read from outline.json (written by scripts/outline.py).
+     The section being read is highlighted as the reader scrolls.
+
+  2. EN | FR switch. en/ and fr/ use the same file names and the same
+     anchors, so switching language swaps the page content in place: same
+     page, same section, no reload. The choice is remembered for the root
+     page redirect (index.qmd).
 -->
 <script>
 (function () {
+  "use strict";
+
   var KEY = "codif-ape-lang";
   var LANGS = ["en", "fr"];
-  var TITLES = {
-    en: { label: "EN", hint: "Read this page in English", brand: "APE coding · MLOps" },
-    fr: { label: "FR", hint: "Lire cette page en français", brand: "Codification APE · MLOps" }
+  var STRINGS = {
+    en: {
+      label: "EN", hint: "Read this page in English", brand: "APE coding · MLOps",
+      group: "Language", toc: "Table of contents", expand: "Expand", collapse: "Collapse"
+    },
+    fr: {
+      label: "FR", hint: "Lire cette page en français", brand: "Codification APE · MLOps",
+      group: "Langue", toc: "Sommaire", expand: "Déplier", collapse: "Replier"
+    }
   };
+  // Parts of the page that differ between languages, swapped on a switch.
+  var SWAPPED = [
+    "main#quarto-document-content",
+    "#quarto-margin-sidebar",
+    "nav.page-navigation",
+    ".nav-footer-center",
+    ".quarto-secondary-nav-title"
+  ];
+  var PATH = /^(.*\/)(en|fr)(\/.*)?$/;
 
-  var m = window.location.pathname.match(/^(.*\/)(en|fr)(\/.*)?$/);
+  var m = window.location.pathname.match(PATH);
   if (!m) return;
-  var base = m[1], current = m[2], rest = m[3] || "/";
+  var base = m[1];
+  var state = { lang: m[2], page: pageOf(m[3]) };
 
-  try { localStorage.setItem(KEY, current); } catch (e) {}
+  // "/data.html", "/data" and "/" all name a page; compare them without ".html".
+  function pageOf(rest) {
+    var page = (rest || "/").replace(/^\//, "").replace(/\.html$/, "");
+    return page === "" ? "index" : page;
+  }
 
-  var brand = document.querySelector(".navbar-brand");
-  if (brand) brand.setAttribute("href", base + current + "/index.html");
-  var brandTitle = document.querySelector(".navbar-title");
-  if (brandTitle) brandTitle.textContent = TITLES[current].brand;
+  function urlFor(lang, page) {
+    return base + lang + "/" + page + ".html";
+  }
 
-  var group = document.createElement("div");
-  group.className = "lang-switch";
-  group.setAttribute("role", "group");
-  group.setAttribute("aria-label", current === "fr" ? "Langue" : "Language");
+  function el(tag, className, attrs) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    Object.keys(attrs || {}).forEach(function (k) { node.setAttribute(k, attrs[k]); });
+    return node;
+  }
+
+  // ---------------------------------------------------------------- MathJax
+
+  // Section titles can hold math; MathJax loads after this script.
+  function typeset(nodes) {
+    var mj = window.MathJax;
+    if (mj && mj.startup && mj.startup.promise) {
+      return mj.startup.promise.then(function () { return mj.typesetPromise(nodes); });
+    }
+    if (document.readyState !== "complete") {
+      return new Promise(function (resolve) {
+        window.addEventListener("load", function () { typeset(nodes).then(resolve); }, { once: true });
+      });
+    }
+    return Promise.resolve();
+  }
+
+  // ----------------------------------------------------- Table of contents
+
+  var outline = fetch(base + "outline.json")
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .catch(function () { return null; });
+
+  var links = {};       // section id -> link, for the current page
+  var activeLink = null;
+
+  function setOpen(li, open) {
+    li.classList.toggle("is-open", open);
+    var button = li.querySelector(":scope > .toc-row > .toc-toggle");
+    if (button) {
+      button.setAttribute("aria-expanded", String(open));
+      button.setAttribute("aria-label", STRINGS[state.lang][open ? "collapse" : "expand"]);
+    }
+  }
+
+  function tocItem(node, depth, page, isCurrentPage) {
+    var li = el("li", "toc-item toc-depth-" + depth);
+    var row = el("div", "toc-row");
+    var children = depth === 0 ? node.sections : node.children;
+
+    if (children && children.length) {
+      var button = el("button", "toc-toggle", { type: "button" });
+      button.addEventListener("click", function () {
+        li.dataset.pinned = "1";
+        setOpen(li, !li.classList.contains("is-open"));
+      });
+      row.appendChild(button);
+    } else {
+      row.appendChild(el("span", "toc-spacer"));
+    }
+
+    var a = el("a", "toc-link no-external");
+    if (depth === 0) {
+      a.href = urlFor(state.lang, page);
+      if (node.number) {
+        var num = el("span", "toc-number");
+        num.textContent = node.number + ".";
+        a.appendChild(num);
+      }
+      a.insertAdjacentHTML("beforeend", node.title);
+      if (isCurrentPage) {
+        a.classList.add("is-current");
+        a.setAttribute("aria-current", "page");
+        a.addEventListener("click", function (e) {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      }
+    } else {
+      a.href = (isCurrentPage ? "" : urlFor(state.lang, page)) + "#" + node.id;
+      a.innerHTML = node.title;
+      if (isCurrentPage) links[node.id] = a;
+    }
+    row.appendChild(a);
+    li.appendChild(row);
+
+    if (children && children.length) {
+      var ul = el("ul", "toc-children");
+      children.forEach(function (child) {
+        ul.appendChild(tocItem(child, depth + 1, page, isCurrentPage));
+      });
+      li.appendChild(ul);
+      setOpen(li, false);
+    }
+    return li;
+  }
+
+  function buildToc(data) {
+    var container = document.querySelector("#quarto-sidebar .sidebar-menu-container");
+    if (!container || !data || !data[state.lang]) return;
+
+    links = {};
+    activeLink = null;
+    var nav = el("nav", "site-toc", { "aria-label": STRINGS[state.lang].toc });
+    var ul = el("ul", "toc-children toc-chapters");
+    data[state.lang].forEach(function (chapter) {
+      var page = pageOf(chapter.href);
+      var isCurrent = page === state.page;
+      var li = tocItem(chapter, 0, page, isCurrent);
+      if (isCurrent) {
+        li.classList.add("is-current");
+        setOpen(li, true);
+      }
+      ul.appendChild(li);
+    });
+    nav.appendChild(ul);
+    container.replaceChildren(nav);
+    document.body.classList.add("has-site-toc");
+
+    typeset([nav]);
+    updateActive();
+    var current = nav.querySelector(".toc-link.is-current");
+    if (current) revealInSidebar(current);
+  }
+
+  function revealInSidebar(link) {
+    var sidebar = document.getElementById("quarto-sidebar");
+    if (!sidebar) return;
+    var r = link.getBoundingClientRect();
+    var s = sidebar.getBoundingClientRect();
+    if (r.top < s.top || r.bottom > s.bottom) {
+      sidebar.scrollTop += r.top - s.top - s.height / 3;
+    }
+  }
+
+  function sectionList() {
+    return Array.prototype.slice.call(document.querySelectorAll(
+      "main#quarto-document-content section.level2[id], main#quarto-document-content section.level3[id]"
+    ));
+  }
+
+  // The section being read: the last one whose top has scrolled past the
+  // navbar.
+  function currentSection() {
+    var sections = sectionList();
+    if (!sections.length) return null;
+    var atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    if (atBottom) return sections[sections.length - 1];
+    var current = null;
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].getBoundingClientRect().top > 100) break;
+      current = sections[i];
+    }
+    return current;
+  }
+
+  function updateActive() {
+    var section = currentSection();
+    var link = (section && links[section.id]) || null;
+    if (link === activeLink) return;
+    if (activeLink) activeLink.classList.remove("active");
+    activeLink = link;
+    if (!link) return;
+    link.classList.add("active");
+
+    // Open the branch that holds the active section, and close the branches
+    // opened automatically before, unless the reader opened them by hand.
+    var branch = [];
+    for (var li = link.closest(".toc-item"); li; li = li.parentElement.closest(".toc-item")) {
+      branch.push(li);
+    }
+    document.querySelectorAll(".site-toc .toc-item.is-open").forEach(function (li) {
+      if (branch.indexOf(li) === -1 && !li.classList.contains("is-current") && !li.dataset.pinned) {
+        setOpen(li, false);
+      }
+    });
+    branch.forEach(function (li) {
+      if (li.querySelector(":scope > .toc-children")) setOpen(li, true);
+    });
+    revealInSidebar(link);
+  }
+
+  var ticking = false;
+  window.addEventListener("scroll", function () {
+    if (ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(function () { ticking = false; updateActive(); });
+  }, { passive: true });
+
+  // -------------------------------------------------------- Language switch
+
+  var switchGroup = el("div", "lang-switch", { role: "group" });
+
+  function updateChrome() {
+    var s = STRINGS[state.lang];
+    var brand = document.querySelector(".navbar-brand");
+    if (brand) brand.setAttribute("href", urlFor(state.lang, "index"));
+    var brandTitle = document.querySelector(".navbar-title");
+    if (brandTitle) brandTitle.textContent = s.brand;
+    switchGroup.setAttribute("aria-label", s.group);
+    Array.prototype.forEach.call(switchGroup.children, function (a) {
+      var lang = a.getAttribute("lang");
+      var active = lang === state.lang;
+      a.classList.toggle("active", active);
+      if (active) a.setAttribute("aria-current", "true");
+      else a.removeAttribute("aria-current");
+      a.href = urlFor(lang, state.page) + window.location.hash;
+    });
+  }
 
   LANGS.forEach(function (lang) {
-    var a = document.createElement("a");
-    a.textContent = TITLES[lang].label;
-    a.setAttribute("lang", lang);
-    a.setAttribute("hreflang", lang);
-    a.setAttribute("title", TITLES[lang].hint);
-    if (lang === current) {
-      a.className = "active";
-      a.setAttribute("aria-current", "true");
-    }
-    a.href = base + lang + rest + window.location.hash;
-    a.addEventListener("click", function () {
-      try { localStorage.setItem(KEY, lang); } catch (e) {}
-      // Keep the section the reader is on, even after scrolling.
-      a.href = base + lang + rest + window.location.hash;
+    var a = el("a", "no-external", { lang: lang, hreflang: lang, title: STRINGS[lang].hint });
+    a.textContent = STRINGS[lang].label;
+    a.addEventListener("click", function (e) {
+      // Let modified clicks open the other language in a new tab.
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      switchLang(lang, true);
     });
-    group.appendChild(a);
+    switchGroup.appendChild(a);
   });
 
   var slot = document.querySelector(".quarto-navbar-tools") ||
              document.querySelector(".navbar-container");
-  if (slot) slot.insertBefore(group, slot.firstChild);
+  if (slot) slot.insertBefore(switchGroup, slot.firstChild);
+
+  // Quarto marks external links (icon, new tab) on page load only.
+  function adornExternalLinks(root) {
+    root.querySelectorAll("a[href]:not(.no-external):not([aria-hidden])").forEach(function (a) {
+      if (/^https?:$/.test(a.protocol) && a.origin !== window.location.origin) {
+        a.setAttribute("target", "_blank");
+        if (a.getAttribute("rel") === null) a.setAttribute("rel", "noopener");
+        a.classList.add("external");
+      }
+    });
+  }
+
+  // Same steps as Quarto's mermaid-init.js, which only runs on page load.
+  var mermaidCount = 0;
+  function renderMermaid(root) {
+    var mermaid = window.mermaid;
+    if (!mermaid) return Promise.resolve();
+    var blocks = Array.prototype.slice.call(root.querySelectorAll("pre.mermaid-js"));
+    return blocks.reduce(function (done, pre) {
+      return done.then(function () {
+        var text = pre.textContent.replace(/&nbsp;/g, " ");
+        return mermaid.mermaidAPI.render("mermaid-switch-" + (++mermaidCount), text, pre)
+          .then(function (result) {
+            pre.innerHTML = result.svg;
+            var svg = pre.querySelector("svg");
+            if (pre.dataset.label) {
+              var style = svg.querySelector("style");
+              if (style) style.innerHTML = style.innerHTML.split("#" + svg.id).join("#" + pre.dataset.label + "-mermaid");
+              svg.id = pre.dataset.label + "-mermaid";
+            }
+            pre.parentElement.replaceChild(svg, pre);
+            svg.classList.add("mermaid-js");
+            /* global _quartoMermaid */
+            if (typeof _quartoMermaid !== "undefined") {
+              try { _quartoMermaid.postProcess(svg); } catch (e) {}
+            }
+          });
+      });
+    }, Promise.resolve());
+  }
+
+  var switching = false;
+  function switchLang(lang, push) {
+    if (lang === state.lang || switching) return;
+    switching = true;
+    var url = urlFor(lang, state.page);
+
+    // Remember where the reader is, to land at the same place. Both
+    // languages have the same sections in the same order, but not always the
+    // same ids (those derived from French titles differ), so sections are
+    // matched by position.
+    var before = sectionList();
+    var anchor = currentSection();
+    var anchorIndex = before.indexOf(anchor);
+    var anchorTop = anchor ? anchor.getBoundingClientRect().top : null;
+    var hashIndex = before.findIndex(function (s) { return "#" + s.id === window.location.hash; });
+    var scrollY = window.scrollY;
+
+    document.documentElement.classList.add("lang-switching");
+    fetch(url)
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (html) {
+        var doc = new DOMParser().parseFromString(html, "text/html");
+        var after = doc.querySelectorAll(
+          "main#quarto-document-content section.level2[id], main#quarto-document-content section.level3[id]"
+        );
+        var hash = hashIndex >= 0 && after[hashIndex] ? "#" + after[hashIndex].id : window.location.hash;
+        state.lang = lang;
+        if (push) history.pushState({ lang: lang }, "", url + hash);
+        else if (hash !== window.location.hash) history.replaceState(history.state, "", url + hash);
+        try { localStorage.setItem(KEY, lang); } catch (e) {}
+
+        SWAPPED.forEach(function (selector) {
+          var current = document.querySelector(selector);
+          var next = doc.querySelector(selector);
+          if (!current || !next) return;
+          next.querySelectorAll("script").forEach(function (s) { s.remove(); });
+          current.replaceWith(document.importNode(next, true));
+        });
+        document.title = doc.title;
+        document.documentElement.lang = doc.documentElement.lang || lang;
+        updateChrome();
+
+        var main = document.querySelector("main#quarto-document-content");
+        adornExternalLinks(main);
+        return Promise.all([
+          renderMermaid(main).catch(function () {}),
+          typeset([main]).catch(function () {}),
+          outline.then(buildToc)
+        ]);
+      })
+      .then(function () {
+        var target = anchorIndex >= 0 ? sectionList()[anchorIndex] : null;
+        if (target && anchorTop !== null) {
+          window.scrollTo(0, window.scrollY + target.getBoundingClientRect().top - anchorTop);
+        } else {
+          window.scrollTo(0, scrollY);
+        }
+        updateActive();
+      })
+      .catch(function () {
+        // Fall back to a normal page load.
+        window.location.href = url + window.location.hash;
+      })
+      .then(function () {
+        switching = false;
+        document.documentElement.classList.remove("lang-switching");
+      });
+  }
+
+  // Back and forward between two languages of the same page stay in place.
+  window.addEventListener("popstate", function () {
+    var mm = window.location.pathname.match(PATH);
+    if (!mm) return;
+    if (pageOf(mm[3]) !== state.page) {
+      window.location.reload();
+    } else if (mm[2] !== state.lang) {
+      switchLang(mm[2], false);
+    }
+  });
+
+  try { localStorage.setItem(KEY, state.lang); } catch (e) {}
+  updateChrome();
+  outline.then(buildToc);
 })();
 </script>
 <script id="quarto-html-after-body" type="application/javascript">
@@ -1117,8 +1579,8 @@ Figure&nbsp;2: One retraining cycle.
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../en/companion-projects.html" class="pagination-link" aria-label="Companion projects: TTC and GRAAL">
-        <span class="nav-page-text">Companion projects: TTC and GRAAL</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../en/organisation.html" class="pagination-link" aria-label="Organisational and infrastructural challenges">
+        <span class="nav-page-text">Organisational and infrastructural challenges</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

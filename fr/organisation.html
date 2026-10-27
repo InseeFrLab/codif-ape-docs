@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr" xml:lang="fr"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.19">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Nathan Randriamanana">
+<meta name="author" content="Hugo Simon">
+<meta name="description" content="Qui fait quoi autour d’un modèle en production : le data scientist métier comme point de contact, et une plateforme de qualification identique à la production.">
+
+<title>Défis organisationnels et d’infrastructure – APE coding · MLOps</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../fr/lessons.html" rel="next">
+<link href="../fr/retraining.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-7ac3c55ca58f93c4c6c73bcc24e20e69.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Pas de résultats",
+    "search-matching-documents-text": "documents trouvés",
+    "search-copy-link-title": "Copier le lien vers la recherche",
+    "search-hide-matches-text": "Cacher les correspondances additionnelles",
+    "search-more-match-text": "correspondance de plus dans ce document",
+    "search-more-matches-text": "correspondances de plus dans ce document",
+    "search-clear-button-title": "Effacer",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Annuler",
+    "search-submit-button-title": "Envoyer",
+    "search-label": "Recherche"
+  }
+}</script>
+<meta name="mermaid-theme" content="neutral">
+<script src="../site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="../site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<meta property="og:title" content="Défis organisationnels et d’infrastructure – APE coding · MLOps">
+<meta property="og:description" content="Qui fait quoi autour d’un modèle en production : le data scientist métier comme point de contact, et une plateforme de qualification identique à la production.">
+<meta property="og:site_name" content="APE coding · MLOps">
+</head>
+
+<body class="nav-sidebar docked nav-fixed slimcontent quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">APE coding · MLOps</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Recherche"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Basculer la navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="https://inseefrlab.github.io/codif-ape-prez/"> 
+<span class="menu-text">Slides</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/InseeFrLab/codif-ape-docs"> <i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Basculer la barre latérale" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <a class="flex-grow-1 no-decor" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Basculer la barre latérale" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+          <h1 class="quarto-secondary-nav-title">Défis organisationnels et d’infrastructure</h1>
+        </a>     
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">La codification automatique de l’activité économique à l’Insee</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/context.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Contexte et historique</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/architecture.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Architecture</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Données</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/model.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Modèle</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/evaluation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Évaluation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/serving.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Mise en production</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/monitoring.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Monitoring et annotation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/retraining.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Protocole de réentraînement</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/organisation.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Défis organisationnels et d’infrastructure</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/lessons.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Retours d’expérience</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/glossary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glossaire et notations</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Références et ressources</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Sur cette page</h2>
+   
+  <ul>
+  <li><a href="#trois-équipes-autour-dun-modèle" id="toc-trois-équipes-autour-dun-modèle" class="nav-link active" data-scroll-target="#trois-équipes-autour-dun-modèle"><span class="header-section-number">1</span> Trois équipes autour d’un modèle</a></li>
+  <li><a href="#sec-business-ds" id="toc-sec-business-ds" class="nav-link" data-scroll-target="#sec-business-ds"><span class="header-section-number">2</span> Le data scientist métier comme point de contact</a>
+  <ul class="collapse">
+  <li><a href="#pourquoi-un-rôle-dédié" id="toc-pourquoi-un-rôle-dédié" class="nav-link" data-scroll-target="#pourquoi-un-rôle-dédié"><span class="header-section-number">2.1</span> Pourquoi un rôle dédié</a></li>
+  <li><a href="#responsabilités" id="toc-responsabilités" class="nav-link" data-scroll-target="#responsabilités"><span class="header-section-number">2.2</span> Responsabilités</a></li>
+  <li><a href="#les-conditions-du-rôle" id="toc-les-conditions-du-rôle" class="nav-link" data-scroll-target="#les-conditions-du-rôle"><span class="header-section-number">2.3</span> Les conditions du rôle</a></li>
+  </ul></li>
+  <li><a href="#sec-qualification-platform" id="toc-sec-qualification-platform" class="nav-link" data-scroll-target="#sec-qualification-platform"><span class="header-section-number">3</span> Une plateforme de qualification identique à la production</a>
+  <ul class="collapse">
+  <li><a href="#lécart-entre-développement-et-production" id="toc-lécart-entre-développement-et-production" class="nav-link" data-scroll-target="#lécart-entre-développement-et-production"><span class="header-section-number">3.1</span> L’écart entre développement et production</a></li>
+  <li><a href="#ce-que-signifie-iso-production" id="toc-ce-que-signifie-iso-production" class="nav-link" data-scroll-target="#ce-que-signifie-iso-production"><span class="header-section-number">3.2</span> Ce que signifie «&nbsp;iso-production&nbsp;»</a></li>
+  <li><a href="#ce-quon-y-mesure" id="toc-ce-quon-y-mesure" class="nav-link" data-scroll-target="#ce-quon-y-mesure"><span class="header-section-number">3.3</span> Ce qu’on y mesure</a></li>
+  <li><a href="#qui-fait-quoi" id="toc-qui-fait-quoi" class="nav-link" data-scroll-target="#qui-fait-quoi"><span class="header-section-number">3.4</span> Qui fait quoi</a></li>
+  </ul></li>
+  <li><a href="#défis-ouverts" id="toc-défis-ouverts" class="nav-link" data-scroll-target="#défis-ouverts"><span class="header-section-number">4</span> Défis ouverts</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/InseeFrLab/codif-ape-docs/edit/main/fr/organisation.qmd" class="toc-action"><i class="bi bi-github"></i>Modifier cette page</a></li><li><a href="https://github.com/InseeFrLab/codif-ape-docs/issues/new" class="toc-action"><i class="bi empty"></i>Faire part d'un problème</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content page-columns page-full" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title d-none d-lg-block">Défis organisationnels et d’infrastructure</h1>
+</div>
+
+<div>
+  <div class="description">
+    Qui fait quoi autour d’un modèle en production : le data scientist métier comme point de contact, et une plateforme de qualification identique à la production.
+  </div>
+</div>
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Auteurs</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">Nathan Randriamanana </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Insee
+          </p>
+      </div>
+    <div class="quarto-title-meta-contents">
+    <p class="author">Hugo Simon </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Insee
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Avertissement</span>Brouillon
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Ce chapitre est un brouillon, à compléter et à valider par ses auteurs.</p>
+</div>
+</div>
+<!--
+Notes pour les auteurs (non affichées) :
+- Nathan : vérifier la liste exacte des responsabilités du tableau, l'équipe de rattachement de ce rôle et la part de temps qu'il représente.
+- Hugo : décrire la plateforme de qualification telle qu'elle est réellement (ce qui est identique à la production, ce qui ne l'est pas encore), les outils de tests de charge et les critères de décision.
+- La note est publique : pas d'URL interne, pas de noms de machines, pas de feuille de route interne.
+-->
+<p>Maintenir un modèle en production, la difficulté est surtout ailleurs que dans la technique. Les enquêtes auprès des praticiens et les retours d’expérience de déploiements de machine learning vont dans le même sens&nbsp;: les problèmes les plus durs se situent <strong>à la frontière entre équipes</strong>, qu’il s’agisse de s’entendre sur les besoins, de négocier la qualité des données ou d’intégrer le modèle dans un système existant <span class="citation" data-cites="amershi2019se4ml nahar2022collaboration paleyes2022challenges">(<a href="#ref-amershi2019se4ml" role="doc-biblioref">Amershi et al. 2019</a>; <a href="#ref-nahar2022collaboration" role="doc-biblioref">Nahar et al. 2022</a>; <a href="#ref-paleyes2022challenges" role="doc-biblioref">Paleyes et al. 2022</a>)</span>. La codification APE ne fait pas exception. Ce chapitre décrit deux réponses qui ont fait la différence&nbsp;: un <strong>data scientist métier</strong>, point de contact pour le modèle, et une <strong>plateforme de qualification</strong> identique à la production.</p>
+<div class="no-row-height column-margin column-container"><div id="ref-amershi2019se4ml" class="csl-entry" role="listitem">
+Amershi, Saleema, Andrew Begel, Christian Bird, et al. 2019. <span>«&nbsp;Software Engineering for Machine Learning: A Case Study&nbsp;»</span>. <em>Proceedings of the 41st International Conference on Software Engineering: Software Engineering in Practice (ICSE-SEIP)</em>, 291‑300.
+</div><div id="ref-nahar2022collaboration" class="csl-entry" role="listitem">
+Nahar, Nadia, Shurui Zhou, Grace Lewis, et Christian Kästner. 2022. <span>«&nbsp;Collaboration Challenges in Building <span>ML</span>-Enabled Systems: Communication, Documentation, Engineering, and Process&nbsp;»</span>. <em>Proceedings of the 44th International Conference on Software Engineering (ICSE)</em>. <a href="https://arxiv.org/abs/2110.10234">https://arxiv.org/abs/2110.10234</a>.
+</div><div id="ref-paleyes2022challenges" class="csl-entry" role="listitem">
+Paleyes, Andrei, Raoul-Gabriel Urma, et Neil D. Lawrence. 2022. <span>«&nbsp;Challenges in Deploying Machine Learning: A Survey of Case Studies&nbsp;»</span>. <em>ACM Computing Surveys</em> 55 (6). <a href="https://doi.org/10.1145/3533378">https://doi.org/10.1145/3533378</a>.
+</div></div><section id="trois-équipes-autour-dun-modèle" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="trois-équipes-autour-dun-modèle"><span class="header-section-number">1</span> Trois équipes autour d’un modèle</h2>
+<p>Trois équipes se partagent la responsabilité du modèle, chacune avec ses propres contraintes&nbsp;:</p>
+<div id="tbl-teams" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-teams-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Équipes impliquées dans la codification APE.
+</figcaption>
+<div aria-describedby="tbl-teams-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Équipe</th>
+<th>Responsable de</th>
+<th>Préoccupation principale</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Équipe métier (répertoire Sirene)</td>
+<td>La nomenclature, les règles de codification, les équipes de reprise manuelle</td>
+<td>Qualité du code APE et charge des gestionnaires</td>
+</tr>
+<tr class="even">
+<td>Équipes informatiques de production</td>
+<td>Le système d’information du répertoire et l’infrastructure de production</td>
+<td>Disponibilité, sécurité, maîtrise des changements</td>
+</tr>
+<tr class="odd">
+<td>Équipe de data science (SSP Lab)</td>
+<td>Le pipeline d’entraînement, les librairies, la plateforme de développement</td>
+<td>Méthodes, outils, qualité du modèle</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>Sans quelqu’un qui soit côté métier <strong>et</strong> comprenne le modèle, chaque question doit passer d’une équipe à l’autre. Une baisse du taux de codification automatique, c’est du drift ou un effet saisonnier&nbsp;? Cette erreur signalée est-elle isolée ou récurrente&nbsp;? Un nouveau modèle peut-il partir en production&nbsp;? Ces questions restent en suspens, ou sont tranchées par la personne la plus proche plutôt que par celle qui devrait décider.</p>
+</section>
+<section id="sec-business-ds" class="level2 page-columns page-full" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="sec-business-ds"><span class="header-section-number">2</span> Le data scientist métier comme point de contact</h2>
+<section id="pourquoi-un-rôle-dédié" class="level3 page-columns page-full" data-number="2.1">
+<h3 data-number="2.1" class="anchored" data-anchor-id="pourquoi-un-rôle-dédié"><span class="header-section-number">2.1</span> Pourquoi un rôle dédié</h3>
+<p>La littérature sur le machine learning dans les organisations décrit les rôles et responsabilités autour d’un modèle en production <span class="citation" data-cites="kreuzberger2023mlops">(<a href="#ref-kreuzberger2023mlops" role="doc-biblioref">Kreuzberger et al. 2023</a>)</span>. Elle montre aussi l’intérêt de placer les data scientists <strong>dans</strong> les équipes métier qu’ils servent, au plus près du domaine et des décisions <span class="citation" data-cites="stelmaszak2023embedded">(<a href="#ref-stelmaszak2023embedded" role="doc-biblioref">Stelmaszak et Kline 2023</a>)</span>. Le cadre AIML4OS, écrit pour la statistique publique, en fait une recommandation&nbsp;: tout modèle en production doit avoir un responsable clairement identifié <span class="citation" data-cites="aiml4os2025">(<a href="#ref-aiml4os2025" role="doc-biblioref">Tayebjee et al. 2025</a>, ch.&nbsp;3)</span>.</p>
+<div class="no-row-height column-margin column-container"><div id="ref-kreuzberger2023mlops" class="csl-entry" role="listitem">
+Kreuzberger, Dominik, Niklas Kühl, et Sebastian Hirschl. 2023. <span>«&nbsp;Machine Learning Operations (<span>MLOps</span>): Overview, Definition, and Architecture&nbsp;»</span>. <em>IEEE Access</em> 11: 31866‑79. <a href="https://doi.org/10.1109/ACCESS.2023.3262138">https://doi.org/10.1109/ACCESS.2023.3262138</a>.
+</div><div id="ref-stelmaszak2023embedded" class="csl-entry" role="listitem">
+Stelmaszak, Marta, et Kelsey Kline. 2023. <span>«&nbsp;Managing Embedded Data Science Teams for Success: How Managers Can Navigate the Advantages and Challenges of Distributed Data Science&nbsp;»</span>. <em>Harvard Data Science Review</em> 5 (2). <a href="https://hdsr.mitpress.mit.edu/pub/wfr9k3vq">https://hdsr.mitpress.mit.edu/pub/wfr9k3vq</a>.
+</div><div id="ref-aiml4os2025" class="csl-entry" role="listitem">
+Tayebjee, Meilame, Nina Niederhametner, Bogdan Levagin, et Ariane Lestrade. 2025. <em>From text to code (<span>WP10.4</span>) – <span>MLOps</span> tutorial</em>. AIML4OS project, Work Package 10. <a href="https://aiml4os.github.io/WP10_Cluster4_MLOps/">https://aiml4os.github.io/WP10_Cluster4_MLOps/</a>.
+</div></div><p>Pour la codification APE, ce responsable est un <strong>data scientist placé dans l’équipe métier</strong>. Il est distinct de l’équipe d’innovation qui a construit les premiers modèles. Il est à l’aise des deux côtés&nbsp;: il connaît la nomenclature et le travail des gestionnaires, et il sait lire une courbe risque–couverture, lancer un entraînement et relire une <em>pull request</em>.</p>
+</section>
+<section id="responsabilités" class="level3" data-number="2.2">
+<h3 data-number="2.2" class="anchored" data-anchor-id="responsabilités"><span class="header-section-number">2.2</span> Responsabilités</h3>
+<div id="tbl-business-ds" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-business-ds-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: Responsabilités du data scientist métier.
+</figcaption>
+<div aria-describedby="tbl-business-ds-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Domaine</th>
+<th>Le data scientist métier…</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Besoins</td>
+<td>Traduit les besoins métier en exigences pour le modèle&nbsp;: accuracy cible <span class="math inline">\(p^*\)</span>, charge de reprise acceptable, codes qui ne doivent jamais être faux</td>
+</tr>
+<tr class="even">
+<td>Annotation</td>
+<td>Organise les campagnes d’annotation et le <em>golden set</em>&nbsp;: échantillonnage, consignes, calendrier des équipes d’experts</td>
+</tr>
+<tr class="odd">
+<td>Retours métier</td>
+<td>Recueille les erreurs signalées, distingue les erreurs isolées des erreurs récurrentes, et transforme ces dernières en <a href="../fr/data.html#sec-rules">règles</a> validées par les experts</td>
+</tr>
+<tr class="even">
+<td>Réentraînement</td>
+<td>Pilote le <a href="../fr/retraining.html">protocole de réentraînement</a> et valide les <a href="../fr/retraining.html#sec-gates">quality gates</a></td>
+</tr>
+<tr class="odd">
+<td>Monitoring</td>
+<td>Fait une première analyse des alertes du <a href="../fr/monitoring.html">monitoring</a> et décide s’il faut agir</td>
+</tr>
+<tr class="even">
+<td>Mise en production</td>
+<td>Est l’interlocuteur des équipes informatiques de production pour chaque version du modèle, de la qualification au rollback</td>
+</tr>
+<tr class="odd">
+<td>Communication</td>
+<td>Rend compte de la qualité à la hiérarchie et aux utilisateurs du code APE</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>L’équipe de data science reste responsable des <strong>outils</strong>&nbsp;: librairies, pipelines, plateforme de développement. Le data scientist métier est responsable du <strong>modèle en tant que service rendu au métier</strong>. Ce partage permet à l’équipe d’innovation de passer à d’autres projets sans laisser le modèle orphelin.</p>
+</section>
+<section id="les-conditions-du-rôle" class="level3" data-number="2.3">
+<h3 data-number="2.3" class="anchored" data-anchor-id="les-conditions-du-rôle"><span class="header-section-number">2.3</span> Les conditions du rôle</h3>
+<p>Le rôle ne marche que si quelques conditions sont réunies&nbsp;:</p>
+<ul>
+<li><strong>du temps</strong>&nbsp;: réentraînement, annotation et monitoring sont des tâches récurrentes, pas une activité annexe&nbsp;;</li>
+<li><strong>des accès</strong>&nbsp;: la même plateforme de développement et les mêmes dépôts que l’équipe de data science&nbsp;;</li>
+<li><strong>des compétences</strong>&nbsp;: Python, Git, stats, et connaissance de la nomenclature&nbsp;;</li>
+<li><strong>un mandat</strong>&nbsp;: le pouvoir de décider des mises en production, dans des règles convenues avec le métier et l’informatique.</li>
+</ul>
+</section>
+</section>
+<section id="sec-qualification-platform" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="sec-qualification-platform"><span class="header-section-number">3</span> Une plateforme de qualification identique à la production</h2>
+<section id="lécart-entre-développement-et-production" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="lécart-entre-développement-et-production"><span class="header-section-number">3.1</span> L’écart entre développement et production</h3>
+<p>Le modèle est développé et entraîné sur le SSP Cloud, une plateforme de data science ouverte, avec des GPU et un accès à internet (voir <a href="../fr/architecture.html">Architecture</a>). Il tourne en production sur l’infrastructure interne de l’Insee&nbsp;: CPU uniquement, pas d’accès à internet, limites de ressources strictes et changements très encadrés. Toute différence entre les deux environnements peut faire échouer une mise en production, ou changer le comportement du modèle sans que personne ne s’en rende compte&nbsp;:</p>
+<ul>
+<li>une version de librairie différente, qui change le prétraitement ou les résultats numériques&nbsp;;</li>
+<li>une ressource que le modèle télécharge au démarrage, inaccessible dans un réseau fermé&nbsp;;</li>
+<li>une latence ou une empreinte mémoire mesurée sur une machine de développement, pas sur le CPU de production&nbsp;;</li>
+<li>une différence de configuration dans la façon dont l’API est exposée au répertoire.</li>
+</ul>
+</section>
+<section id="ce-que-signifie-iso-production" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="ce-que-signifie-iso-production"><span class="header-section-number">3.2</span> Ce que signifie «&nbsp;iso-production&nbsp;»</h3>
+<p>La <strong>plateforme de qualification</strong> comble cet écart en reproduisant la production aussi fidèlement que possible&nbsp;:</p>
+<ul>
+<li>le même environnement d’exécution&nbsp;: image de base, versions de Python et des librairies, builds CPU uniquement&nbsp;;</li>
+<li>les mêmes ressources&nbsp;: limites de CPU et de mémoire, nombre de réplicas&nbsp;;</li>
+<li>les mêmes contraintes réseau&nbsp;: pas d’accès à internet, dépendances servies par le gestionnaire de dépôts interne&nbsp;;</li>
+<li>le même mécanisme de déploiement et la même configuration qu’en production.</li>
+</ul>
+</section>
+<section id="ce-quon-y-mesure" class="level3" data-number="3.3">
+<h3 data-number="3.3" class="anchored" data-anchor-id="ce-quon-y-mesure"><span class="header-section-number">3.3</span> Ce qu’on y mesure</h3>
+<p>Chaque modèle candidat passe la même batterie de tests avant sa mise en production (voir <a href="../fr/retraining.html#sec-preprod">Protocole de réentraînement</a>)&nbsp;:</p>
+<ul>
+<li>la <strong>latence</strong> des appels unitaires (médiane, p95, p99) et le <strong>débit</strong> en batch, sous une charge réaliste&nbsp;;</li>
+<li>l’<strong>empreinte mémoire</strong> et le <strong>temps de démarrage</strong>&nbsp;;</li>
+<li>la <strong>cohérence online / offline</strong>&nbsp;: le modèle servi doit reproduire exactement les prédictions hors ligne sur le <em>golden set</em> de test&nbsp;;</li>
+<li>la <strong>robustesse</strong>&nbsp;: des entrées mal formées ou inattendues doivent être rejetées proprement, sans faire tomber le service.</li>
+</ul>
+<p>Ce sont les <a href="../fr/evaluation.html#sec-eval-nonfunctional">métriques non fonctionnelles</a> de l’évaluation, qui n’ont de sens qu’ici.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-qualification" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-qualification-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-qualification">flowchart LR
+  DEV["Développement et entraînement&lt;br/&gt;(SSP Cloud : GPU, internet)"] --&gt; REG[("Model registry&lt;br/&gt;MLflow")]
+  REG --&gt; QUAL["Plateforme de qualification&lt;br/&gt;(iso-production : CPU, réseau fermé)"]
+  QUAL --&gt;|"latence, mémoire,&lt;br/&gt;cohérence, robustesse"| GO{"Go / no-go"}
+  GO --&gt;|"non"| DEV
+  GO --&gt;|"oui"| PROD["Production&lt;br/&gt;(infrastructure interne)"]
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-qualification-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Du développement à la production.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="qui-fait-quoi" class="level3" data-number="3.4">
+<h3 data-number="3.4" class="anchored" data-anchor-id="qui-fait-quoi"><span class="header-section-number">3.4</span> Qui fait quoi</h3>
+<div id="tbl-qualification-raci" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-qualification-raci-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3: Partage des responsabilités autour de la qualification.
+</figcaption>
+<div aria-describedby="tbl-qualification-raci-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Étape</th>
+<th>Équipe de data science</th>
+<th>Data scientist métier</th>
+<th>Production informatique / architectes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Artefact du modèle et suite de tests</td>
+<td>Fournit</td>
+<td>Relit</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Plateforme de qualification</td>
+<td>Utilise</td>
+<td>Utilise</td>
+<td>Fournit et maintient</td>
+</tr>
+<tr class="odd">
+<td>Go / no-go</td>
+<td>Conseille</td>
+<td>Décide</td>
+<td>Vérifie les critères d’exploitation</td>
+</tr>
+<tr class="even">
+<td>Mise en production et rollback</td>
+<td>—</td>
+<td>Demande</td>
+<td>Exécute</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+</section>
+<section id="défis-ouverts" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="défis-ouverts"><span class="header-section-number">4</span> Défis ouverts</h2>
+<ul>
+<li><strong>Pérenniser l’annotation.</strong> Le <em>golden set</em> demande aux experts métier un effort d’annotation modeste mais continu, qui entre en concurrence avec leur travail quotidien de codification.</li>
+<li><strong>Compétences et continuité.</strong> Un seul data scientist métier, c’est un <em>single point of failure</em>&nbsp;: il faut un suppléant et de la documentation.</li>
+<li><strong>Garder les plateformes alignées.</strong> Chaque changement en production (image de base, limites de ressources, règles réseau) doit être répercuté sur la plateforme de qualification, sinon la qualification perd son sens.</li>
+</ul>
+
+
+
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Retour au sommet</a></main> <!-- /main -->
+<!--
+  Site navigation, added at the end of every page.
+
+  1. Table of contents. The left sidebar becomes a single, collapsible table
+     of contents for the whole note: chapters, then their sections and
+     sub-sections, read from outline.json (written by scripts/outline.py).
+     The section being read is highlighted as the reader scrolls.
+
+  2. EN | FR switch. en/ and fr/ use the same file names and the same
+     anchors, so switching language swaps the page content in place: same
+     page, same section, no reload. The choice is remembered for the root
+     page redirect (index.qmd).
+-->
+<script>
+(function () {
+  "use strict";
+
+  var KEY = "codif-ape-lang";
+  var LANGS = ["en", "fr"];
+  var STRINGS = {
+    en: {
+      label: "EN", hint: "Read this page in English", brand: "APE coding · MLOps",
+      group: "Language", toc: "Table of contents", expand: "Expand", collapse: "Collapse"
+    },
+    fr: {
+      label: "FR", hint: "Lire cette page en français", brand: "Codification APE · MLOps",
+      group: "Langue", toc: "Sommaire", expand: "Déplier", collapse: "Replier"
+    }
+  };
+  // Parts of the page that differ between languages, swapped on a switch.
+  var SWAPPED = [
+    "main#quarto-document-content",
+    "#quarto-margin-sidebar",
+    "nav.page-navigation",
+    ".nav-footer-center",
+    ".quarto-secondary-nav-title"
+  ];
+  var PATH = /^(.*\/)(en|fr)(\/.*)?$/;
+
+  var m = window.location.pathname.match(PATH);
+  if (!m) return;
+  var base = m[1];
+  var state = { lang: m[2], page: pageOf(m[3]) };
+
+  // "/data.html", "/data" and "/" all name a page; compare them without ".html".
+  function pageOf(rest) {
+    var page = (rest || "/").replace(/^\//, "").replace(/\.html$/, "");
+    return page === "" ? "index" : page;
+  }
+
+  function urlFor(lang, page) {
+    return base + lang + "/" + page + ".html";
+  }
+
+  function el(tag, className, attrs) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    Object.keys(attrs || {}).forEach(function (k) { node.setAttribute(k, attrs[k]); });
+    return node;
+  }
+
+  // ---------------------------------------------------------------- MathJax
+
+  // Section titles can hold math; MathJax loads after this script.
+  function typeset(nodes) {
+    var mj = window.MathJax;
+    if (mj && mj.startup && mj.startup.promise) {
+      return mj.startup.promise.then(function () { return mj.typesetPromise(nodes); });
+    }
+    if (document.readyState !== "complete") {
+      return new Promise(function (resolve) {
+        window.addEventListener("load", function () { typeset(nodes).then(resolve); }, { once: true });
+      });
+    }
+    return Promise.resolve();
+  }
+
+  // ----------------------------------------------------- Table of contents
+
+  var outline = fetch(base + "outline.json")
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .catch(function () { return null; });
+
+  var links = {};       // section id -> link, for the current page
+  var activeLink = null;
+
+  function setOpen(li, open) {
+    li.classList.toggle("is-open", open);
+    var button = li.querySelector(":scope > .toc-row > .toc-toggle");
+    if (button) {
+      button.setAttribute("aria-expanded", String(open));
+      button.setAttribute("aria-label", STRINGS[state.lang][open ? "collapse" : "expand"]);
+    }
+  }
+
+  function tocItem(node, depth, page, isCurrentPage) {
+    var li = el("li", "toc-item toc-depth-" + depth);
+    var row = el("div", "toc-row");
+    var children = depth === 0 ? node.sections : node.children;
+
+    if (children && children.length) {
+      var button = el("button", "toc-toggle", { type: "button" });
+      button.addEventListener("click", function () {
+        li.dataset.pinned = "1";
+        setOpen(li, !li.classList.contains("is-open"));
+      });
+      row.appendChild(button);
+    } else {
+      row.appendChild(el("span", "toc-spacer"));
+    }
+
+    var a = el("a", "toc-link no-external");
+    if (depth === 0) {
+      a.href = urlFor(state.lang, page);
+      if (node.number) {
+        var num = el("span", "toc-number");
+        num.textContent = node.number + ".";
+        a.appendChild(num);
+      }
+      a.insertAdjacentHTML("beforeend", node.title);
+      if (isCurrentPage) {
+        a.classList.add("is-current");
+        a.setAttribute("aria-current", "page");
+        a.addEventListener("click", function (e) {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      }
+    } else {
+      a.href = (isCurrentPage ? "" : urlFor(state.lang, page)) + "#" + node.id;
+      a.innerHTML = node.title;
+      if (isCurrentPage) links[node.id] = a;
+    }
+    row.appendChild(a);
+    li.appendChild(row);
+
+    if (children && children.length) {
+      var ul = el("ul", "toc-children");
+      children.forEach(function (child) {
+        ul.appendChild(tocItem(child, depth + 1, page, isCurrentPage));
+      });
+      li.appendChild(ul);
+      setOpen(li, false);
+    }
+    return li;
+  }
+
+  function buildToc(data) {
+    var container = document.querySelector("#quarto-sidebar .sidebar-menu-container");
+    if (!container || !data || !data[state.lang]) return;
+
+    links = {};
+    activeLink = null;
+    var nav = el("nav", "site-toc", { "aria-label": STRINGS[state.lang].toc });
+    var ul = el("ul", "toc-children toc-chapters");
+    data[state.lang].forEach(function (chapter) {
+      var page = pageOf(chapter.href);
+      var isCurrent = page === state.page;
+      var li = tocItem(chapter, 0, page, isCurrent);
+      if (isCurrent) {
+        li.classList.add("is-current");
+        setOpen(li, true);
+      }
+      ul.appendChild(li);
+    });
+    nav.appendChild(ul);
+    container.replaceChildren(nav);
+    document.body.classList.add("has-site-toc");
+
+    typeset([nav]);
+    updateActive();
+    var current = nav.querySelector(".toc-link.is-current");
+    if (current) revealInSidebar(current);
+  }
+
+  function revealInSidebar(link) {
+    var sidebar = document.getElementById("quarto-sidebar");
+    if (!sidebar) return;
+    var r = link.getBoundingClientRect();
+    var s = sidebar.getBoundingClientRect();
+    if (r.top < s.top || r.bottom > s.bottom) {
+      sidebar.scrollTop += r.top - s.top - s.height / 3;
+    }
+  }
+
+  function sectionList() {
+    return Array.prototype.slice.call(document.querySelectorAll(
+      "main#quarto-document-content section.level2[id], main#quarto-document-content section.level3[id]"
+    ));
+  }
+
+  // The section being read: the last one whose top has scrolled past the
+  // navbar.
+  function currentSection() {
+    var sections = sectionList();
+    if (!sections.length) return null;
+    var atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    if (atBottom) return sections[sections.length - 1];
+    var current = null;
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].getBoundingClientRect().top > 100) break;
+      current = sections[i];
+    }
+    return current;
+  }
+
+  function updateActive() {
+    var section = currentSection();
+    var link = (section && links[section.id]) || null;
+    if (link === activeLink) return;
+    if (activeLink) activeLink.classList.remove("active");
+    activeLink = link;
+    if (!link) return;
+    link.classList.add("active");
+
+    // Open the branch that holds the active section, and close the branches
+    // opened automatically before, unless the reader opened them by hand.
+    var branch = [];
+    for (var li = link.closest(".toc-item"); li; li = li.parentElement.closest(".toc-item")) {
+      branch.push(li);
+    }
+    document.querySelectorAll(".site-toc .toc-item.is-open").forEach(function (li) {
+      if (branch.indexOf(li) === -1 && !li.classList.contains("is-current") && !li.dataset.pinned) {
+        setOpen(li, false);
+      }
+    });
+    branch.forEach(function (li) {
+      if (li.querySelector(":scope > .toc-children")) setOpen(li, true);
+    });
+    revealInSidebar(link);
+  }
+
+  var ticking = false;
+  window.addEventListener("scroll", function () {
+    if (ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(function () { ticking = false; updateActive(); });
+  }, { passive: true });
+
+  // -------------------------------------------------------- Language switch
+
+  var switchGroup = el("div", "lang-switch", { role: "group" });
+
+  function updateChrome() {
+    var s = STRINGS[state.lang];
+    var brand = document.querySelector(".navbar-brand");
+    if (brand) brand.setAttribute("href", urlFor(state.lang, "index"));
+    var brandTitle = document.querySelector(".navbar-title");
+    if (brandTitle) brandTitle.textContent = s.brand;
+    switchGroup.setAttribute("aria-label", s.group);
+    Array.prototype.forEach.call(switchGroup.children, function (a) {
+      var lang = a.getAttribute("lang");
+      var active = lang === state.lang;
+      a.classList.toggle("active", active);
+      if (active) a.setAttribute("aria-current", "true");
+      else a.removeAttribute("aria-current");
+      a.href = urlFor(lang, state.page) + window.location.hash;
+    });
+  }
+
+  LANGS.forEach(function (lang) {
+    var a = el("a", "no-external", { lang: lang, hreflang: lang, title: STRINGS[lang].hint });
+    a.textContent = STRINGS[lang].label;
+    a.addEventListener("click", function (e) {
+      // Let modified clicks open the other language in a new tab.
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      switchLang(lang, true);
+    });
+    switchGroup.appendChild(a);
+  });
+
+  var slot = document.querySelector(".quarto-navbar-tools") ||
+             document.querySelector(".navbar-container");
+  if (slot) slot.insertBefore(switchGroup, slot.firstChild);
+
+  // Quarto marks external links (icon, new tab) on page load only.
+  function adornExternalLinks(root) {
+    root.querySelectorAll("a[href]:not(.no-external):not([aria-hidden])").forEach(function (a) {
+      if (/^https?:$/.test(a.protocol) && a.origin !== window.location.origin) {
+        a.setAttribute("target", "_blank");
+        if (a.getAttribute("rel") === null) a.setAttribute("rel", "noopener");
+        a.classList.add("external");
+      }
+    });
+  }
+
+  // Same steps as Quarto's mermaid-init.js, which only runs on page load.
+  var mermaidCount = 0;
+  function renderMermaid(root) {
+    var mermaid = window.mermaid;
+    if (!mermaid) return Promise.resolve();
+    var blocks = Array.prototype.slice.call(root.querySelectorAll("pre.mermaid-js"));
+    return blocks.reduce(function (done, pre) {
+      return done.then(function () {
+        var text = pre.textContent.replace(/&nbsp;/g, " ");
+        return mermaid.mermaidAPI.render("mermaid-switch-" + (++mermaidCount), text, pre)
+          .then(function (result) {
+            pre.innerHTML = result.svg;
+            var svg = pre.querySelector("svg");
+            if (pre.dataset.label) {
+              var style = svg.querySelector("style");
+              if (style) style.innerHTML = style.innerHTML.split("#" + svg.id).join("#" + pre.dataset.label + "-mermaid");
+              svg.id = pre.dataset.label + "-mermaid";
+            }
+            pre.parentElement.replaceChild(svg, pre);
+            svg.classList.add("mermaid-js");
+            /* global _quartoMermaid */
+            if (typeof _quartoMermaid !== "undefined") {
+              try { _quartoMermaid.postProcess(svg); } catch (e) {}
+            }
+          });
+      });
+    }, Promise.resolve());
+  }
+
+  var switching = false;
+  function switchLang(lang, push) {
+    if (lang === state.lang || switching) return;
+    switching = true;
+    var url = urlFor(lang, state.page);
+
+    // Remember where the reader is, to land at the same place. Both
+    // languages have the same sections in the same order, but not always the
+    // same ids (those derived from French titles differ), so sections are
+    // matched by position.
+    var before = sectionList();
+    var anchor = currentSection();
+    var anchorIndex = before.indexOf(anchor);
+    var anchorTop = anchor ? anchor.getBoundingClientRect().top : null;
+    var hashIndex = before.findIndex(function (s) { return "#" + s.id === window.location.hash; });
+    var scrollY = window.scrollY;
+
+    document.documentElement.classList.add("lang-switching");
+    fetch(url)
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (html) {
+        var doc = new DOMParser().parseFromString(html, "text/html");
+        var after = doc.querySelectorAll(
+          "main#quarto-document-content section.level2[id], main#quarto-document-content section.level3[id]"
+        );
+        var hash = hashIndex >= 0 && after[hashIndex] ? "#" + after[hashIndex].id : window.location.hash;
+        state.lang = lang;
+        if (push) history.pushState({ lang: lang }, "", url + hash);
+        else if (hash !== window.location.hash) history.replaceState(history.state, "", url + hash);
+        try { localStorage.setItem(KEY, lang); } catch (e) {}
+
+        SWAPPED.forEach(function (selector) {
+          var current = document.querySelector(selector);
+          var next = doc.querySelector(selector);
+          if (!current || !next) return;
+          next.querySelectorAll("script").forEach(function (s) { s.remove(); });
+          current.replaceWith(document.importNode(next, true));
+        });
+        document.title = doc.title;
+        document.documentElement.lang = doc.documentElement.lang || lang;
+        updateChrome();
+
+        var main = document.querySelector("main#quarto-document-content");
+        adornExternalLinks(main);
+        return Promise.all([
+          renderMermaid(main).catch(function () {}),
+          typeset([main]).catch(function () {}),
+          outline.then(buildToc)
+        ]);
+      })
+      .then(function () {
+        var target = anchorIndex >= 0 ? sectionList()[anchorIndex] : null;
+        if (target && anchorTop !== null) {
+          window.scrollTo(0, window.scrollY + target.getBoundingClientRect().top - anchorTop);
+        } else {
+          window.scrollTo(0, scrollY);
+        }
+        updateActive();
+      })
+      .catch(function () {
+        // Fall back to a normal page load.
+        window.location.href = url + window.location.hash;
+      })
+      .then(function () {
+        switching = false;
+        document.documentElement.classList.remove("lang-switching");
+      });
+  }
+
+  // Back and forward between two languages of the same page stay in place.
+  window.addEventListener("popstate", function () {
+    var mm = window.location.pathname.match(PATH);
+    if (!mm) return;
+    if (pageOf(mm[3]) !== state.page) {
+      window.location.reload();
+    } else if (mm[2] !== state.lang) {
+      switchLang(mm[2], false);
+    }
+  });
+
+  try { localStorage.setItem(KEY, state.lang); } catch (e) {}
+  updateChrome();
+  outline.then(buildToc);
+})();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copié");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copié");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/inseefrlab\.github\.io\/codif-ape-docs\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+            // default icon
+            link.classList.add("external");
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../fr/retraining.html" class="pagination-link" aria-label="Protocole de réentraînement">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Protocole de réentraînement</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../fr/lessons.html" class="pagination-link" aria-label="Retours d'expérience">
+        <span class="nav-page-text">Retours d’expérience</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>Insee — SSP Lab</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/InseeFrLab/codif-ape-docs/edit/main/fr/organisation.qmd" class="toc-action"><i class="bi bi-github"></i>Modifier cette page</a></li><li><a href="https://github.com/InseeFrLab/codif-ape-docs/issues/new" class="toc-action"><i class="bi empty"></i>Faire part d'un problème</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p>Built with <a href="https://quarto.org/">Quarto</a></p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

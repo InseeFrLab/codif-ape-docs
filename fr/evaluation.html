@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr" xml:lang="fr"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.19">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Meilame Tayebjee">
+<meta name="description" content="Quelles métriques disent si on peut faire confiance à un modèle de codification, sur quelles données les calculer, et comment juger les moteurs auxiliaires et le temps d’inférence.">
+
+<title>Évaluation – APE coding · MLOps</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../fr/serving.html" rel="next">
+<link href="../fr/model.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-7ac3c55ca58f93c4c6c73bcc24e20e69.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Pas de résultats",
+    "search-matching-documents-text": "documents trouvés",
+    "search-copy-link-title": "Copier le lien vers la recherche",
+    "search-hide-matches-text": "Cacher les correspondances additionnelles",
+    "search-more-match-text": "correspondance de plus dans ce document",
+    "search-more-matches-text": "correspondances de plus dans ce document",
+    "search-clear-button-title": "Effacer",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Annuler",
+    "search-submit-button-title": "Envoyer",
+    "search-label": "Recherche"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<meta property="og:title" content="Évaluation – APE coding · MLOps">
+<meta property="og:description" content="Quelles métriques disent si on peut faire confiance à un modèle de codification, sur quelles données les calculer, et comment juger les moteurs auxiliaires et le temps d’inférence.">
+<meta property="og:site_name" content="APE coding · MLOps">
+</head>
+
+<body class="nav-sidebar docked nav-fixed slimcontent quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">APE coding · MLOps</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Recherche"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Basculer la navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="https://inseefrlab.github.io/codif-ape-prez/"> 
+<span class="menu-text">Slides</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/InseeFrLab/codif-ape-docs"> <i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Basculer la barre latérale" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <a class="flex-grow-1 no-decor" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Basculer la barre latérale" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+          <h1 class="quarto-secondary-nav-title">Évaluation</h1>
+        </a>     
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">La codification automatique de l’activité économique à l’Insee</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/context.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Contexte et historique</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/architecture.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Architecture</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Données</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/model.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Modèle</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/evaluation.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Évaluation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/serving.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Mise en production</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/monitoring.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Monitoring et annotation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/retraining.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Protocole de réentraînement</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/organisation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Défis organisationnels et d’infrastructure</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/lessons.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Retours d’expérience</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/glossary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glossaire et notations</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Références et ressources</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Sur cette page</h2>
+   
+  <ul>
+  <li><a href="#au-delà-de-laccuracy" id="toc-au-delà-de-laccuracy" class="nav-link active" data-scroll-target="#au-delà-de-laccuracy"><span class="header-section-number">1</span> Au-delà de l’accuracy</a></li>
+  <li><a href="#sec-metrics" id="toc-sec-metrics" class="nav-link" data-scroll-target="#sec-metrics"><span class="header-section-number">2</span> Métriques</a>
+  <ul class="collapse">
+  <li><a href="#laccuracy-à-chaque-niveau" id="toc-laccuracy-à-chaque-niveau" class="nav-link" data-scroll-target="#laccuracy-à-chaque-niveau"><span class="header-section-number">2.1</span> L’accuracy à chaque niveau</a></li>
+  <li><a href="#la-calibration" id="toc-la-calibration" class="nav-link" data-scroll-target="#la-calibration"><span class="header-section-number">2.2</span> La calibration</a></li>
+  <li><a href="#risquecouverture-choisir-le-seuil" id="toc-risquecouverture-choisir-le-seuil" class="nav-link" data-scroll-target="#risquecouverture-choisir-le-seuil"><span class="header-section-number">2.3</span> Risque–couverture&nbsp;: choisir le seuil</a></li>
+  <li><a href="#la-stabilité-dans-le-temps" id="toc-la-stabilité-dans-le-temps" class="nav-link" data-scroll-target="#la-stabilité-dans-le-temps"><span class="header-section-number">2.4</span> La stabilité dans le temps</a></li>
+  </ul></li>
+  <li><a href="#sec-eval-data" id="toc-sec-eval-data" class="nav-link" data-scroll-target="#sec-eval-data"><span class="header-section-number">3</span> Évaluer sur les bonnes données</a></li>
+  <li><a href="#incertitude-et-comparaisons" id="toc-incertitude-et-comparaisons" class="nav-link" data-scroll-target="#incertitude-et-comparaisons"><span class="header-section-number">4</span> Incertitude et comparaisons</a></li>
+  <li><a href="#sec-eval-engines" id="toc-sec-eval-engines" class="nav-link" data-scroll-target="#sec-eval-engines"><span class="header-section-number">5</span> Évaluer les moteurs auxiliaires</a></li>
+  <li><a href="#des-choix-darchitecture-pour-la-confiance" id="toc-des-choix-darchitecture-pour-la-confiance" class="nav-link" data-scroll-target="#des-choix-darchitecture-pour-la-confiance"><span class="header-section-number">6</span> Des choix d’architecture pour la confiance</a></li>
+  <li><a href="#sec-eval-nonfunctional" id="toc-sec-eval-nonfunctional" class="nav-link" data-scroll-target="#sec-eval-nonfunctional"><span class="header-section-number">7</span> Temps d’inférence et autres métriques de production</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/InseeFrLab/codif-ape-docs/edit/main/fr/evaluation.qmd" class="toc-action"><i class="bi bi-github"></i>Modifier cette page</a></li><li><a href="https://github.com/InseeFrLab/codif-ape-docs/issues/new" class="toc-action"><i class="bi empty"></i>Faire part d'un problème</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content page-columns page-full" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title d-none d-lg-block">Évaluation</h1>
+</div>
+
+<div>
+  <div class="description">
+    Quelles métriques disent si on peut faire confiance à un modèle de codification, sur quelles données les calculer, et comment juger les moteurs auxiliaires et le temps d’inférence.
+  </div>
+</div>
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Auteur</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author"><a href="https://github.com/meilame-tayebjee">Meilame Tayebjee</a> <a href="mailto:meilame.tayebjee@insee.fr" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            SSP Lab, Insee
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="au-delà-de-laccuracy" class="level2 page-columns page-full" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="au-delà-de-laccuracy"><span class="header-section-number">1</span> Au-delà de l’accuracy</h2>
+<p>Un modèle à 95&nbsp;% d’accuracy sur son jeu de test n’est pas forcément prêt pour la production. Sur 2&nbsp;millions de libellés par an, 5&nbsp;% d’erreurs, ce sont 100&nbsp;000 codes faux. Ce qui compte, c’est de savoir <strong>lesquels</strong> arrivent dans le répertoire sans que personne ne les regarde. Une erreur faite avec une faible confiance est arrêtée par le seuil et part en reprise manuelle. Une erreur faite avec une forte confiance est codée automatiquement et entre directement dans les statistiques. L’accuracy dit à quelle fréquence le modèle a raison, pas <strong>quand on peut lui faire confiance</strong> <span class="citation" data-cites="tayebjee2026iaos">(<a href="#ref-tayebjee2026iaos" role="doc-biblioref">Tayebjee 2026</a>)</span>.</p>
+<div class="no-row-height column-margin column-container"></div><p>L’évaluation du modèle APE répond donc à quatre questions, dans cet ordre. Les notations sont celles du <a href="../fr/retraining.html">protocole de réentraînement</a>, rassemblées dans le <a href="../fr/glossary.html#sec-notation">glossaire</a>.</p>
+<div id="tbl-eval-questions" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-eval-questions-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Ce à quoi l’évaluation doit répondre.
+</figcaption>
+<div aria-describedby="tbl-eval-questions-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Question</th>
+<th>Outil</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Le modèle a-t-il raison, et ses erreurs tombent-elles près du bon code&nbsp;?</td>
+<td>Accuracy à chaque niveau de la nomenclature, macro-F1</td>
+</tr>
+<tr class="even">
+<td>Ses probabilités sont-elles fiables&nbsp;?</td>
+<td>Reliability diagram, ECE (<em>expected calibration error</em>), score de Brier</td>
+</tr>
+<tr class="odd">
+<td>Quelle part peut être codée automatiquement, avec quel taux d’erreur&nbsp;?</td>
+<td>Courbe risque–couverture, couverture à accuracy cible <span class="math inline">\(p^*\)</span></td>
+</tr>
+<tr class="even">
+<td>Respecte-t-il les contraintes de production&nbsp;?</td>
+<td>Latence, débit et mémoire, mesurés sur la plateforme de qualification</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Ce chapitre décrit comment juger le modèle. Certaines de ces métriques et de ces tests sont déjà calculés à chaque run, d’autres restent à mettre en place&nbsp;: voir l’<a href="../fr/retraining.html#sec-status">état des lieux</a>.</p>
+</div>
+</div>
+</section>
+<section id="sec-metrics" class="level2 page-columns page-full" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="sec-metrics"><span class="header-section-number">2</span> Métriques</h2>
+<section id="laccuracy-à-chaque-niveau" class="level3" data-number="2.1">
+<h3 data-number="2.1" class="anchored" data-anchor-id="laccuracy-à-chaque-niveau"><span class="header-section-number">2.1</span> L’accuracy à chaque niveau</h3>
+<p>Le modèle prédit une sous-classe, dont découlent tous les niveaux supérieurs. L’accuracy est donc calculée de la section (niveau 1) à la sous-classe (niveau 5). Une erreur qui reste dans la bonne division coûte moins cher qu’une erreur qui change de section&nbsp;: à accuracy égale sur la sous-classe, on préfère un modèle dont les erreurs restent proches du bon code.</p>
+<p>L’accuracy globale est tirée par les codes les plus fréquents. Le <strong>macro-F1</strong> et l’accuracy sur les classes rares montrent si le modèle néglige la longue traîne de la nomenclature.</p>
+</section>
+<section id="la-calibration" class="level3 page-columns page-full" data-number="2.2">
+<h3 data-number="2.2" class="anchored" data-anchor-id="la-calibration"><span class="header-section-number">2.2</span> La calibration</h3>
+<p>Une probabilité de 0,8 doit être juste dans environ 80&nbsp;% des cas. Calibration et accuracy sont deux choses différentes&nbsp;: les réseaux de neurones modernes ont tendance à être performants mais trop sûrs d’eux (<em>overconfident</em>) <span class="citation" data-cites="guo2017calibration">(<a href="#ref-guo2017calibration" role="doc-biblioref">Guo et al. 2017</a>)</span>. La calibration se vérifie avec&nbsp;:</p>
+<div class="no-row-height column-margin column-container"><div id="ref-guo2017calibration" class="csl-entry" role="listitem">
+Guo, Chuan, Geoff Pleiss, Yu Sun, et Kilian Q. Weinberger. 2017. <span>«&nbsp;On Calibration of Modern Neural Networks&nbsp;»</span>. <em>Proceedings of the 34th International Conference on Machine Learning (ICML)</em>. <a href="https://arxiv.org/abs/1706.04599">https://arxiv.org/abs/1706.04599</a>.
+</div></div><ul>
+<li>le <strong>reliability diagram</strong>, qui compare, par tranche de confiance, l’accuracy observée à la confiance annoncée&nbsp;;</li>
+<li>l’<strong>ECE</strong> (<em>expected calibration error</em>), l’écart moyen pondéré entre les deux&nbsp;;</li>
+<li>le <strong>score de Brier</strong>, qui combine calibration et pouvoir discriminant.</li>
+</ul>
+<p>Un modèle mal calibré se corrige sans réentraînement, avec des méthodes post-hoc comme le <em>temperature scaling</em> ou la régression isotonique. Le modèle PyTorch actuel est bien calibré d’emblée (voir <a href="../fr/model.html#sec-calibration">Modèle</a>).</p>
+</section>
+<section id="risquecouverture-choisir-le-seuil" class="level3 page-columns page-full" data-number="2.3">
+<h3 data-number="2.3" class="anchored" data-anchor-id="risquecouverture-choisir-le-seuil"><span class="header-section-number">2.3</span> Risque–couverture&nbsp;: choisir le seuil</h3>
+<p>Le seuil <span class="math inline">\(\tau\)</span> sur l’indice de confiance coupe le flux en deux. La <strong>couverture</strong> est la part des libellés codés automatiquement, le <strong>risque</strong> le taux d’erreur parmi eux. Relever <span class="math inline">\(\tau\)</span> fait baisser les deux. La <strong>courbe risque–couverture</strong> montre ce compromis pour tous les seuils <span class="citation" data-cites="geifman2017selective">(<a href="#ref-geifman2017selective" role="doc-biblioref">Geifman et El-Yaniv 2017</a>)</span>&nbsp;:</p>
+<div class="no-row-height column-margin column-container"><div id="ref-geifman2017selective" class="csl-entry" role="listitem">
+Geifman, Yonatan, et Ran El-Yaniv. 2017. <span>«&nbsp;Selective Classification for Deep Neural Networks&nbsp;»</span>. <em>Advances in Neural Information Processing Systems (NeurIPS)</em>. <a href="https://arxiv.org/abs/1705.08500">https://arxiv.org/abs/1705.08500</a>.
+</div></div><ul>
+<li>un meilleur modèle a une courbe plus basse, quelle que soit la couverture&nbsp;;</li>
+<li>l’aire sous la courbe (<strong>AURC</strong>) la résume en un seul chiffre&nbsp;;</li>
+<li>l’indicateur métier est la <strong>couverture à accuracy cible <span class="math inline">\(p^*\)</span></strong>&nbsp;: la part qu’on peut automatiser en gardant une accuracy d’au moins <span class="math inline">\(p^*\)</span> sur la codification automatique.</li>
+</ul>
+<p>Cette courbe remplace la question «&nbsp;le modèle est-il bon&nbsp;?&nbsp;» par «&nbsp;combien de reprise manuelle fait-il économiser, pour un risque qu’on accepte&nbsp;?&nbsp;». Le choix de <span class="math inline">\(p^*\)</span> est une décision métier&nbsp;; la courbe n’en donne que le prix.</p>
+</section>
+<section id="la-stabilité-dans-le-temps" class="level3" data-number="2.4">
+<h3 data-number="2.4" class="anchored" data-anchor-id="la-stabilité-dans-le-temps"><span class="header-section-number">2.4</span> La stabilité dans le temps</h3>
+<p>Toutes ces métriques sont aussi calculées <strong>par trimestre</strong> du <em>golden set</em>. Un modèle dont la couverture à <span class="math inline">\(p^*\)</span> baisse lentement est en train de dériver, même si son accuracy moyenne a l’air stable. Entre deux vagues d’annotation, les signaux qui ne demandent pas de label (distribution de l’indice de confiance, taux de codification automatique) prennent le relais (voir <a href="../fr/monitoring.html">Monitoring</a>).</p>
+</section>
+</section>
+<section id="sec-eval-data" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="sec-eval-data"><span class="header-section-number">3</span> Évaluer sur les bonnes données</h2>
+<p>Une métrique ne vaut que par l’échantillon sur lequel elle est calculée.</p>
+<ul>
+<li><strong>Un jeu de test tiré des données d’entraînement</strong> est optimiste&nbsp;: ses labels ont les mêmes biais que ceux d’entraînement, et sa composition n’est pas celle du flux de production. Il ne sert qu’au développement.</li>
+<li><strong>Le <em>golden set</em></strong> est un échantillon aléatoire du flux de production, annoté par des experts qui ne voient pas la prédiction du modèle. C’est le seul échantillon sur lequel les métriques ci-dessus reflètent ce qui se passe en production. Il est coupé une fois pour toutes en <span class="math inline">\(\bar{G}^{\text{val}}\)</span>, qui sert à tous les choix, et <span class="math inline">\(\bar{G}^{\text{test}}\)</span>, réservé au verdict final (voir <a href="../fr/retraining.html#sec-golden">Protocole de réentraînement</a>).</li>
+<li><strong>Les libellés jamais vus.</strong> Le flux est répétitif&nbsp;: beaucoup de libellés du <em>golden set</em> sont aussi dans les données d’entraînement. Les métriques sont donc aussi calculées sur les libellés absents de l’entraînement, pour mesurer la généralisation plutôt que la mémorisation.</li>
+<li><strong>Les cas connus</strong> <span class="math inline">\(K_n\)</span>, et leurs variantes reformulées, ne sont pas un échantillon&nbsp;: ce sont des tests unitaires que le modèle doit passer (voir <a href="../fr/retraining.html#sec-gates">Quality gates</a>).</li>
+<li><strong>Les reprises manuelles</strong> ne sont jamais un jeu d’évaluation&nbsp;: elles sont sélectionnées sur les échecs du modèle.</li>
+</ul>
+<p>L’accord inter-annotateurs mesuré pendant la campagne NAF 2025 donne le plafond&nbsp;: trois experts ne tombent d’accord sur la sous-classe que dans environ 62&nbsp;% des cas (voir <a href="../fr/data.html#sec-naf2025">Données</a>). Il faut l’avoir en tête en lisant n’importe quelle métrique.</p>
+</section>
+<section id="incertitude-et-comparaisons" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="incertitude-et-comparaisons"><span class="header-section-number">4</span> Incertitude et comparaisons</h2>
+<p>Le <em>golden set</em> est petit par rapport à 750 classes. Chaque métrique est donc donnée avec un <strong>intervalle de confiance</strong> (Wilson ou bootstrap), et deux modèles sont comparés par un <strong>test apparié</strong> (McNemar ou bootstrap apparié) sur les mêmes libellés. Un nouveau modèle est accepté sur un critère de <strong>non-infériorité</strong>, pas parce que son estimation ponctuelle se trouve être un peu plus haute (voir <a href="../fr/retraining.html#sec-gates">Quality gates</a>).</p>
+<p>Des scores obtenus sur des <em>golden sets</em> différents ne se comparent pas. Pour suivre les progrès dans le temps, on réévalue tous les anciens modèles sur le dernier <span class="math inline">\(\bar{G}^{\text{test}}\)</span>.</p>
+</section>
+<section id="sec-eval-engines" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="sec-eval-engines"><span class="header-section-number">5</span> Évaluer les moteurs auxiliaires</h2>
+<p>Deux briques proposent des codes sans intervention humaine&nbsp;: les agents LLM de <a href="../fr/data.html#sec-graal">GRAAL</a> et le volet probabiliste (fuzzy matching et similarité sémantique) du <a href="../fr/data.html#sec-rules">moteur de règles</a> de codif-ape-preprocess. Comme toutes deux alimentent le prochain jeu d’entraînement, il faut les évaluer avant d’utiliser leurs codes. Le volet déterministe du moteur de règles, lui, relève d’une autre logique&nbsp;: il encode les cas connus <span class="math inline">\(K_n\)</span> validés par les experts et se vérifie comme un test unitaire.</p>
+<p>Pour ces moteurs, l’accuracy globale n’est <strong>pas</strong> la bonne question. Un moteur moins bon que le modèle de production sur l’ensemble du flux peut être très utile s’il a raison là où le modèle se trompe. Le critère est <strong>conditionnel et comparatif</strong> (voir <a href="../fr/retraining.html#sec-curation">Protocole de réentraînement</a>)&nbsp;:</p>
+<ul>
+<li>sur <span class="math inline">\(\bar{G}^{\text{val}}\)</span>, restreint aux cas codés automatiquement sur lesquels le moteur est en <strong>désaccord</strong> avec le modèle de production, qui a raison le plus souvent&nbsp;?</li>
+<li>comparer les moteurs à <strong>couverture égale</strong>, car un moteur qui s’abstient souvent gagne mécaniquement sur la zone de désaccord&nbsp;;</li>
+<li>pour chaque extension de règle, mesurer combien de lignes elle touche et sa précision sur <span class="math inline">\(\bar{G}^{\text{val}}\)</span>, et écarter celles qui ratissent trop large ou se trompent trop.</li>
+</ul>
+<p>GRAAL a son propre module d’évaluation (métriques à chaque niveau, échantillons stratifiés pondérés, intervalles par bootstrap, tests appariés)&nbsp;: le même protocole s’applique donc à ses versions successives.</p>
+</section>
+<section id="des-choix-darchitecture-pour-la-confiance" class="level2 page-columns page-full" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="des-choix-darchitecture-pour-la-confiance"><span class="header-section-number">6</span> Des choix d’architecture pour la confiance</h2>
+<p>Certaines fonctionnalités du modèle servent surtout à améliorer les métriques ci-dessus, ou à rendre les erreurs plus faciles à traiter <span class="citation" data-cites="tayebjee2026iaos">(<a href="#ref-tayebjee2026iaos" role="doc-biblioref">Tayebjee 2026</a>)</span>. Les deux suivantes sont disponibles dans <a href="../fr/model.html#sec-ttc">torchTextClassifiers</a>&nbsp;:</p>
+<div class="no-row-height column-margin column-container"><div id="ref-tayebjee2026iaos" class="csl-entry" role="listitem">
+Tayebjee, Meilame. 2026. <em>From Accuracy to Trust: Practical Methods for Uncertainty-Aware Automatic Coding with <span>ML</span> and <span>xAI</span></em>. IAOS Conference, Vilnius. <a href="https://meilame-tayebjee.github.io/IAOS-Vilnius-conference/presentations/accuracy2trust/">https://meilame-tayebjee.github.io/IAOS-Vilnius-conference/presentations/accuracy2trust/</a>.
+</div></div><ul>
+<li><strong>Des têtes multiniveaux.</strong> Avec une tête de classification par niveau de la nomenclature, un modèle qui hésite peut se rabattre sur le niveau le plus fin dont il est sûr (une classe ou un groupe plutôt qu’une sous-classe fausse). On limite ainsi les erreurs qui sortent de la bonne section.</li>
+<li><strong>La label attention.</strong> Chaque code a sa propre lecture du libellé, ce qui montre les mots qui pèsent pour chaque candidat. Un gestionnaire voit pourquoi le modèle hésite.</li>
+</ul>
+<p>Le <a href="../fr/model.html#sec-internship">stage de Julien Bernardi</a> a donné une première évaluation de ces deux options sur la NAF 2025. Parmi les sous-classes mal prédites, les têtes multiniveaux font passer la part fausse à tous les niveaux d’environ 47&nbsp;% à 29–34&nbsp;%. La label attention donne des explications plus fidèles que les integrated gradients, mais il lui faut tout le jeu d’entraînement pour égaler le modèle de type fastText, et son entraînement est 3 à 6 fois plus long. Le repli sur un niveau plus agrégé quand le modèle hésite n’a pas encore été testé.</p>
+<p>C’est avec les métriques de ce chapitre, sur <span class="math inline">\(\bar{G}^{\text{val}}\)</span> et dans le budget de latence, qu’on décide si ces options valent le coup pour la codification APE.</p>
+</section>
+<section id="sec-eval-nonfunctional" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="sec-eval-nonfunctional"><span class="header-section-number">7</span> Temps d’inférence et autres métriques de production</h2>
+<p>Un modèle performant mais trop lent ne peut pas être déployé. Avec les contraintes de production (appels unitaires, CPU uniquement, environnement fermé), les mesures suivantes font partie de l’évaluation&nbsp;:</p>
+<div id="tbl-eval-nonfunctional" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-eval-nonfunctional-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: Métriques non fonctionnelles.
+</figcaption>
+<div aria-describedby="tbl-eval-nonfunctional-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Métrique</th>
+<th>Pourquoi elle compte</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Latence d’un appel unitaire (médiane, p95, p99)</td>
+<td>Chaque déclaration attend le modèle dans la chaîne de traitement du répertoire</td>
+</tr>
+<tr class="even">
+<td>Débit en batch</td>
+<td>Recodages en masse, par exemple après un changement de nomenclature</td>
+</tr>
+<tr class="odd">
+<td>Empreinte mémoire</td>
+<td>Fixe le nombre de réplicas qu’un nœud peut accueillir</td>
+</tr>
+<tr class="even">
+<td>Temps de démarrage</td>
+<td>Le chargement du modèle et de son tokenizer retarde chaque redémarrage et chaque déploiement</td>
+</tr>
+<tr class="odd">
+<td>Cohérence online / offline</td>
+<td>Le modèle servi doit reproduire exactement les prédictions hors ligne</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>Ces chiffres n’ont de sens que sur le même matériel et la même pile logicielle qu’en production. Mesurés dans un notebook ou sur un nœud GPU, ils disent peu de chose du CPU de production, de ses limites de ressources et de ses contraintes réseau. On les mesure donc sur la <strong>plateforme de qualification</strong>, qui reproduit la production (voir <a href="../fr/organisation.html#sec-qualification-platform">Défis organisationnels et d’infrastructure</a>). Pour mémoire, le modèle PyTorch actuel reste sous 300 ms par appel unitaire sur CPU, contre moins de 100 ms pour fastText (voir <a href="../fr/model.html#tbl-ft-vs-ttc">Modèle</a>).</p>
+
+
+
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Retour au sommet</a></main> <!-- /main -->
+<!--
+  Site navigation, added at the end of every page.
+
+  1. Table of contents. The left sidebar becomes a single, collapsible table
+     of contents for the whole note: chapters, then their sections and
+     sub-sections, read from outline.json (written by scripts/outline.py).
+     The section being read is highlighted as the reader scrolls.
+
+  2. EN | FR switch. en/ and fr/ use the same file names and the same
+     anchors, so switching language swaps the page content in place: same
+     page, same section, no reload. The choice is remembered for the root
+     page redirect (index.qmd).
+-->
+<script>
+(function () {
+  "use strict";
+
+  var KEY = "codif-ape-lang";
+  var LANGS = ["en", "fr"];
+  var STRINGS = {
+    en: {
+      label: "EN", hint: "Read this page in English", brand: "APE coding · MLOps",
+      group: "Language", toc: "Table of contents", expand: "Expand", collapse: "Collapse"
+    },
+    fr: {
+      label: "FR", hint: "Lire cette page en français", brand: "Codification APE · MLOps",
+      group: "Langue", toc: "Sommaire", expand: "Déplier", collapse: "Replier"
+    }
+  };
+  // Parts of the page that differ between languages, swapped on a switch.
+  var SWAPPED = [
+    "main#quarto-document-content",
+    "#quarto-margin-sidebar",
+    "nav.page-navigation",
+    ".nav-footer-center",
+    ".quarto-secondary-nav-title"
+  ];
+  var PATH = /^(.*\/)(en|fr)(\/.*)?$/;
+
+  var m = window.location.pathname.match(PATH);
+  if (!m) return;
+  var base = m[1];
+  var state = { lang: m[2], page: pageOf(m[3]) };
+
+  // "/data.html", "/data" and "/" all name a page; compare them without ".html".
+  function pageOf(rest) {
+    var page = (rest || "/").replace(/^\//, "").replace(/\.html$/, "");
+    return page === "" ? "index" : page;
+  }
+
+  function urlFor(lang, page) {
+    return base + lang + "/" + page + ".html";
+  }
+
+  function el(tag, className, attrs) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    Object.keys(attrs || {}).forEach(function (k) { node.setAttribute(k, attrs[k]); });
+    return node;
+  }
+
+  // ---------------------------------------------------------------- MathJax
+
+  // Section titles can hold math; MathJax loads after this script.
+  function typeset(nodes) {
+    var mj = window.MathJax;
+    if (mj && mj.startup && mj.startup.promise) {
+      return mj.startup.promise.then(function () { return mj.typesetPromise(nodes); });
+    }
+    if (document.readyState !== "complete") {
+      return new Promise(function (resolve) {
+        window.addEventListener("load", function () { typeset(nodes).then(resolve); }, { once: true });
+      });
+    }
+    return Promise.resolve();
+  }
+
+  // ----------------------------------------------------- Table of contents
+
+  var outline = fetch(base + "outline.json")
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .catch(function () { return null; });
+
+  var links = {};       // section id -> link, for the current page
+  var activeLink = null;
+
+  function setOpen(li, open) {
+    li.classList.toggle("is-open", open);
+    var button = li.querySelector(":scope > .toc-row > .toc-toggle");
+    if (button) {
+      button.setAttribute("aria-expanded", String(open));
+      button.setAttribute("aria-label", STRINGS[state.lang][open ? "collapse" : "expand"]);
+    }
+  }
+
+  function tocItem(node, depth, page, isCurrentPage) {
+    var li = el("li", "toc-item toc-depth-" + depth);
+    var row = el("div", "toc-row");
+    var children = depth === 0 ? node.sections : node.children;
+
+    if (children && children.length) {
+      var button = el("button", "toc-toggle", { type: "button" });
+      button.addEventListener("click", function () {
+        li.dataset.pinned = "1";
+        setOpen(li, !li.classList.contains("is-open"));
+      });
+      row.appendChild(button);
+    } else {
+      row.appendChild(el("span", "toc-spacer"));
+    }
+
+    var a = el("a", "toc-link no-external");
+    if (depth === 0) {
+      a.href = urlFor(state.lang, page);
+      if (node.number) {
+        var num = el("span", "toc-number");
+        num.textContent = node.number + ".";
+        a.appendChild(num);
+      }
+      a.insertAdjacentHTML("beforeend", node.title);
+      if (isCurrentPage) {
+        a.classList.add("is-current");
+        a.setAttribute("aria-current", "page");
+        a.addEventListener("click", function (e) {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      }
+    } else {
+      a.href = (isCurrentPage ? "" : urlFor(state.lang, page)) + "#" + node.id;
+      a.innerHTML = node.title;
+      if (isCurrentPage) links[node.id] = a;
+    }
+    row.appendChild(a);
+    li.appendChild(row);
+
+    if (children && children.length) {
+      var ul = el("ul", "toc-children");
+      children.forEach(function (child) {
+        ul.appendChild(tocItem(child, depth + 1, page, isCurrentPage));
+      });
+      li.appendChild(ul);
+      setOpen(li, false);
+    }
+    return li;
+  }
+
+  function buildToc(data) {
+    var container = document.querySelector("#quarto-sidebar .sidebar-menu-container");
+    if (!container || !data || !data[state.lang]) return;
+
+    links = {};
+    activeLink = null;
+    var nav = el("nav", "site-toc", { "aria-label": STRINGS[state.lang].toc });
+    var ul = el("ul", "toc-children toc-chapters");
+    data[state.lang].forEach(function (chapter) {
+      var page = pageOf(chapter.href);
+      var isCurrent = page === state.page;
+      var li = tocItem(chapter, 0, page, isCurrent);
+      if (isCurrent) {
+        li.classList.add("is-current");
+        setOpen(li, true);
+      }
+      ul.appendChild(li);
+    });
+    nav.appendChild(ul);
+    container.replaceChildren(nav);
+    document.body.classList.add("has-site-toc");
+
+    typeset([nav]);
+    updateActive();
+    var current = nav.querySelector(".toc-link.is-current");
+    if (current) revealInSidebar(current);
+  }
+
+  function revealInSidebar(link) {
+    var sidebar = document.getElementById("quarto-sidebar");
+    if (!sidebar) return;
+    var r = link.getBoundingClientRect();
+    var s = sidebar.getBoundingClientRect();
+    if (r.top < s.top || r.bottom > s.bottom) {
+      sidebar.scrollTop += r.top - s.top - s.height / 3;
+    }
+  }
+
+  function sectionList() {
+    return Array.prototype.slice.call(document.querySelectorAll(
+      "main#quarto-document-content section.level2[id], main#quarto-document-content section.level3[id]"
+    ));
+  }
+
+  // The section being read: the last one whose top has scrolled past the
+  // navbar.
+  function currentSection() {
+    var sections = sectionList();
+    if (!sections.length) return null;
+    var atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    if (atBottom) return sections[sections.length - 1];
+    var current = null;
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].getBoundingClientRect().top > 100) break;
+      current = sections[i];
+    }
+    return current;
+  }
+
+  function updateActive() {
+    var section = currentSection();
+    var link = (section && links[section.id]) || null;
+    if (link === activeLink) return;
+    if (activeLink) activeLink.classList.remove("active");
+    activeLink = link;
+    if (!link) return;
+    link.classList.add("active");
+
+    // Open the branch that holds the active section, and close the branches
+    // opened automatically before, unless the reader opened them by hand.
+    var branch = [];
+    for (var li = link.closest(".toc-item"); li; li = li.parentElement.closest(".toc-item")) {
+      branch.push(li);
+    }
+    document.querySelectorAll(".site-toc .toc-item.is-open").forEach(function (li) {
+      if (branch.indexOf(li) === -1 && !li.classList.contains("is-current") && !li.dataset.pinned) {
+        setOpen(li, false);
+      }
+    });
+    branch.forEach(function (li) {
+      if (li.querySelector(":scope > .toc-children")) setOpen(li, true);
+    });
+    revealInSidebar(link);
+  }
+
+  var ticking = false;
+  window.addEventListener("scroll", function () {
+    if (ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(function () { ticking = false; updateActive(); });
+  }, { passive: true });
+
+  // -------------------------------------------------------- Language switch
+
+  var switchGroup = el("div", "lang-switch", { role: "group" });
+
+  function updateChrome() {
+    var s = STRINGS[state.lang];
+    var brand = document.querySelector(".navbar-brand");
+    if (brand) brand.setAttribute("href", urlFor(state.lang, "index"));
+    var brandTitle = document.querySelector(".navbar-title");
+    if (brandTitle) brandTitle.textContent = s.brand;
+    switchGroup.setAttribute("aria-label", s.group);
+    Array.prototype.forEach.call(switchGroup.children, function (a) {
+      var lang = a.getAttribute("lang");
+      var active = lang === state.lang;
+      a.classList.toggle("active", active);
+      if (active) a.setAttribute("aria-current", "true");
+      else a.removeAttribute("aria-current");
+      a.href = urlFor(lang, state.page) + window.location.hash;
+    });
+  }
+
+  LANGS.forEach(function (lang) {
+    var a = el("a", "no-external", { lang: lang, hreflang: lang, title: STRINGS[lang].hint });
+    a.textContent = STRINGS[lang].label;
+    a.addEventListener("click", function (e) {
+      // Let modified clicks open the other language in a new tab.
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      switchLang(lang, true);
+    });
+    switchGroup.appendChild(a);
+  });
+
+  var slot = document.querySelector(".quarto-navbar-tools") ||
+             document.querySelector(".navbar-container");
+  if (slot) slot.insertBefore(switchGroup, slot.firstChild);
+
+  // Quarto marks external links (icon, new tab) on page load only.
+  function adornExternalLinks(root) {
+    root.querySelectorAll("a[href]:not(.no-external):not([aria-hidden])").forEach(function (a) {
+      if (/^https?:$/.test(a.protocol) && a.origin !== window.location.origin) {
+        a.setAttribute("target", "_blank");
+        if (a.getAttribute("rel") === null) a.setAttribute("rel", "noopener");
+        a.classList.add("external");
+      }
+    });
+  }
+
+  // Same steps as Quarto's mermaid-init.js, which only runs on page load.
+  var mermaidCount = 0;
+  function renderMermaid(root) {
+    var mermaid = window.mermaid;
+    if (!mermaid) return Promise.resolve();
+    var blocks = Array.prototype.slice.call(root.querySelectorAll("pre.mermaid-js"));
+    return blocks.reduce(function (done, pre) {
+      return done.then(function () {
+        var text = pre.textContent.replace(/&nbsp;/g, " ");
+        return mermaid.mermaidAPI.render("mermaid-switch-" + (++mermaidCount), text, pre)
+          .then(function (result) {
+            pre.innerHTML = result.svg;
+            var svg = pre.querySelector("svg");
+            if (pre.dataset.label) {
+              var style = svg.querySelector("style");
+              if (style) style.innerHTML = style.innerHTML.split("#" + svg.id).join("#" + pre.dataset.label + "-mermaid");
+              svg.id = pre.dataset.label + "-mermaid";
+            }
+            pre.parentElement.replaceChild(svg, pre);
+            svg.classList.add("mermaid-js");
+            /* global _quartoMermaid */
+            if (typeof _quartoMermaid !== "undefined") {
+              try { _quartoMermaid.postProcess(svg); } catch (e) {}
+            }
+          });
+      });
+    }, Promise.resolve());
+  }
+
+  var switching = false;
+  function switchLang(lang, push) {
+    if (lang === state.lang || switching) return;
+    switching = true;
+    var url = urlFor(lang, state.page);
+
+    // Remember where the reader is, to land at the same place. Both
+    // languages have the same sections in the same order, but not always the
+    // same ids (those derived from French titles differ), so sections are
+    // matched by position.
+    var before = sectionList();
+    var anchor = currentSection();
+    var anchorIndex = before.indexOf(anchor);
+    var anchorTop = anchor ? anchor.getBoundingClientRect().top : null;
+    var hashIndex = before.findIndex(function (s) { return "#" + s.id === window.location.hash; });
+    var scrollY = window.scrollY;
+
+    document.documentElement.classList.add("lang-switching");
+    fetch(url)
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (html) {
+        var doc = new DOMParser().parseFromString(html, "text/html");
+        var after = doc.querySelectorAll(
+          "main#quarto-document-content section.level2[id], main#quarto-document-content section.level3[id]"
+        );
+        var hash = hashIndex >= 0 && after[hashIndex] ? "#" + after[hashIndex].id : window.location.hash;
+        state.lang = lang;
+        if (push) history.pushState({ lang: lang }, "", url + hash);
+        else if (hash !== window.location.hash) history.replaceState(history.state, "", url + hash);
+        try { localStorage.setItem(KEY, lang); } catch (e) {}
+
+        SWAPPED.forEach(function (selector) {
+          var current = document.querySelector(selector);
+          var next = doc.querySelector(selector);
+          if (!current || !next) return;
+          next.querySelectorAll("script").forEach(function (s) { s.remove(); });
+          current.replaceWith(document.importNode(next, true));
+        });
+        document.title = doc.title;
+        document.documentElement.lang = doc.documentElement.lang || lang;
+        updateChrome();
+
+        var main = document.querySelector("main#quarto-document-content");
+        adornExternalLinks(main);
+        return Promise.all([
+          renderMermaid(main).catch(function () {}),
+          typeset([main]).catch(function () {}),
+          outline.then(buildToc)
+        ]);
+      })
+      .then(function () {
+        var target = anchorIndex >= 0 ? sectionList()[anchorIndex] : null;
+        if (target && anchorTop !== null) {
+          window.scrollTo(0, window.scrollY + target.getBoundingClientRect().top - anchorTop);
+        } else {
+          window.scrollTo(0, scrollY);
+        }
+        updateActive();
+      })
+      .catch(function () {
+        // Fall back to a normal page load.
+        window.location.href = url + window.location.hash;
+      })
+      .then(function () {
+        switching = false;
+        document.documentElement.classList.remove("lang-switching");
+      });
+  }
+
+  // Back and forward between two languages of the same page stay in place.
+  window.addEventListener("popstate", function () {
+    var mm = window.location.pathname.match(PATH);
+    if (!mm) return;
+    if (pageOf(mm[3]) !== state.page) {
+      window.location.reload();
+    } else if (mm[2] !== state.lang) {
+      switchLang(mm[2], false);
+    }
+  });
+
+  try { localStorage.setItem(KEY, state.lang); } catch (e) {}
+  updateChrome();
+  outline.then(buildToc);
+})();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copié");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copié");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/inseefrlab\.github\.io\/codif-ape-docs\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+            // default icon
+            link.classList.add("external");
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../fr/model.html" class="pagination-link" aria-label="Modèle">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Modèle</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../fr/serving.html" class="pagination-link" aria-label="Mise en production">
+        <span class="nav-page-text">Mise en production</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>Insee — SSP Lab</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/InseeFrLab/codif-ape-docs/edit/main/fr/evaluation.qmd" class="toc-action"><i class="bi bi-github"></i>Modifier cette page</a></li><li><a href="https://github.com/InseeFrLab/codif-ape-docs/issues/new" class="toc-action"><i class="bi empty"></i>Faire part d'un problème</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p>Built with <a href="https://quarto.org/">Quarto</a></p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

@@ -6,8 +6,8 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="author" content="SSP Lab">
-<meta name="description" content="Données d’entraînement, nettoyage des labels par un moteur de règles auditable, et passage à la NAF 2025.">
+<meta name="author" content="Meilame Tayebjee">
+<meta name="description" content="Données d’entraînement, nettoyage des labels par un moteur de règles auditable, passage à la NAF 2025 et données synthétiques.">
 
 <title>Données – APE coding · MLOps</title>
 <style>
@@ -68,7 +68,7 @@ div.csl-indent {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-fc581236a46ad31b3ea501458e50ff32.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-7ac3c55ca58f93c4c6c73bcc24e20e69.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -96,10 +96,43 @@ div.csl-indent {
     "search-label": "Recherche"
   }
 }</script>
+<meta name="mermaid-theme" content="neutral">
+<script src="../site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="../site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <meta property="og:title" content="Données – APE coding · MLOps">
-<meta property="og:description" content="Données d’entraînement, nettoyage des labels par un moteur de règles auditable, et passage à la NAF 2025.">
+<meta property="og:description" content="Données d’entraînement, nettoyage des labels par un moteur de règles auditable, passage à la NAF 2025 et données synthétiques.">
 <meta property="og:site_name" content="APE coding · MLOps">
 </head>
 
@@ -184,14 +217,20 @@ div.csl-indent {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../fr/evaluation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Évaluation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../fr/serving.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Mise à disposition du modèle et déploiement</span></a>
+ <span class="menu-text">Mise en production</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../fr/monitoring.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Suivi et annotation</span></a>
+ <span class="menu-text">Monitoring et annotation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -202,14 +241,20 @@ div.csl-indent {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../fr/companion-projects.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Projets associés&nbsp;: TTC et GRAAL</span></a>
+  <a href="../fr/organisation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Défis organisationnels et d’infrastructure</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../fr/lessons.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Enseignements</span></a>
+ <span class="menu-text">Retours d’expérience</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../fr/glossary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glossaire et notations</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -230,11 +275,26 @@ div.csl-indent {
   <ul>
   <li><a href="#données-dentraînement" id="toc-données-dentraînement" class="nav-link active" data-scroll-target="#données-dentraînement"><span class="header-section-number">1</span> Données d’entraînement</a></li>
   <li><a href="#sec-rules" id="toc-sec-rules" class="nav-link" data-scroll-target="#sec-rules"><span class="header-section-number">2</span> Nettoyage des labels&nbsp;: un moteur de règles auditable</a></li>
-  <li><a href="#découpage-et-versionnage" id="toc-découpage-et-versionnage" class="nav-link" data-scroll-target="#découpage-et-versionnage"><span class="header-section-number">3</span> Découpage et versionnage</a></li>
+  <li><a href="#splits-et-versionnage" id="toc-splits-et-versionnage" class="nav-link" data-scroll-target="#splits-et-versionnage"><span class="header-section-number">3</span> Splits et versionnage</a></li>
   <li><a href="#sec-naf2025" id="toc-sec-naf2025" class="nav-link" data-scroll-target="#sec-naf2025"><span class="header-section-number">4</span> Le passage à la NAF 2025</a>
   <ul class="collapse">
-  <li><a href="#le-problème-de-la-correspondance" id="toc-le-problème-de-la-correspondance" class="nav-link" data-scroll-target="#le-problème-de-la-correspondance"><span class="header-section-number">4.1</span> Le problème de la correspondance</a></li>
+  <li><a href="#le-problème-de-la-table-de-passage" id="toc-le-problème-de-la-table-de-passage" class="nav-link" data-scroll-target="#le-problème-de-la-table-de-passage"><span class="header-section-number">4.1</span> Le problème de la table de passage</a></li>
   <li><a href="#les-experts-comme-référence-les-llm-pour-le-volume" id="toc-les-experts-comme-référence-les-llm-pour-le-volume" class="nav-link" data-scroll-target="#les-experts-comme-référence-les-llm-pour-le-volume"><span class="header-section-number">4.2</span> Les experts comme référence, les LLM pour le volume</a></li>
+  </ul></li>
+  <li><a href="#sec-graal" id="toc-sec-graal" class="nav-link" data-scroll-target="#sec-graal"><span class="header-section-number">5</span> GRAAL</a>
+  <ul class="collapse">
+  <li><a href="#principe" id="toc-principe" class="nav-link" data-scroll-target="#principe"><span class="header-section-number">5.1</span> Principe</a></li>
+  <li><a href="#les-agents" id="toc-les-agents" class="nav-link" data-scroll-target="#les-agents"><span class="header-section-number">5.2</span> Les agents</a></li>
+  <li><a href="#rôle-dans-le-pipeline" id="toc-rôle-dans-le-pipeline" class="nav-link" data-scroll-target="#rôle-dans-le-pipeline"><span class="header-section-number">5.3</span> Rôle dans le pipeline</a></li>
+  <li><a href="#des-codes-qui-doivent-faire-leurs-preuves" id="toc-des-codes-qui-doivent-faire-leurs-preuves" class="nav-link" data-scroll-target="#des-codes-qui-doivent-faire-leurs-preuves"><span class="header-section-number">5.4</span> Des codes qui doivent faire leurs preuves</a></li>
+  </ul></li>
+  <li><a href="#sec-synthetic" id="toc-sec-synthetic" class="nav-link" data-scroll-target="#sec-synthetic"><span class="header-section-number">6</span> Données synthétiques&nbsp;: Code2Text</a>
+  <ul class="collapse">
+  <li><a href="#pourquoi-générer-des-libellés" id="toc-pourquoi-générer-des-libellés" class="nav-link" data-scroll-target="#pourquoi-générer-des-libellés"><span class="header-section-number">6.1</span> Pourquoi générer des libellés</a></li>
+  <li><a href="#une-première-version-naivecode2text" id="toc-une-première-version-naivecode2text" class="nav-link" data-scroll-target="#une-première-version-naivecode2text"><span class="header-section-number">6.2</span> Une première version&nbsp;: NaiveCode2Text</a></li>
+  <li><a href="#un-texte-de-llm-ça-se-repère-labelguard" id="toc-un-texte-de-llm-ça-se-repère-labelguard" class="nav-link" data-scroll-target="#un-texte-de-llm-ça-se-repère-labelguard"><span class="header-section-number">6.3</span> Un texte de LLM, ça se repère&nbsp;: LabelGuard</a></li>
+  <li><a href="#casser-le-style-code2retext" id="toc-casser-le-style-code2retext" class="nav-link" data-scroll-target="#casser-le-style-code2retext"><span class="header-section-number">6.4</span> Casser le style&nbsp;: Code2ReText</a></li>
+  <li><a href="#résultats" id="toc-résultats" class="nav-link" data-scroll-target="#résultats"><span class="header-section-number">6.5</span> Résultats</a></li>
   </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/InseeFrLab/codif-ape-docs/edit/main/fr/data.qmd" class="toc-action"><i class="bi bi-github"></i>Modifier cette page</a></li><li><a href="https://github.com/InseeFrLab/codif-ape-docs/issues/new" class="toc-action"><i class="bi empty"></i>Faire part d'un problème</a></li></ul></div></nav>
@@ -249,7 +309,7 @@ div.csl-indent {
 
 <div>
   <div class="description">
-    Données d’entraînement, nettoyage des labels par un moteur de règles auditable, et passage à la NAF 2025.
+    Données d’entraînement, nettoyage des labels par un moteur de règles auditable, passage à la NAF 2025 et données synthétiques.
   </div>
 </div>
 
@@ -258,11 +318,11 @@ div.csl-indent {
   <div class="quarto-title-meta-heading">Affiliation</div>
   
     <div class="quarto-title-meta-contents">
-    <p class="author">SSP Lab </p>
+    <p class="author"><a href="https://github.com/meilame-tayebjee">Meilame Tayebjee</a> <a href="mailto:meilame.tayebjee@insee.fr" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> </p>
   </div>
   <div class="quarto-title-meta-contents">
         <p class="affiliation">
-            Insee
+            SSP Lab, Insee
           </p>
       </div>
   </div>
@@ -281,7 +341,7 @@ div.csl-indent {
 
 <section id="données-dentraînement" class="level2 page-columns page-full" data-number="1">
 <h2 data-number="1" class="anchored" data-anchor-id="données-dentraînement"><span class="header-section-number">1</span> Données d’entraînement</h2>
-<p>Le modèle apprend à partir des déclarations passées, conservées dans le répertoire Sirene. Chaque observation comprend&nbsp;:</p>
+<p>Le modèle apprend sur les déclarations passées, conservées dans le répertoire Sirene. Chaque observation contient&nbsp;:</p>
 <ul>
 <li>le <strong>libellé d’activité</strong>&nbsp;: texte libre saisi par le déclarant, parfois complété de précisions sur une activité secondaire ou agricole&nbsp;;</li>
 <li>des <strong>variables annexes</strong> issues du formulaire de déclaration&nbsp;:
@@ -294,7 +354,7 @@ div.csl-indent {
 </ul></li>
 <li>le <strong>code APE</strong> attribué, automatiquement ou par un gestionnaire.</li>
 </ul>
-<p>Les premiers modèles ont été entraînés sur environ 10&nbsp;millions de déclarations issues de l’ancien répertoire (2014–2022). Depuis le passage au nouveau répertoire et à la NAF 2025, la base d’entraînement est constituée d’environ <strong>2,7&nbsp;millions</strong> de déclarations récentes <span class="citation" data-cites="randriamanana2025jms">(<a href="#ref-randriamanana2025jms" role="doc-biblioref">Randriamanana et Faria 2025</a>)</span>.</p>
+<p>Les premiers modèles ont été entraînés sur environ 10&nbsp;millions de déclarations issues de l’ancien répertoire (2014–2022). Depuis le passage au nouveau répertoire et à la NAF 2025, la base d’entraînement compte environ <strong>2,7&nbsp;millions</strong> de déclarations récentes <span class="citation" data-cites="randriamanana2025jms">(<a href="#ref-randriamanana2025jms" role="doc-biblioref">Randriamanana et Faria 2025</a>)</span>.</p>
 <div class="no-row-height column-margin column-container"></div><div class="callout callout-style-default callout-warning callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -305,14 +365,14 @@ div.csl-indent {
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Les labels historiques proviennent de Sicore, des versions précédentes du modèle et de gestionnaires travaillant sous contrainte de temps. Certains sont faux, d’autres se contredisent&nbsp;: un même libellé peut porter des codes différents. La qualité des labels compte autant que l’architecture du modèle. Deux composants s’en chargent&nbsp;: le moteur de règles (ci-dessous) et les campagnes d’annotation (<a href="../fr/monitoring.html">Suivi</a>).</p>
+<p>Les labels historiques viennent de Sicore, des versions précédentes du modèle et de gestionnaires qui travaillent dans l’urgence. Certains sont faux, d’autres se contredisent&nbsp;: un même libellé peut avoir des codes différents. La qualité des labels compte autant que l’architecture du modèle. Deux outils s’en occupent&nbsp;: le moteur de règles (ci-dessous) et les campagnes d’annotation (<a href="../fr/monitoring.html">Monitoring</a>).</p>
 </div>
 </div>
 </section>
 <section id="sec-rules" class="level2" data-number="2">
 <h2 data-number="2" class="anchored" data-anchor-id="sec-rules"><span class="header-section-number">2</span> Nettoyage des labels&nbsp;: un moteur de règles auditable</h2>
-<p><a href="https://github.com/InseeFrLab/codif-ape-preprocess">codif-ape-preprocess</a> applique des <strong>règles métier</strong> aux données d’entraînement avant chaque entraînement. Une règle traduit en code une connaissance des experts métier. Par exemple, les activités de location meublée désignées par le sigle «&nbsp;LMNP&nbsp;», les sociétés holding, les chauffeurs VTC et les taxis sont chacun orientés vers un code précis.</p>
-<p>Une règle peut agir de trois façons&nbsp;:</p>
+<p><a href="https://github.com/InseeFrLab/codif-ape-preprocess">codif-ape-preprocess</a> applique des <strong>règles métier</strong> aux données avant chaque entraînement. Une règle, c’est un savoir des experts métier traduit en code. Par exemple, les locations meublées désignées par le sigle «&nbsp;LMNP&nbsp;», les holdings, les chauffeurs VTC et les taxis sont chacun envoyés vers un code précis.</p>
+<p>Une règle peut faire trois choses&nbsp;:</p>
 <div id="tbl-rule-types" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-rule-types-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
@@ -335,12 +395,12 @@ Table&nbsp;1: Types de règles.
 <tbody>
 <tr class="odd">
 <td><strong>Modifier</strong></td>
-<td>Réétiqueter les lignes qui correspondent à un motif</td>
+<td>Changer le label des lignes qui correspondent à un pattern</td>
 <td>Libellés mentionnant une activité de holding passive → le code dédié aux holdings</td>
 </tr>
 <tr class="even">
 <td><strong>Augmenter</strong></td>
-<td>Ajouter des lignes synthétiques, pondérées, pour que le modèle apprenne un cas qu’il voit rarement</td>
+<td>Ajouter des lignes synthétiques pondérées, pour que le modèle apprenne un cas qu’il voit rarement</td>
 <td>Une ligne «&nbsp;LMNP&nbsp;» par catégorie juridique, pour que toutes soient couvertes</td>
 </tr>
 <tr class="odd">
@@ -353,50 +413,55 @@ Table&nbsp;1: Types de règles.
 </div>
 </figure>
 </div>
-<p>Les règles sont des fonctions Python enregistrées à l’aide d’un décorateur. Chacune porte un nom, des tags et une description. Une règle repère les libellés concernés par une ou plusieurs de ces trois méthodes&nbsp;:</p>
+<p>Les règles sont des fonctions Python enregistrées via un décorateur, chacune avec un nom, des tags et une description. Pour repérer les libellés concernés, une règle utilise une ou plusieurs de ces trois méthodes&nbsp;:</p>
 <ul>
-<li>des <strong>expressions régulières</strong> sur le texte normalisé&nbsp;;</li>
-<li>une <strong>correspondance approximative</strong> (<em>fuzzy matching</em>), pour absorber les fautes de frappe&nbsp;;</li>
-<li>une <strong>similarité sémantique</strong>, à partir d’un modèle de plongements de phrases calculé sur GPU.</li>
+<li>des <strong>regex</strong> sur le texte normalisé&nbsp;;</li>
+<li>du <strong>fuzzy matching</strong>, pour absorber les fautes de frappe&nbsp;;</li>
+<li>de la <strong>similarité sémantique</strong>, avec un modèle d’embeddings de phrases qui tourne sur GPU.</li>
 </ul>
-<p>Les correspondances approximative et sémantique étendent une règle aux libellés proches de ceux listés par les experts. Chaque règle définit les méthodes qu’elle autorise. Par exemple, une règle portant sur un sigle court est limitée à la correspondance exacte.</p>
-<p><strong>Chaque modification est journalisée.</strong> Pour chaque ligne modifiée, créée ou supprimée, un journal enregistre le code avant et après, la règle appliquée et le contexte de la déclaration. Ces journaux sont stockés à côté du jeu de données nettoyé. Tout label du jeu d’entraînement peut ainsi être retracé jusqu’à son origine.</p>
-<p>Les règles rendent <strong>pérennes</strong> les retours des experts. Une erreur corrigée uniquement par réentraînement peut réapparaître avec le modèle suivant. Une règle, elle, corrige définitivement tout le jeu d’entraînement, et la correction est auditable. La création, la vérification et la propagation des règles sont décrites dans le <a href="../fr/retraining.html#sec-known-cases">protocole de réentraînement</a>.</p>
+<p>Le fuzzy matching et la similarité sémantique étendent une règle aux libellés proches de ceux listés par les experts. Chaque règle choisit les méthodes qu’elle autorise&nbsp;: une règle sur un sigle court, par exemple, se limite au match exact.</p>
+<p>Le moteur de règles a donc deux volets, qui ne s’évaluent pas de la même façon&nbsp;:</p>
+<ul>
+<li>le <strong>volet déterministe</strong> (patterns exacts validés par les experts) encode les <em>cas connus</em>, notés <span class="math inline">\(K_n\)</span> dans le <a href="../fr/retraining.html#sec-golden">protocole de réentraînement</a>. Il se vérifie comme un test unitaire&nbsp;: le modèle doit le reproduire&nbsp;;</li>
+<li>le <strong>volet probabiliste</strong> (extensions par fuzzy matching et similarité sémantique) fait un pari sur des libellés qu’aucun expert n’a vus. C’est un moteur de codification automatique à part entière, dont la qualité doit être <a href="../fr/evaluation.html#sec-eval-engines">mesurée</a> avant d’en garder les codes.</li>
+</ul>
+<p><strong>Chaque modification est loggée.</strong> Pour chaque ligne modifiée, créée ou supprimée, on garde le code avant et après, la règle appliquée et le contexte de la déclaration. Ces logs sont stockés à côté du jeu de données nettoyé, si bien qu’on peut remonter à l’origine de n’importe quel label du jeu d’entraînement.</p>
+<p>Les règles rendent <strong>durables</strong> les retours des experts. Une erreur corrigée seulement par réentraînement peut revenir avec le modèle suivant. Une règle, elle, corrige une fois pour toutes l’ensemble du jeu d’entraînement, et la correction est traçable. La création, la vérification et la propagation des règles sont décrites dans le <a href="../fr/retraining.html#sec-known-cases">protocole de réentraînement</a>.</p>
 </section>
-<section id="découpage-et-versionnage" class="level2" data-number="3">
-<h2 data-number="3" class="anchored" data-anchor-id="découpage-et-versionnage"><span class="header-section-number">3</span> Découpage et versionnage</h2>
-<p>Après nettoyage, la chaîne&nbsp;:</p>
+<section id="splits-et-versionnage" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="splits-et-versionnage"><span class="header-section-number">3</span> Splits et versionnage</h2>
+<p>Après nettoyage, le pipeline&nbsp;:</p>
 <ol type="1">
 <li>construit les variables finales&nbsp;: le libellé concaténé avec ses champs texte complémentaires, et les variables catégorielles&nbsp;;</li>
 <li>découpe les données en jeux d’entraînement, de validation et de test&nbsp;;</li>
 <li>écrit ces jeux sur S3, dans un dossier nommé d’après la date d’extraction&nbsp;;</li>
-<li>inscrit ce dossier, avec la liste des variables, dans un fichier de configuration partagé, lu par le code d’entraînement.</li>
+<li>référence ce dossier, avec la liste des variables, dans un fichier de configuration partagé que lit le code d’entraînement.</li>
 </ol>
-<p>Chaque entraînement enregistre ses jeux de données d’entrée dans MLflow. Il est donc rattaché à un instantané exact des données.</p>
+<p>Chaque entraînement logge ses jeux de données d’entrée dans MLflow&nbsp;: on sait donc exactement sur quel snapshot des données il a tourné.</p>
 </section>
 <section id="sec-naf2025" class="level2 page-columns page-full" data-number="4">
 <h2 data-number="4" class="anchored" data-anchor-id="sec-naf2025"><span class="header-section-number">4</span> Le passage à la NAF 2025</h2>
-<p>La révision européenne de la nomenclature d’activités (NACE Rév. 2.1, appelée NAF 2025 en France) s’applique à toutes les unités de Sirene au 1er janvier 2027. Le modèle doit donc être entraîné dans une nomenclature <strong>dans laquelle aucune donnée historique n’a été codée</strong>.</p>
-<section id="le-problème-de-la-correspondance" class="level3 page-columns page-full" data-number="4.1">
-<h3 data-number="4.1" class="anchored" data-anchor-id="le-problème-de-la-correspondance"><span class="header-section-number">4.1</span> Le problème de la correspondance</h3>
-<p>La table de correspondance officielle entre la NAF rév. 2 et la NAF 2025 relie 732 anciennes sous-classes à 746 nouvelles <span class="citation" data-cites="randriamanana2025jms">(<a href="#ref-randriamanana2025jms" role="doc-biblioref">Randriamanana et Faria 2025</a>)</span>&nbsp;:</p>
+<p>La révision européenne de la nomenclature d’activités (NACE Rév. 2.1, NAF 2025 en France) s’applique à toutes les unités de Sirene au 1er janvier 2027. Il faut donc entraîner le modèle dans une nomenclature <strong>dans laquelle aucune donnée historique n’a été codée</strong>.</p>
+<section id="le-problème-de-la-table-de-passage" class="level3 page-columns page-full" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="le-problème-de-la-table-de-passage"><span class="header-section-number">4.1</span> Le problème de la table de passage</h3>
+<p>La table de passage officielle entre la NAF rév. 2 et la NAF 2025 relie 732 anciennes sous-classes à 746 nouvelles <span class="citation" data-cites="randriamanana2025jms">(<a href="#ref-randriamanana2025jms" role="doc-biblioref">Randriamanana et Faria 2025</a>)</span>&nbsp;:</p>
 <div class="no-row-height column-margin column-container"><div id="ref-randriamanana2025jms" class="csl-entry" role="listitem">
 Randriamanana, Nathan, et Thomas Faria. 2025. <em>Changement de nomenclature statistique à l’ère du Machine Learning : réentraînement basé sur les <span>LLM</span> pour la révision de la <span>NAF</span></em>. Journées de méthodologie statistique (JMS). <a href="https://inseefrlab.github.io/codif-ape-prez/papers/jms2025-llm-relabeling/index.pdf">https://inseefrlab.github.io/codif-ape-prez/papers/jms2025-llm-relabeling/index.pdf</a>.
 </div></div><ul>
-<li><strong>551 correspondances univoques</strong>&nbsp;: l’ancien code correspond à un seul nouveau code, et la traduction est mécanique&nbsp;;</li>
+<li><strong>551 correspondances univoques</strong>&nbsp;: l’ancien code donne un seul nouveau code, le passage est mécanique&nbsp;;</li>
 <li><strong>181 correspondances multivoques</strong>&nbsp;: l’ancien code éclate en plusieurs nouveaux codes (jusqu’à 38), et il faut lire le libellé pour choisir.</li>
 </ul>
-<p>Les codes multivoques ne représentent que 25&nbsp;% des codes, mais ils couvrent <strong>52&nbsp;% des observations d’entraînement</strong>, soit environ 1,4&nbsp;million de lignes. Les experts métier ont d’abord requalifié certains «&nbsp;faux multivoques&nbsp;», où une cible domine nettement. Cette étape en a réglé environ un tiers. Il restait néanmoins environ 500&nbsp;000 observations à recoder une à une.</p>
+<p>Les codes multivoques ne font que 25&nbsp;% des codes, mais <strong>52&nbsp;% des observations d’entraînement</strong>, soit environ 1,4&nbsp;million de lignes. Les experts métier ont d’abord requalifié des «&nbsp;faux multivoques&nbsp;», où une cible domine nettement, ce qui en a réglé environ un tiers. Restaient tout de même environ 500&nbsp;000 observations à recoder une par une.</p>
 </section>
 <section id="les-experts-comme-référence-les-llm-pour-le-volume" class="level3 page-columns page-full" data-number="4.2">
 <h3 data-number="4.2" class="anchored" data-anchor-id="les-experts-comme-référence-les-llm-pour-le-volume"><span class="header-section-number">4.2</span> Les experts comme référence, les LLM pour le volume</h3>
-<p>Le recodage a combiné expertise humaine et grands modèles de langage&nbsp;:</p>
+<p>Le recodage a combiné expertise humaine et LLM&nbsp;:</p>
 <ol type="1">
-<li><strong>Annotation par les experts.</strong> Environ 25 experts métier ont annoté quelque <strong>30&nbsp;000</strong> libellés multivoques en NAF 2025, dans Label Studio, pendant environ cinq mois. La campagne a aussi fourni des mesures d’accord inter-annotateurs, qui fixent un plafond réaliste&nbsp;: trois experts indépendants ne s’accordent sur la sous-classe que dans 62&nbsp;% des cas environ, alors qu’au moins deux d’entre eux s’accordent dans 96&nbsp;% des cas.</li>
-<li><strong>Les LLM comme annotateurs virtuels.</strong> Des LLM à poids ouverts, servis sur la plateforme avec vLLM, ont recodé les observations multivoques (<a href="https://github.com/InseeFrLab/codif-ape-nace-revision">codif-ape-nace-revision</a>). Chaque prompt contenait le libellé, les codes NAF 2025 candidats et leurs <strong>notes explicatives</strong> (génération augmentée par le contexte). La sortie était contrainte par un schéma JSON. Plusieurs modèles ont été comparés aux annotations des experts. Le meilleur modèle isolé atteignait une exactitude d’environ 72&nbsp;% au niveau de la sous-classe. Combiner les modèles, par vote ou en cascade, apportait quelques points de plus.</li>
+<li><strong>Annotation par les experts.</strong> Environ 25 experts métier ont annoté quelque <strong>30&nbsp;000</strong> libellés multivoques en NAF 2025, dans Label Studio, pendant environ cinq mois. La campagne a aussi permis de mesurer l’accord inter-annotateurs, ce qui donne un plafond réaliste&nbsp;: trois experts indépendants ne tombent d’accord sur la sous-classe que dans environ 62&nbsp;% des cas, alors qu’au moins deux d’entre eux sont d’accord dans 96&nbsp;% des cas.</li>
+<li><strong>Les LLM comme annotateurs virtuels.</strong> Des LLM open-weight, servis sur la plateforme avec vLLM, ont recodé les observations multivoques (<a href="https://github.com/InseeFrLab/codif-ape-nace-revision">codif-ape-nace-revision</a>). Chaque prompt contenait le libellé, les codes NAF 2025 candidats et leurs <strong>notes explicatives</strong>, directement dans le contexte, avec une sortie contrainte par un schéma JSON. Plusieurs modèles ont été comparés aux annotations des experts&nbsp;: le meilleur atteignait environ 72&nbsp;% d’accuracy au niveau sous-classe, et combiner plusieurs modèles, par vote ou en cascade, faisait gagner quelques points.</li>
 <li><strong>Des règles métier</strong> ont ensuite été appliquées par-dessus, via le <a href="#sec-rules">moteur de règles</a>, pour corriger les erreurs systématiques.</li>
 </ol>
-<p>Au total, environ 2,3&nbsp;millions des 2,7&nbsp;millions d’observations ont été reconstituées en NAF 2025. Des itérations ultérieures, avec des modèles à poids ouverts plus récents et un vote majoritaire, ont porté l’exactitude des LLM à environ 78&nbsp;% <span class="citation" data-cites="pramil2026isi">(<a href="#ref-pramil2026isi" role="doc-biblioref">Pramil 2026</a>)</span>.</p>
+<p>Au total, environ 2,3&nbsp;millions des 2,7&nbsp;millions d’observations ont pu être recodées en NAF 2025. Par la suite, des modèles open-weight plus récents et un vote majoritaire ont fait monter l’accuracy des LLM à environ 78&nbsp;% <span class="citation" data-cites="pramil2026isi">(<a href="#ref-pramil2026isi" role="doc-biblioref">Pramil 2026</a>)</span>.</p>
 <div class="no-row-height column-margin column-container"><div id="ref-pramil2026isi" class="csl-entry" role="listitem">
 Pramil, Julien. 2026. <em>When Classifications Change but Deadlines Don’t: Scaling Recoding with <span>LLMs</span>. The <span>NACE</span> Transition at Insee</em>. ISI World Statistics Congress, Malta. <a href="https://inseefrlab.github.io/codif-ape-prez/slides/isi-malta-relabeling/">https://inseefrlab.github.io/codif-ape-prez/slides/isi-malta-relabeling/</a>.
 </div></div><div class="callout callout-style-default callout-tip callout-titled">
@@ -409,10 +474,192 @@ Pramil, Julien. 2026. <em>When Classifications Change but Deadlines Don’t: Sca
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Les annotations d’experts sont coûteuses&nbsp;: mieux vaut les utiliser comme <strong>référence</strong>. Elles orientent le choix des prompts et des modèles et mesurent le résultat, tandis que les LLM apportent le volume. La confiance déclarée par un LLM lui-même s’est révélée un filtre peu fiable. L’accord entre plusieurs modèles est un meilleur signal.</p>
+<p>Les annotations d’experts coûtent cher&nbsp;: mieux vaut s’en servir comme <strong>référence</strong>, pour choisir les prompts et les modèles et pour mesurer le résultat, et laisser le volume aux LLM. La confiance qu’un LLM déclare lui-même s’est révélée un mauvais filtre&nbsp;; l’accord entre plusieurs modèles est un bien meilleur signal.</p>
 </div>
 </div>
-<p>Le modèle réentraîné sur ces données est présenté dans le <a href="../fr/model.html#sec-results">chapitre suivant</a>.</p>
+<p>Le modèle réentraîné sur ces données est présenté dans le chapitre <a href="../fr/model.html#sec-results">Modèle</a>.</p>
+</section>
+</section>
+<section id="sec-graal" class="level2 page-columns page-full" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="sec-graal"><span class="header-section-number">5</span> GRAAL</h2>
+<p><a href="https://github.com/InseeFrLab/GRAAL">GRAAL</a> (<a href="https://inseefrlab.github.io/GRAAL/">documentation</a>), <em>Graph-based Reasoning Agents for Automatic Labelling</em>, est un framework d’agents LLM qui codent du texte libre dans une nomenclature hiérarchique. Il repose sur deux briques&nbsp;:</p>
+<ol type="1">
+<li><strong>la notice sous forme de graphe</strong>, stockée dans la base de données orientée graphe <a href="https://neo4j.com/">Neo4j</a> <span class="citation" data-cites="neo4j">(<a href="#ref-neo4j" role="doc-biblioref">Neo4j, Inc. 2026</a>)</span>&nbsp;;</li>
+<li><strong>des tools</strong> que les LLM appellent pour interroger ce graphe.</li>
+</ol>
+<div class="no-row-height column-margin column-container"><div id="ref-neo4j" class="csl-entry" role="listitem">
+Neo4j, Inc. 2026. <em>Neo4j: graph database</em>. <a href="https://neo4j.com/docs/">https://neo4j.com/docs/</a>.
+</div></div><p>Comme <a href="../fr/model.html#sec-ttc">torchTextClassifiers</a>, il est né des besoins de la codification APE et est développé comme un outil généraliste et open source. Mais contrairement à elle, GRAAL est <strong>hors du chemin critique</strong>&nbsp;: il travaille hors ligne, sur des données, pas sur des requêtes en temps réel. Il a sa place dans ce chapitre parce qu’il produit des codes.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-graal" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-graal-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-graal">flowchart LR
+  subgraph OFF["Hors ligne (batch)"]
+    GR["GRAAL&lt;br/&gt;agents LLM"]
+    PRE["Curation des données&lt;br/&gt;codif-ape-preprocess"]
+  end
+  subgraph CRIT["Chemin critique"]
+    TRN["Entraînement&lt;br/&gt;codif-ape-train"] --&gt; MOD["Modèle&lt;br/&gt;(TTC)"] --&gt; API["API&lt;br/&gt;codif-ape-api"]
+  end
+  GR --&gt;|"recodage, audits,&lt;br/&gt;arbitrage, données synthétiques"| PRE
+  PRE --&gt; TRN
+  API --&gt;|"codes candidats,&lt;br/&gt;référence supervisée"| GR
+  API --&gt;|"prédictions"| MON["Monitoring"]
+  MON --&gt;|"cas à auditer"| GR
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-graal-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Place de GRAAL dans le pipeline.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<section id="principe" class="level3" data-number="5.1">
+<h3 data-number="5.1" class="anchored" data-anchor-id="principe"><span class="header-section-number">5.1</span> Principe</h3>
+<p><strong>Le graphe.</strong> La notice complète est chargée dans Neo4j&nbsp;:</p>
+<ul>
+<li>les codes et leurs libellés&nbsp;;</li>
+<li>les <strong>notes explicatives</strong>&nbsp;: inclusions, exclusions, exemples&nbsp;;</li>
+<li>les relations parent–enfant, ainsi qu’un index vectoriel sur les notes.</li>
+</ul>
+<p><strong>Les tools.</strong> Les LLM n’accèdent au graphe que via des tools&nbsp;: descendre ou remonter la hiérarchie, lire les notes d’un code, chercher les notes les plus proches d’un texte. Ils parcourent ainsi la nomenclature comme le ferait un expert humain. Les agents décrits plus bas ne sont que des façons différentes de combiner ces tools. Toutes les entrées et sorties sont des modèles Pydantic typés. Les agents marchent avec n’importe quel endpoint compatible avec l’API OpenAI&nbsp;; sur la plateforme, ce sont des modèles open-weight.</p>
+<p>Comme tout ce qu’il faut savoir de la nomenclature est dans le graphe, le framework est <strong>indépendant de la nomenclature</strong>. Des graphes existent pour la NAF 2025 (en français), la NACE Rev.&nbsp;2.1 (en anglais) et la COICOP 2018.</p>
+</section>
+<section id="les-agents" class="level3" data-number="5.2">
+<h3 data-number="5.2" class="anchored" data-anchor-id="les-agents"><span class="header-section-number">5.2</span> Les agents</h3>
+<div id="tbl-graal" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-graal-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: Agents de GRAAL.
+</figcaption>
+<div aria-describedby="tbl-graal-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Famille</th>
+<th>Agent</th>
+<th>Rôle</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><em>Texte → code</em></td>
+<td><strong>Navigator</strong></td>
+<td>Parcourt la hiérarchie de la racine jusqu’à une feuille, en lisant les notes à chaque étape</td>
+</tr>
+<tr class="even">
+<td></td>
+<td><strong>Agentic RAG</strong></td>
+<td>Part d’une recherche vectorielle, puis vérifie et corrige avec le Navigator</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td><strong>Summary agent</strong></td>
+<td>Un seul agent, avec un résumé de toute la nomenclature dans son contexte</td>
+</tr>
+<tr class="even">
+<td><em>Arbitrage</em></td>
+<td><strong>CodeChooser</strong></td>
+<td>Arbitre entre quelques codes candidats</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td><strong>MatchVerifier</strong></td>
+<td>Audite un couple (libellé, code)&nbsp;: est-il cohérent avec les notes&nbsp;? Sinon, quel code convient mieux&nbsp;?</td>
+</tr>
+<tr class="even">
+<td><em>Code → texte</em></td>
+<td><strong>Code2Text</strong></td>
+<td>Génère des libellés synthétiques réalistes pour un code donné</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>GRAAL comprend aussi un module d’évaluation et des applications de revue où les experts métier jugent les verdicts des agents. Le module d’évaluation fournit des métriques à chaque niveau, des échantillons stratifiés pondérés, des intervalles de confiance par bootstrap et des tests appariés.</p>
+</section>
+<section id="rôle-dans-le-pipeline" class="level3" data-number="5.3">
+<h3 data-number="5.3" class="anchored" data-anchor-id="rôle-dans-le-pipeline"><span class="header-section-number">5.3</span> Rôle dans le pipeline</h3>
+<p>GRAAL <strong>ne remplace pas</strong> le modèle de production. Les agents mettent de quelques secondes à quelques minutes par libellé et ont besoin de GPU pour le LLM, alors que la production demande environ 200&nbsp;ms sur CPU. Sur les premiers benchmarks, ils ne faisaient d’ailleurs pas mieux que le modèle supervisé sur l’ensemble du flux. L’intérêt de GRAAL est ailleurs, dans quatre tâches hors ligne&nbsp;:</p>
+<ol type="1">
+<li><strong>Recoder un stock après un changement de nomenclature.</strong> L’essentiel des données d’entraînement NAF 2025 a été produit par un pipeline dédié, <a href="https://github.com/InseeFrLab/codif-ape-nace-revision">codif-ape-nace-revision</a>, dans laquelle des LLM codent avec les notes explicatives dans leur contexte (<a href="#sec-naf2025">voir plus haut</a>). GRAAL généralise cette approche avec des agents qui naviguent dans la nomenclature, pour les révisions futures et pour d’autres nomenclatures.</li>
+<li><strong>Auditer et fiabiliser les codes.</strong> Le MatchVerifier repère les codes douteux dans les données d’entraînement ou parmi les cas codés automatiquement, et propose des alternatives. Dans le <a href="../fr/retraining.html#sec-curation">protocole de réentraînement</a>, GRAAL est l’un des moteurs indépendants dont les désaccords avec le modèle de production sont arbitrés.</li>
+<li><strong>Prioriser la revue humaine.</strong> Les cas suspects passent en priorité devant les experts métier, dont les avis, recueillis dans une application de revue, deviennent de nouvelles annotations.</li>
+<li><strong>Générer des données synthétiques.</strong> Code2Text produit des libellés pour les codes rares (<a href="#sec-synthetic">voir plus bas</a>), ainsi que des variantes reformulées de cas connus, pour vérifier qu’une correction <a href="../fr/retraining.html#sec-gates">se généralise</a>.</li>
+</ol>
+<p>En retour, GRAAL s’appuie sur l’API de production, comme baseline supervisée et comme source de codes candidats pour les agents et les annotateurs.</p>
+</section>
+<section id="des-codes-qui-doivent-faire-leurs-preuves" class="level3" data-number="5.4">
+<h3 data-number="5.4" class="anchored" data-anchor-id="des-codes-qui-doivent-faire-leurs-preuves"><span class="header-section-number">5.4</span> Des codes qui doivent faire leurs preuves</h3>
+<p>GRAAL et la partie probabiliste du <a href="#sec-rules">moteur de règles</a> jouent le même rôle&nbsp;: ils proposent des codes qu’aucun humain n’a vérifiés. Avant que l’un ou l’autre n’alimente l’entraînement, on l’évalue là où ça compte&nbsp;: <strong>sur les cas où il n’est pas d’accord avec le modèle de production</strong>, par rapport au <em>golden set</em>. Le critère et ses précautions sont détaillés dans le <a href="../fr/retraining.html#sec-curation">protocole de réentraînement</a> et dans le chapitre <a href="../fr/evaluation.html#sec-eval-engines">Évaluation</a>.</p>
+</section>
+</section>
+<section id="sec-synthetic" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="sec-synthetic"><span class="header-section-number">6</span> Données synthétiques&nbsp;: Code2Text</h2>
+<p>Pendant son stage au SSP Lab (ENSAE Paris, 2026), Matéo Morin a travaillé sur la génération de libellés synthétiques par LLM pour la NAF 2025, dans le prolongement de l’agent Code2Text de <a href="#sec-graal">GRAAL</a>. Rapport, slides et annexes&nbsp;: <a href="https://mateomorin.github.io/Code2Text-presentation/">mateomorin.github.io/Code2Text-presentation</a>. Ces travaux restent exploratoires.</p>
+<section id="pourquoi-générer-des-libellés" class="level3" data-number="6.1">
+<h3 data-number="6.1" class="anchored" data-anchor-id="pourquoi-générer-des-libellés"><span class="header-section-number">6.1</span> Pourquoi générer des libellés</h3>
+<p>Deux motivations&nbsp;:</p>
+<ul>
+<li><strong>les codes rares</strong>&nbsp;: sur plus d’un million de libellés d’entraînement, la moitié des codes ont moins de 60 exemples, et le modèle les apprend mal&nbsp;;</li>
+<li><strong>le secret statistique</strong>&nbsp;: impossible de diffuser les déclarations, que ce soit pour des cours, des hackathons ou de la recherche. Un jeu synthétique assez réaliste, lui, pourrait l’être.</li>
+</ul>
+<p>Les deux usages n’appellent pas la même distribution des codes&nbsp;: pour diffuser, il faut coller à la distribution réelle&nbsp;; pour entraîner, on a intérêt à surreprésenter les codes rares. On génère donc <strong>code par code</strong>. Si, pour un code donné, les libellés générés ressemblent aux vrais, il ne reste qu’à choisir combien en tirer par code selon l’usage visé.</p>
+</section>
+<section id="une-première-version-naivecode2text" class="level3" data-number="6.2">
+<h3 data-number="6.2" class="anchored" data-anchor-id="une-première-version-naivecode2text"><span class="header-section-number">6.2</span> Une première version&nbsp;: NaiveCode2Text</h3>
+<p>Pour chaque code, on donne au LLM son intitulé, une partie des inclusions, toutes les exclusions et quelques vrais libellés du même code en exemple (<em>few-shot</em>). Les appels sont parallélisés&nbsp;: 62&nbsp;100 libellés couvrant toute la nomenclature en 42 minutes.</p>
+<p>Sur le fond, les libellés tiennent la route. Mais ils sont trop propres&nbsp;: pas de fautes, un ton très formel, souvent proche de l’intitulé du code. Pour la sylviculture, on obtient par exemple «&nbsp;Activités forestières&nbsp;: culture de peupliers et de saules&nbsp;». Demander dans le prompt un style plus relâché n’y change rien.</p>
+</section>
+<section id="un-texte-de-llm-ça-se-repère-labelguard" class="level3" data-number="6.3">
+<h3 data-number="6.3" class="anchored" data-anchor-id="un-texte-de-llm-ça-se-repère-labelguard"><span class="header-section-number">6.3</span> Un texte de LLM, ça se repère&nbsp;: LabelGuard</h3>
+<p><a href="https://github.com/mateomorin/LabelGuard">LabelGuard</a> est un classifieur qui distingue un libellé écrit par un déclarant d’un libellé généré. C’est un MLP sur les embeddings de Qwen3-Embedding-8B, entraîné sur 160&nbsp;000 libellés, moitié vrais, moitié synthétiques. On a d’abord retiré des vrais libellés ce qui les trahit trop facilement (troncature à 140 caractères, numéros, suffixe ajouté au prétraitement), pour qu’il apprenne le style et pas ces artefacts.</p>
+<p>Résultat&nbsp;: <strong>99,4&nbsp;% d’accuracy</strong> sur 40&nbsp;000 libellés de validation, pour 0,7&nbsp;% de faux positifs. Le style d’un LLM se repère donc presque à coup sûr. Pour le classifieur, c’est du <em>covariate shift</em>&nbsp;: entraîné sur ces libellés, il ne voit pas le même texte qu’en production, où les libellés sont abrégés, télégraphiques et pleins de fautes.</p>
+</section>
+<section id="casser-le-style-code2retext" class="level3" data-number="6.4">
+<h3 data-number="6.4" class="anchored" data-anchor-id="casser-le-style-code2retext"><span class="header-section-number">6.4</span> Casser le style&nbsp;: Code2ReText</h3>
+<p>Premier essai&nbsp;: donner directement LabelGuard en tool au LLM générateur. Il a vite triché&nbsp;: mots collés, mots inventés, et copie pure et simple des libellés qui passaient le test.</p>
+<p>La version retenue, Code2ReText, répartit le travail entre deux LLM, orchestrés avec LangGraph&nbsp;:</p>
+<ul>
+<li>l’<strong>Acteur</strong> génère des libellés comme NaiveCode2Text, puis les reformule. Il peut changer la forme, pas le fond&nbsp;;</li>
+<li>le <strong>Superviseur</strong> voit les scores de LabelGuard et de vrais libellés du même code. Il dit à l’Acteur comment réécrire ceux qui se font repérer (score supérieur à 0,70), sans lui montrer les vrais libellés.</li>
+</ul>
+<p>Cinq tours au maximum. Le score moyen de LabelGuard baisse à chaque tour. Pour la sylviculture, on obtient désormais par exemple «&nbsp;TRANSPLANTATION ARBRES&nbsp;».</p>
+</section>
+<section id="résultats" class="level3" data-number="6.5">
+<h3 data-number="6.5" class="anchored" data-anchor-id="résultats"><span class="header-section-number">6.5</span> Résultats</h3>
+<p>Un classifieur aux hyperparamètres fixés (choisis sur données réelles) est entraîné sur des jeux de 50&nbsp;000 libellés comprenant une part <span class="math inline">\(\alpha\)</span> de synthétique, puis évalué sur 30&nbsp;000 vrais libellés. Les jeux sont <strong>emboîtés</strong>&nbsp;: les libellés synthétiques utilisés pour un <span class="math inline">\(\alpha\)</span> donné se retrouvent dans tous les jeux à <span class="math inline">\(\alpha\)</span> plus élevé, et chaque code apparaît au moins une fois. Les écarts d’un <span class="math inline">\(\alpha\)</span> à l’autre ne viennent donc pas de l’échantillonnage.</p>
+<ul>
+<li><strong>Accuracy globale.</strong> Elle tient jusqu’à environ 50&nbsp;% de synthétique et s’effondre au-delà de 90&nbsp;%.</li>
+<li><strong>Selon la fréquence du code.</strong> Rien ne bouge sur les codes fréquents. Sur les codes de fréquence intermédiaire, l’accuracy baisse quand <span class="math inline">\(\alpha\)</span> augmente. Sur les <strong>codes rares</strong>, elle progresse nettement dès les premiers ajouts, surtout avec Code2ReText. Le bon compromis se situe autour de <strong>40 à 50&nbsp;%</strong> de libellés Code2ReText, tirés selon une distribution des codes proche de la réalité.</li>
+<li><strong>Style contre diversité.</strong> Pour presque tous les codes, Code2ReText est plus proche des vrais libellés que NaiveCode2Text (distance de Wasserstein entre embeddings). Mais sa diversité (DC-Score) s’effondre, alors que celle de NaiveCode2Text dépasse même un peu celle des vrais libellés. On n’a pas les deux à la fois.</li>
+<li><strong>Recopie.</strong> Environ 0,5&nbsp;% des libellés de Code2ReText sont des copies de vrais libellés, contre 0,005&nbsp;% pour NaiveCode2Text&nbsp;: l’Acteur et le Superviseur ont trouvé là un autre moyen de tromper LabelGuard. En l’état, c’est rédhibitoire pour une diffusion.</li>
+</ul>
+<p>Ces résultats portent sur 50&nbsp;000 libellés, pas sur le million de la base complète, et héritent du bruit des vrais labels (voir <a href="#sec-naf2025">plus haut</a>). Piste suivante&nbsp;: plutôt que de corriger le style à coups de boucles de prompts, faire un <strong>fine-tuning</strong> d’un petit modèle open-weight sur la façon d’écrire des déclarants. Le même modèle pourrait générer des libellés NACE dans plusieurs langues.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Astuce</span>Enseignement
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Le synthétique complète les vraies données sur les codes rares, il ne les remplace pas. Un LLM a un style qui se repère&nbsp;: mieux vaut le mesurer avant d’injecter quoi que ce soit. Et un générateur optimisé pour tromper un discriminateur finit par recopier ses exemples&nbsp;: avant toute diffusion, il faut vérifier qu’aucun vrai libellé n’a fuité.</p>
+</div>
+</div>
 
 
 
@@ -421,57 +668,404 @@ Pramil, Julien. 2026. <em>When Classifications Change but Deadlines Don’t: Sca
 
 <a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Retour au sommet</a></main> <!-- /main -->
 <!--
-  EN | FR switch in the navbar. en/ and fr/ use the same file names and the
-  same anchors, so the switch links to the same page and section in the other
-  language. The choice is remembered for the root page redirect (index.qmd).
+  Site navigation, added at the end of every page.
+
+  1. Table of contents. The left sidebar becomes a single, collapsible table
+     of contents for the whole note: chapters, then their sections and
+     sub-sections, read from outline.json (written by scripts/outline.py).
+     The section being read is highlighted as the reader scrolls.
+
+  2. EN | FR switch. en/ and fr/ use the same file names and the same
+     anchors, so switching language swaps the page content in place: same
+     page, same section, no reload. The choice is remembered for the root
+     page redirect (index.qmd).
 -->
 <script>
 (function () {
+  "use strict";
+
   var KEY = "codif-ape-lang";
   var LANGS = ["en", "fr"];
-  var TITLES = {
-    en: { label: "EN", hint: "Read this page in English", brand: "APE coding · MLOps" },
-    fr: { label: "FR", hint: "Lire cette page en français", brand: "Codification APE · MLOps" }
+  var STRINGS = {
+    en: {
+      label: "EN", hint: "Read this page in English", brand: "APE coding · MLOps",
+      group: "Language", toc: "Table of contents", expand: "Expand", collapse: "Collapse"
+    },
+    fr: {
+      label: "FR", hint: "Lire cette page en français", brand: "Codification APE · MLOps",
+      group: "Langue", toc: "Sommaire", expand: "Déplier", collapse: "Replier"
+    }
   };
+  // Parts of the page that differ between languages, swapped on a switch.
+  var SWAPPED = [
+    "main#quarto-document-content",
+    "#quarto-margin-sidebar",
+    "nav.page-navigation",
+    ".nav-footer-center",
+    ".quarto-secondary-nav-title"
+  ];
+  var PATH = /^(.*\/)(en|fr)(\/.*)?$/;
 
-  var m = window.location.pathname.match(/^(.*\/)(en|fr)(\/.*)?$/);
+  var m = window.location.pathname.match(PATH);
   if (!m) return;
-  var base = m[1], current = m[2], rest = m[3] || "/";
+  var base = m[1];
+  var state = { lang: m[2], page: pageOf(m[3]) };
 
-  try { localStorage.setItem(KEY, current); } catch (e) {}
+  // "/data.html", "/data" and "/" all name a page; compare them without ".html".
+  function pageOf(rest) {
+    var page = (rest || "/").replace(/^\//, "").replace(/\.html$/, "");
+    return page === "" ? "index" : page;
+  }
 
-  var brand = document.querySelector(".navbar-brand");
-  if (brand) brand.setAttribute("href", base + current + "/index.html");
-  var brandTitle = document.querySelector(".navbar-title");
-  if (brandTitle) brandTitle.textContent = TITLES[current].brand;
+  function urlFor(lang, page) {
+    return base + lang + "/" + page + ".html";
+  }
 
-  var group = document.createElement("div");
-  group.className = "lang-switch";
-  group.setAttribute("role", "group");
-  group.setAttribute("aria-label", current === "fr" ? "Langue" : "Language");
+  function el(tag, className, attrs) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    Object.keys(attrs || {}).forEach(function (k) { node.setAttribute(k, attrs[k]); });
+    return node;
+  }
+
+  // ---------------------------------------------------------------- MathJax
+
+  // Section titles can hold math; MathJax loads after this script.
+  function typeset(nodes) {
+    var mj = window.MathJax;
+    if (mj && mj.startup && mj.startup.promise) {
+      return mj.startup.promise.then(function () { return mj.typesetPromise(nodes); });
+    }
+    if (document.readyState !== "complete") {
+      return new Promise(function (resolve) {
+        window.addEventListener("load", function () { typeset(nodes).then(resolve); }, { once: true });
+      });
+    }
+    return Promise.resolve();
+  }
+
+  // ----------------------------------------------------- Table of contents
+
+  var outline = fetch(base + "outline.json")
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .catch(function () { return null; });
+
+  var links = {};       // section id -> link, for the current page
+  var activeLink = null;
+
+  function setOpen(li, open) {
+    li.classList.toggle("is-open", open);
+    var button = li.querySelector(":scope > .toc-row > .toc-toggle");
+    if (button) {
+      button.setAttribute("aria-expanded", String(open));
+      button.setAttribute("aria-label", STRINGS[state.lang][open ? "collapse" : "expand"]);
+    }
+  }
+
+  function tocItem(node, depth, page, isCurrentPage) {
+    var li = el("li", "toc-item toc-depth-" + depth);
+    var row = el("div", "toc-row");
+    var children = depth === 0 ? node.sections : node.children;
+
+    if (children && children.length) {
+      var button = el("button", "toc-toggle", { type: "button" });
+      button.addEventListener("click", function () {
+        li.dataset.pinned = "1";
+        setOpen(li, !li.classList.contains("is-open"));
+      });
+      row.appendChild(button);
+    } else {
+      row.appendChild(el("span", "toc-spacer"));
+    }
+
+    var a = el("a", "toc-link no-external");
+    if (depth === 0) {
+      a.href = urlFor(state.lang, page);
+      if (node.number) {
+        var num = el("span", "toc-number");
+        num.textContent = node.number + ".";
+        a.appendChild(num);
+      }
+      a.insertAdjacentHTML("beforeend", node.title);
+      if (isCurrentPage) {
+        a.classList.add("is-current");
+        a.setAttribute("aria-current", "page");
+        a.addEventListener("click", function (e) {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      }
+    } else {
+      a.href = (isCurrentPage ? "" : urlFor(state.lang, page)) + "#" + node.id;
+      a.innerHTML = node.title;
+      if (isCurrentPage) links[node.id] = a;
+    }
+    row.appendChild(a);
+    li.appendChild(row);
+
+    if (children && children.length) {
+      var ul = el("ul", "toc-children");
+      children.forEach(function (child) {
+        ul.appendChild(tocItem(child, depth + 1, page, isCurrentPage));
+      });
+      li.appendChild(ul);
+      setOpen(li, false);
+    }
+    return li;
+  }
+
+  function buildToc(data) {
+    var container = document.querySelector("#quarto-sidebar .sidebar-menu-container");
+    if (!container || !data || !data[state.lang]) return;
+
+    links = {};
+    activeLink = null;
+    var nav = el("nav", "site-toc", { "aria-label": STRINGS[state.lang].toc });
+    var ul = el("ul", "toc-children toc-chapters");
+    data[state.lang].forEach(function (chapter) {
+      var page = pageOf(chapter.href);
+      var isCurrent = page === state.page;
+      var li = tocItem(chapter, 0, page, isCurrent);
+      if (isCurrent) {
+        li.classList.add("is-current");
+        setOpen(li, true);
+      }
+      ul.appendChild(li);
+    });
+    nav.appendChild(ul);
+    container.replaceChildren(nav);
+    document.body.classList.add("has-site-toc");
+
+    typeset([nav]);
+    updateActive();
+    var current = nav.querySelector(".toc-link.is-current");
+    if (current) revealInSidebar(current);
+  }
+
+  function revealInSidebar(link) {
+    var sidebar = document.getElementById("quarto-sidebar");
+    if (!sidebar) return;
+    var r = link.getBoundingClientRect();
+    var s = sidebar.getBoundingClientRect();
+    if (r.top < s.top || r.bottom > s.bottom) {
+      sidebar.scrollTop += r.top - s.top - s.height / 3;
+    }
+  }
+
+  function sectionList() {
+    return Array.prototype.slice.call(document.querySelectorAll(
+      "main#quarto-document-content section.level2[id], main#quarto-document-content section.level3[id]"
+    ));
+  }
+
+  // The section being read: the last one whose top has scrolled past the
+  // navbar.
+  function currentSection() {
+    var sections = sectionList();
+    if (!sections.length) return null;
+    var atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    if (atBottom) return sections[sections.length - 1];
+    var current = null;
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].getBoundingClientRect().top > 100) break;
+      current = sections[i];
+    }
+    return current;
+  }
+
+  function updateActive() {
+    var section = currentSection();
+    var link = (section && links[section.id]) || null;
+    if (link === activeLink) return;
+    if (activeLink) activeLink.classList.remove("active");
+    activeLink = link;
+    if (!link) return;
+    link.classList.add("active");
+
+    // Open the branch that holds the active section, and close the branches
+    // opened automatically before, unless the reader opened them by hand.
+    var branch = [];
+    for (var li = link.closest(".toc-item"); li; li = li.parentElement.closest(".toc-item")) {
+      branch.push(li);
+    }
+    document.querySelectorAll(".site-toc .toc-item.is-open").forEach(function (li) {
+      if (branch.indexOf(li) === -1 && !li.classList.contains("is-current") && !li.dataset.pinned) {
+        setOpen(li, false);
+      }
+    });
+    branch.forEach(function (li) {
+      if (li.querySelector(":scope > .toc-children")) setOpen(li, true);
+    });
+    revealInSidebar(link);
+  }
+
+  var ticking = false;
+  window.addEventListener("scroll", function () {
+    if (ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(function () { ticking = false; updateActive(); });
+  }, { passive: true });
+
+  // -------------------------------------------------------- Language switch
+
+  var switchGroup = el("div", "lang-switch", { role: "group" });
+
+  function updateChrome() {
+    var s = STRINGS[state.lang];
+    var brand = document.querySelector(".navbar-brand");
+    if (brand) brand.setAttribute("href", urlFor(state.lang, "index"));
+    var brandTitle = document.querySelector(".navbar-title");
+    if (brandTitle) brandTitle.textContent = s.brand;
+    switchGroup.setAttribute("aria-label", s.group);
+    Array.prototype.forEach.call(switchGroup.children, function (a) {
+      var lang = a.getAttribute("lang");
+      var active = lang === state.lang;
+      a.classList.toggle("active", active);
+      if (active) a.setAttribute("aria-current", "true");
+      else a.removeAttribute("aria-current");
+      a.href = urlFor(lang, state.page) + window.location.hash;
+    });
+  }
 
   LANGS.forEach(function (lang) {
-    var a = document.createElement("a");
-    a.textContent = TITLES[lang].label;
-    a.setAttribute("lang", lang);
-    a.setAttribute("hreflang", lang);
-    a.setAttribute("title", TITLES[lang].hint);
-    if (lang === current) {
-      a.className = "active";
-      a.setAttribute("aria-current", "true");
-    }
-    a.href = base + lang + rest + window.location.hash;
-    a.addEventListener("click", function () {
-      try { localStorage.setItem(KEY, lang); } catch (e) {}
-      // Keep the section the reader is on, even after scrolling.
-      a.href = base + lang + rest + window.location.hash;
+    var a = el("a", "no-external", { lang: lang, hreflang: lang, title: STRINGS[lang].hint });
+    a.textContent = STRINGS[lang].label;
+    a.addEventListener("click", function (e) {
+      // Let modified clicks open the other language in a new tab.
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      switchLang(lang, true);
     });
-    group.appendChild(a);
+    switchGroup.appendChild(a);
   });
 
   var slot = document.querySelector(".quarto-navbar-tools") ||
              document.querySelector(".navbar-container");
-  if (slot) slot.insertBefore(group, slot.firstChild);
+  if (slot) slot.insertBefore(switchGroup, slot.firstChild);
+
+  // Quarto marks external links (icon, new tab) on page load only.
+  function adornExternalLinks(root) {
+    root.querySelectorAll("a[href]:not(.no-external):not([aria-hidden])").forEach(function (a) {
+      if (/^https?:$/.test(a.protocol) && a.origin !== window.location.origin) {
+        a.setAttribute("target", "_blank");
+        if (a.getAttribute("rel") === null) a.setAttribute("rel", "noopener");
+        a.classList.add("external");
+      }
+    });
+  }
+
+  // Same steps as Quarto's mermaid-init.js, which only runs on page load.
+  var mermaidCount = 0;
+  function renderMermaid(root) {
+    var mermaid = window.mermaid;
+    if (!mermaid) return Promise.resolve();
+    var blocks = Array.prototype.slice.call(root.querySelectorAll("pre.mermaid-js"));
+    return blocks.reduce(function (done, pre) {
+      return done.then(function () {
+        var text = pre.textContent.replace(/&nbsp;/g, " ");
+        return mermaid.mermaidAPI.render("mermaid-switch-" + (++mermaidCount), text, pre)
+          .then(function (result) {
+            pre.innerHTML = result.svg;
+            var svg = pre.querySelector("svg");
+            if (pre.dataset.label) {
+              var style = svg.querySelector("style");
+              if (style) style.innerHTML = style.innerHTML.split("#" + svg.id).join("#" + pre.dataset.label + "-mermaid");
+              svg.id = pre.dataset.label + "-mermaid";
+            }
+            pre.parentElement.replaceChild(svg, pre);
+            svg.classList.add("mermaid-js");
+            /* global _quartoMermaid */
+            if (typeof _quartoMermaid !== "undefined") {
+              try { _quartoMermaid.postProcess(svg); } catch (e) {}
+            }
+          });
+      });
+    }, Promise.resolve());
+  }
+
+  var switching = false;
+  function switchLang(lang, push) {
+    if (lang === state.lang || switching) return;
+    switching = true;
+    var url = urlFor(lang, state.page);
+
+    // Remember where the reader is, to land at the same place. Both
+    // languages have the same sections in the same order, but not always the
+    // same ids (those derived from French titles differ), so sections are
+    // matched by position.
+    var before = sectionList();
+    var anchor = currentSection();
+    var anchorIndex = before.indexOf(anchor);
+    var anchorTop = anchor ? anchor.getBoundingClientRect().top : null;
+    var hashIndex = before.findIndex(function (s) { return "#" + s.id === window.location.hash; });
+    var scrollY = window.scrollY;
+
+    document.documentElement.classList.add("lang-switching");
+    fetch(url)
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (html) {
+        var doc = new DOMParser().parseFromString(html, "text/html");
+        var after = doc.querySelectorAll(
+          "main#quarto-document-content section.level2[id], main#quarto-document-content section.level3[id]"
+        );
+        var hash = hashIndex >= 0 && after[hashIndex] ? "#" + after[hashIndex].id : window.location.hash;
+        state.lang = lang;
+        if (push) history.pushState({ lang: lang }, "", url + hash);
+        else if (hash !== window.location.hash) history.replaceState(history.state, "", url + hash);
+        try { localStorage.setItem(KEY, lang); } catch (e) {}
+
+        SWAPPED.forEach(function (selector) {
+          var current = document.querySelector(selector);
+          var next = doc.querySelector(selector);
+          if (!current || !next) return;
+          next.querySelectorAll("script").forEach(function (s) { s.remove(); });
+          current.replaceWith(document.importNode(next, true));
+        });
+        document.title = doc.title;
+        document.documentElement.lang = doc.documentElement.lang || lang;
+        updateChrome();
+
+        var main = document.querySelector("main#quarto-document-content");
+        adornExternalLinks(main);
+        return Promise.all([
+          renderMermaid(main).catch(function () {}),
+          typeset([main]).catch(function () {}),
+          outline.then(buildToc)
+        ]);
+      })
+      .then(function () {
+        var target = anchorIndex >= 0 ? sectionList()[anchorIndex] : null;
+        if (target && anchorTop !== null) {
+          window.scrollTo(0, window.scrollY + target.getBoundingClientRect().top - anchorTop);
+        } else {
+          window.scrollTo(0, scrollY);
+        }
+        updateActive();
+      })
+      .catch(function () {
+        // Fall back to a normal page load.
+        window.location.href = url + window.location.hash;
+      })
+      .then(function () {
+        switching = false;
+        document.documentElement.classList.remove("lang-switching");
+      });
+  }
+
+  // Back and forward between two languages of the same page stay in place.
+  window.addEventListener("popstate", function () {
+    var mm = window.location.pathname.match(PATH);
+    if (!mm) return;
+    if (pageOf(mm[3]) !== state.page) {
+      window.location.reload();
+    } else if (mm[2] !== state.lang) {
+      switchLang(mm[2], false);
+    }
+  });
+
+  try { localStorage.setItem(KEY, state.lang); } catch (e) {}
+  updateChrome();
+  outline.then(buildToc);
 })();
 </script>
 <script id="quarto-html-after-body" type="application/javascript">
